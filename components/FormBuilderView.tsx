@@ -52,12 +52,20 @@ const FormBuilderView: React.FC = () => {
   const [userTotal, setUserTotal] = useState(0);
   const [loadingUsers, setLoadingUsers] = useState(false);
   const usersPerPage = 10;
-  const signatureCanvasRefs = useRef<Record<string, HTMLCanvasElement | null>>({});
-  const [drawingStates, setDrawingStates] = useState<Record<string, boolean>>({});
+  const signatureCanvasRefs = useRef<Record<string, HTMLCanvasElement | null>>(
+    {},
+  );
+  const [drawingStates, setDrawingStates] = useState<Record<string, boolean>>(
+    {},
+  );
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [ratingValues, setRatingValues] = useState<Record<string, number>>({});
-  const [ratingHoverValues, setRatingHoverValues] = useState<Record<string, number>>({});
-  const [editingOptions, setEditingOptions] = useState<Record<string, string[]>>({});
+  const [ratingHoverValues, setRatingHoverValues] = useState<
+    Record<string, number>
+  >({});
+  const [editingOptions, setEditingOptions] = useState<
+    Record<string, string[]>
+  >({});
   const [newFormData, setNewFormData] = useState({
     name: "",
     type: "Loan" as "Loan" | "Investment",
@@ -162,7 +170,9 @@ const FormBuilderView: React.FC = () => {
 
   const startDrawing = (
     fieldId: string,
-    e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>,
+    e:
+      | React.MouseEvent<HTMLCanvasElement>
+      | React.TouchEvent<HTMLCanvasElement>,
   ) => {
     const canvas = signatureCanvasRefs.current[fieldId];
     if (!canvas) return;
@@ -180,7 +190,9 @@ const FormBuilderView: React.FC = () => {
 
   const draw = (
     fieldId: string,
-    e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>,
+    e:
+      | React.MouseEvent<HTMLCanvasElement>
+      | React.TouchEvent<HTMLCanvasElement>,
   ) => {
     if (!drawingStates[fieldId] || !signatureCanvasRefs.current[fieldId])
       return;
@@ -720,7 +732,9 @@ const FormBuilderView: React.FC = () => {
                   }}
                   className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors flex items-center justify-between"
                 >
-                  <span className="text-slate-600 dark:text-slate-300">Actions</span>
+                  <span className="text-slate-600 dark:text-slate-300">
+                    Actions
+                  </span>
                   <span className="material-symbols-outlined text-slate-400">
                     {openMenuId === form.id ? "expand_less" : "expand_more"}
                   </span>
@@ -769,7 +783,9 @@ const FormBuilderView: React.FC = () => {
                           if (error) {
                             setError(error);
                           } else if (data) {
-                            setForms(forms.map((f) => (f.id === data.id ? data : f)));
+                            setForms(
+                              forms.map((f) => (f.id === data.id ? data : f)),
+                            );
                           }
                           setSaving(false);
                         }}
@@ -785,7 +801,11 @@ const FormBuilderView: React.FC = () => {
                     <button
                       onClick={async (e) => {
                         e.stopPropagation();
-                        if (confirm(`Are you sure you want to duplicate "${form.name}"?`)) {
+                        if (
+                          confirm(
+                            `Are you sure you want to duplicate "${form.name}"?`,
+                          )
+                        ) {
                           setOpenMenuId(null);
                           setSaving(true);
                           const { data, error } = await duplicateForm(form.id);
@@ -809,7 +829,11 @@ const FormBuilderView: React.FC = () => {
                     <button
                       onClick={async (e) => {
                         e.stopPropagation();
-                        if (confirm(`Are you sure you want to delete "${form.name}"? This action cannot be undone.`)) {
+                        if (
+                          confirm(
+                            `Are you sure you want to delete "${form.name}"? This action cannot be undone.`,
+                          )
+                        ) {
                           setOpenMenuId(null);
                           setSaving(true);
                           const { error } = await deleteForm(form.id);
@@ -1129,21 +1153,25 @@ const FormBuilderView: React.FC = () => {
               </span>
             </div>
           )}
-          
+
           {/* Settings Menu */}
           <div className="relative">
             <button
-              onClick={() => setOpenMenuId(openMenuId === 'settings' ? null : 'settings')}
+              onClick={() =>
+                setOpenMenuId(openMenuId === "settings" ? null : "settings")
+              }
               className="px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest border border-slate-200 dark:border-slate-800 bg-white dark:bg-surface-dark text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center gap-2"
             >
-              <span className="material-symbols-outlined text-sm">settings</span>
+              <span className="material-symbols-outlined text-sm">
+                settings
+              </span>
               Settings
               <span className="material-symbols-outlined text-sm">
-                {openMenuId === 'settings' ? "expand_less" : "expand_more"}
+                {openMenuId === "settings" ? "expand_less" : "expand_more"}
               </span>
             </button>
 
-            {openMenuId === 'settings' && (
+            {openMenuId === "settings" && (
               <div className="absolute top-full right-0 mt-2 w-72 bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl z-10 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
                 <button
                   onClick={() => {
@@ -1157,14 +1185,15 @@ const FormBuilderView: React.FC = () => {
                   </span>
                   <div className="flex-1">
                     <div>Administrators</div>
-                    {selectedForm.administrators && selectedForm.administrators.length > 0 && (
-                      <div className="text-[10px] text-slate-500">
-                        {selectedForm.administrators.length} assigned
-                      </div>
-                    )}
+                    {selectedForm.administrators &&
+                      selectedForm.administrators.length > 0 && (
+                        <div className="text-[10px] text-slate-500">
+                          {selectedForm.administrators.length} assigned
+                        </div>
+                      )}
                   </div>
                 </button>
-                
+
                 <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800 space-y-3">
                   <div>
                     <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">
@@ -1173,7 +1202,9 @@ const FormBuilderView: React.FC = () => {
                     <select
                       value={selectedForm.type}
                       onChange={(e) => {
-                        handleUpdateFormMetadata({ type: e.target.value as any });
+                        handleUpdateFormMetadata({
+                          type: e.target.value as any,
+                        });
                       }}
                       className="w-full px-3 py-2 rounded-lg text-xs font-bold border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 cursor-pointer"
                     >
@@ -1181,7 +1212,7 @@ const FormBuilderView: React.FC = () => {
                       <option value="Investment">Investment</option>
                     </select>
                   </div>
-                  
+
                   <div>
                     <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">
                       Category Type
@@ -1189,7 +1220,9 @@ const FormBuilderView: React.FC = () => {
                     <select
                       value={selectedForm.category_type || ""}
                       onChange={(e) => {
-                        handleUpdateFormMetadata({ category_type: e.target.value });
+                        handleUpdateFormMetadata({
+                          category_type: e.target.value,
+                        });
                       }}
                       className="w-full px-3 py-2 rounded-lg text-xs font-bold border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 cursor-pointer"
                     >
@@ -1201,20 +1234,22 @@ const FormBuilderView: React.FC = () => {
                       <option value="NOLT Vault">NOLT Vault</option>
                     </select>
                   </div>
-                  
+
                   <div>
                     <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">
                       Status
                     </label>
                     <div className="flex gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg">
-                      {['Draft', 'Published', 'Archived'].map((status) => (
+                      {["Draft", "Published", "Archived"].map((status) => (
                         <button
                           key={status}
-                          onClick={() => handleUpdateFormMetadata({ status: status as any })}
+                          onClick={() =>
+                            handleUpdateFormMetadata({ status: status as any })
+                          }
                           className={`flex-1 px-3 py-1.5 rounded-md text-[10px] font-black uppercase tracking-wide transition-all ${
                             selectedForm.status === status
-                              ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm'
-                              : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                              ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm"
+                              : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
                           }`}
                         >
                           {status}
@@ -1223,20 +1258,24 @@ const FormBuilderView: React.FC = () => {
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="px-4 py-3">
                   <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">
                     Visibility
                   </label>
                   <div className="flex gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg">
-                    {['Public', 'Internal', 'Private'].map((visibility) => (
+                    {["Public", "Internal", "Private"].map((visibility) => (
                       <button
                         key={visibility}
-                        onClick={() => handleUpdateFormMetadata({ visibility: visibility as any })}
+                        onClick={() =>
+                          handleUpdateFormMetadata({
+                            visibility: visibility as any,
+                          })
+                        }
                         className={`flex-1 px-3 py-1.5 rounded-md text-[10px] font-black uppercase tracking-wide transition-all ${
                           selectedForm.visibility === visibility
-                            ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm'
-                            : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                            ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm"
+                            : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
                         }`}
                       >
                         {visibility}
@@ -1502,7 +1541,8 @@ const FormBuilderView: React.FC = () => {
                         <div className="flex items-center gap-2">
                           {[1, 2, 3, 4, 5].map((star) => {
                             const currentRating = ratingValues[field.id] || 0;
-                            const hoverRating = ratingHoverValues[field.id] || 0;
+                            const hoverRating =
+                              ratingHoverValues[field.id] || 0;
                             const displayRating = hoverRating || currentRating;
                             return (
                               <button
@@ -1515,8 +1555,20 @@ const FormBuilderView: React.FC = () => {
                                     [field.id]: star,
                                   }))
                                 }
-                                onMouseEnter={() => isPreview && setRatingHoverValues((prev) => ({ ...prev, [field.id]: star }))}
-                                onMouseLeave={() => isPreview && setRatingHoverValues((prev) => ({ ...prev, [field.id]: 0 }))}
+                                onMouseEnter={() =>
+                                  isPreview &&
+                                  setRatingHoverValues((prev) => ({
+                                    ...prev,
+                                    [field.id]: star,
+                                  }))
+                                }
+                                onMouseLeave={() =>
+                                  isPreview &&
+                                  setRatingHoverValues((prev) => ({
+                                    ...prev,
+                                    [field.id]: 0,
+                                  }))
+                                }
                                 className={`text-3xl transition-all ${
                                   star <= displayRating
                                     ? "text-yellow-400 scale-110"
@@ -1559,17 +1611,32 @@ const FormBuilderView: React.FC = () => {
                           <div className="relative">
                             <canvas
                               ref={(el) => {
-                                if (el) signatureCanvasRefs.current[field.id] = el;
+                                if (el)
+                                  signatureCanvasRefs.current[field.id] = el;
                               }}
                               width={600}
                               height={200}
-                              onMouseDown={(e) => isPreview && startDrawing(field.id, e)}
-                              onMouseMove={(e) => isPreview && draw(field.id, e)}
-                              onMouseUp={() => isPreview && stopDrawing(field.id)}
-                              onMouseOut={() => isPreview && stopDrawing(field.id)}
-                              onTouchStart={(e) => isPreview && startDrawing(field.id, e)}
-                              onTouchMove={(e) => isPreview && draw(field.id, e)}
-                              onTouchEnd={() => isPreview && stopDrawing(field.id)}
+                              onMouseDown={(e) =>
+                                isPreview && startDrawing(field.id, e)
+                              }
+                              onMouseMove={(e) =>
+                                isPreview && draw(field.id, e)
+                              }
+                              onMouseUp={() =>
+                                isPreview && stopDrawing(field.id)
+                              }
+                              onMouseOut={() =>
+                                isPreview && stopDrawing(field.id)
+                              }
+                              onTouchStart={(e) =>
+                                isPreview && startDrawing(field.id, e)
+                              }
+                              onTouchMove={(e) =>
+                                isPreview && draw(field.id, e)
+                              }
+                              onTouchEnd={() =>
+                                isPreview && stopDrawing(field.id)
+                              }
                               className={`w-full h-48 bg-white dark:bg-background-dark/50 border-2 border-dashed border-slate-100 dark:border-slate-800 rounded-xl transition-colors ${
                                 isPreview
                                   ? "cursor-crosshair hover:border-primary"
@@ -1844,21 +1911,32 @@ const FormBuilderView: React.FC = () => {
                               ? "Radio Button Options"
                               : "Checkbox Options"}
                         </label>
-                        {((editingOptions[currentField.id] || currentField.options || ["Option 1"])).map((opt, oIdx) => (
+                        {(
+                          editingOptions[currentField.id] ||
+                          currentField.options || ["Option 1"]
+                        ).map((opt, oIdx) => (
                           <div key={oIdx} className="flex gap-2">
                             <input
                               value={opt}
                               onChange={(e) => {
-                                const currentOpts = editingOptions[currentField.id] || currentField.options || [];
+                                const currentOpts =
+                                  editingOptions[currentField.id] ||
+                                  currentField.options ||
+                                  [];
                                 const opts = [...currentOpts];
                                 opts[oIdx] = e.target.value;
-                                setEditingOptions(prev => ({ ...prev, [currentField.id]: opts }));
+                                setEditingOptions((prev) => ({
+                                  ...prev,
+                                  [currentField.id]: opts,
+                                }));
                               }}
                               onBlur={() => {
                                 const opts = editingOptions[currentField.id];
                                 if (opts) {
-                                  updateField(currentField.id, { options: opts });
-                                  setEditingOptions(prev => {
+                                  updateField(currentField.id, {
+                                    options: opts,
+                                  });
+                                  setEditingOptions((prev) => {
                                     const newState = { ...prev };
                                     delete newState[currentField.id];
                                     return newState;
@@ -1867,14 +1945,26 @@ const FormBuilderView: React.FC = () => {
                               }}
                               className="flex-1 bg-slate-50 dark:bg-background-dark/50 border-none rounded-xl px-3 py-2 text-xs font-bold focus:ring-1 focus:ring-primary dark:text-white"
                             />
-                            {((editingOptions[currentField.id] || currentField.options || [])).length > 1 && (
+                            {(
+                              editingOptions[currentField.id] ||
+                              currentField.options ||
+                              []
+                            ).length > 1 && (
                               <button
                                 onClick={() => {
-                                  const currentOpts = editingOptions[currentField.id] || currentField.options || [];
+                                  const currentOpts =
+                                    editingOptions[currentField.id] ||
+                                    currentField.options ||
+                                    [];
                                   const opts = [...currentOpts];
                                   opts.splice(oIdx, 1);
-                                  setEditingOptions(prev => ({ ...prev, [currentField.id]: opts }));
-                                  updateField(currentField.id, { options: opts });
+                                  setEditingOptions((prev) => ({
+                                    ...prev,
+                                    [currentField.id]: opts,
+                                  }));
+                                  updateField(currentField.id, {
+                                    options: opts,
+                                  });
                                 }}
                                 className="px-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/20 rounded-lg transition-colors"
                               >
@@ -1887,9 +1977,15 @@ const FormBuilderView: React.FC = () => {
                         ))}
                         <button
                           onClick={() => {
-                            const currentOpts = editingOptions[currentField.id] || currentField.options || [];
+                            const currentOpts =
+                              editingOptions[currentField.id] ||
+                              currentField.options ||
+                              [];
                             const opts = [...currentOpts, "New Option"];
-                            setEditingOptions(prev => ({ ...prev, [currentField.id]: opts }));
+                            setEditingOptions((prev) => ({
+                              ...prev,
+                              [currentField.id]: opts,
+                            }));
                             updateField(currentField.id, { options: opts });
                           }}
                           className="text-[10px] font-black text-primary uppercase tracking-widest ml-1"
