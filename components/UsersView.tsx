@@ -1,60 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { User, UserRole, UserStatus } from "../types";
-import { createAdminUser } from "../utils/authService";
-
-const INITIAL_USERS: User[] = [
-  {
-    id: "u1",
-    name: "Alex Morgan",
-    email: "alex.m@nolt.finance",
-    role: "Super Admin",
-    status: "Active",
-    referralCode: "ALEX-ADMIN",
-    lastActive: "2 mins ago",
-    avatar: "https://picsum.photos/seed/admin/100/100",
-  },
-  {
-    id: "u2",
-    name: "Tunde Bakare",
-    email: "t.bakare@nolt.finance",
-    role: "Credit",
-    status: "Active",
-    referralCode: "CRED-T01",
-    lastActive: "1 hour ago",
-    avatar: "https://picsum.photos/seed/tunde/100/100",
-  },
-  {
-    id: "u3",
-    name: "Michael Scott",
-    email: "scott@nolt.finance",
-    role: "Sales Team Lead",
-    status: "Active",
-    referralCode: "SALE-S99",
-    lastActive: "Yesterday",
-    avatar: "https://picsum.photos/seed/scott/100/100",
-  },
-  {
-    id: "u4",
-    name: "Jessica Wu",
-    email: "j.wu@nolt.finance",
-    role: "Customer Experience",
-    status: "Pending",
-    referralCode: "CX-JESS",
-    lastActive: "Never",
-    avatar: "https://picsum.photos/seed/jess/100/100",
-  },
-  {
-    id: "u5",
-    name: "Chidi Okoro",
-    email: "c.okoro@nolt.finance",
-    role: "Sales Officer",
-    status: "Active",
-    referralCode: "SO-CHIDI",
-    lastActive: "10 mins ago",
-    avatar: "https://picsum.photos/seed/chidi/100/100",
-    teamLeadId: "u3",
-  },
-];
+import {
+  createAdminUser,
+  fetchAllUsers,
+  updateUserProfile,
+  deleteUserProfile,
+  getCurrentUser
+} from "../utils/authService";
 
 const ROLES: UserRole[] = [
   "Super Admin",
@@ -68,13 +20,15 @@ const ROLES: UserRole[] = [
 ];
 
 const UsersView: React.FC = () => {
-  const [users, setUsers] = useState<User[]>(INITIAL_USERS);
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [editingUser, setEditingUser] = useState<User | null>(null);
-  const [editingHierarchyId, setEditingHierarchyId] = useState<string | null>(
-    null,
-  );
+  const [editingHierarchyId, setEditingHierarchyId] = useState<string | null>(null);
 
   // Form State for Invitation
   const [inviteRole, setInviteRole] = useState<UserRole>("Sales Officer");
@@ -85,6 +39,33 @@ const UsersView: React.FC = () => {
   const [isCreating, setIsCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
   const [createSuccess, setCreateSuccess] = useState(false);
+
+  // Action Loading State
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+
+  useEffect(() => {
+    loadUsers();
+    fetchCurrentUser();
+  }, []);
+
+  const fetchCurrentUser = async () => {
+    const user = await getCurrentUser();
+    if (user) {
+      setCurrentUserId(user.id);
+      setCurrentUser(user as User);
+    }
+  };
+
+  const loadUsers = async () => {
+    setLoading(true);
+    const { users, error } = await fetchAllUsers();
+    if (users) {
+      setUsers(users);
+    } else {
+      console.error("Failed to load users:", error);
+    }
+    setLoading(false);
+  };
 
   const filteredUsers = users.filter(
     (u) =>
@@ -109,44 +90,73 @@ const UsersView: React.FC = () => {
     }
   };
 
-  const handleStatusToggle = (userId: string) => {
-    setUsers((prev) =>
-      prev.map((u) => {
-        if (u.id === userId) {
-          return {
-            ...u,
-            status:
-              u.status === "Active" || u.status === "Pending"
-                ? "Suspended"
-                : "Active",
-          };
-        }
-        return u;
-      }),
-    );
+  const handleStatusChange = async (user: User, newStatus: UserStatus) => {
+    setActionLoading(user.id);
+
+    const { success, error } = await updateUserProfile(user.id, { status: newStatus });
+
+    if (success) {
+      await loadUsers();
+    } else {
+      alert(`Failed to update status: ${error}`);
+    }
+    setActionLoading(null);
   };
 
-  const handleRoleChange = (userId: string, newRole: UserRole) => {
-    setUsers((prev) =>
-      prev.map((u) => (u.id === userId ? { ...u, role: newRole } : u)),
-    );
-    setEditingUser(null);
+  const handleRoleChange = async (userId: string, newRole: UserRole) => {
+    setActionLoading(userId);
+    const { success, error } = await updateUserProfile(userId, { role: newRole });
+
+    if (success) {
+      await loadUsers();
+      setEditingUser(null);
+    } else {
+      alert(`Failed to update role: ${error}`);
+    }
+    setActionLoading(null);
   };
 
-  const handleTeamLeadChange = (userId: string, newLeadId: string) => {
-    setUsers((prev) =>
-      prev.map((u) =>
-        u.id === userId ? { ...u, teamLeadId: newLeadId || undefined } : u,
-      ),
-    );
-    setEditingHierarchyId(null);
+  const handleTeamLeadChange = async (userId: string, newLeadId: string) => {
+    setActionLoading(userId);
+    const { success, error } = await updateUserProfile(userId, { teamLeadId: newLeadId || undefined });
+
+    if (success) {
+      await loadUsers();
+      setEditingHierarchyId(null);
+    } else {
+      alert(`Failed to update team lead: ${error}`);
+    }
+    setActionLoading(null);
   };
 
-  const handleRegenerateCode = (userId: string) => {
+  const handleRegenerateCode = async (userId: string) => {
     const newCode = `NOLT-${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
-    setUsers((prev) =>
-      prev.map((u) => (u.id === userId ? { ...u, referralCode: newCode } : u)),
-    );
+    setActionLoading(userId);
+
+    const { success, error } = await updateUserProfile(userId, { referralCode: newCode });
+
+    if (success) {
+      await loadUsers();
+    } else {
+      alert(`Failed to update referral code: ${error}`);
+    }
+    setActionLoading(null);
+  };
+
+  const handleDeleteUser = async (user: User) => {
+    if (!window.confirm(`Are you sure you want to delete ${user.name}? This action cannot be undone.`)) {
+      return;
+    }
+
+    setActionLoading(user.id);
+    const { success, error } = await deleteUserProfile(user.id);
+
+    if (success) {
+      await loadUsers();
+    } else {
+      alert(`Failed to delete user: ${error}`);
+    }
+    setActionLoading(null);
   };
 
   const handleCreateUser = async () => {
@@ -177,21 +187,7 @@ const UsersView: React.FC = () => {
       }
 
       if (user) {
-        // Add the new user to the list
-        const newUser: User = {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-          status: "Active",
-          referralCode:
-            inviteReferralCode ||
-            `${inviteRole.toUpperCase().replace(/\s+/g, "-")}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
-          lastActive: "Just now",
-          avatar:
-            user.avatar || `https://picsum.photos/seed/${user.id}/100/100`,
-        };
-        setUsers((prev) => [newUser, ...prev]);
+        await loadUsers();
 
         // Reset form and close modal
         setCreateSuccess(true);
@@ -216,24 +212,24 @@ const UsersView: React.FC = () => {
 
   const getRoleIcon = (role: UserRole) => {
     switch (role) {
-      case "Super Admin":
-        return "shield";
-      case "Credit":
-        return "account_balance";
-      case "Sales Manager":
-        return "leaderboard";
-      case "Sales Officer":
-        return "person_pin_circle";
-      case "Customer Experience":
-        return "support_agent";
-      case "Sales Team Lead":
-        return "groups";
-      case "Internal Control":
-        return "verified";
-      default:
-        return "person";
+      case "Super Admin": return "shield";
+      case "Credit": return "account_balance";
+      case "Sales Manager": return "leaderboard";
+      case "Sales Officer": return "person_pin_circle";
+      case "Customer Experience": return "support_agent";
+      case "Sales Team Lead": return "groups";
+      case "Internal Control": return "verified";
+      default: return "person";
     }
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-20">
@@ -247,15 +243,17 @@ const UsersView: React.FC = () => {
             hierarchy.
           </p>
         </div>
-        <button
-          onClick={() => setIsInviteOpen(true)}
-          className="px-8 py-3 bg-primary text-white font-black text-sm rounded-2xl shadow-xl shadow-primary/30 hover:bg-blue-600 transition-all flex items-center gap-2 uppercase tracking-wider"
-        >
-          <span className="material-symbols-outlined text-[22px]">
-            person_add
-          </span>
-          Invite New User
-        </button>
+        {currentUser?.role === "Super Admin" && (
+          <button
+            onClick={() => setIsInviteOpen(true)}
+            className="w-full md:w-auto px-8 py-3 bg-primary text-white font-black text-sm rounded-2xl shadow-xl shadow-primary/30 hover:bg-blue-600 transition-all flex items-center justify-center gap-2 uppercase tracking-wider"
+          >
+            <span className="material-symbols-outlined text-[22px]">
+              person_add
+            </span>
+            Invite New User
+          </button>
+        )}
       </div>
 
       <div className="bg-white dark:bg-surface-dark rounded-[24px] border border-slate-100 dark:border-slate-800 shadow-xl overflow-hidden">
@@ -285,7 +283,7 @@ const UsersView: React.FC = () => {
                 <th className="px-8 py-5">Reports To</th>
                 <th className="px-8 py-5">Referral Code</th>
                 <th className="px-8 py-5">Account Status</th>
-                <th className="px-8 py-5 text-right">Descriptive Actions</th>
+                <th className="px-8 py-5 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -294,11 +292,12 @@ const UsersView: React.FC = () => {
                   ? users.find((u) => u.id === user.teamLeadId)
                   : null;
                 const otherUsers = users.filter((u) => u.id !== user.id);
+                const isProcessing = actionLoading === user.id;
 
                 return (
                   <tr
                     key={user.id}
-                    className="hover:bg-slate-50 dark:hover:bg-slate-800/20 transition-colors group"
+                    className={`hover:bg-slate-50 dark:hover:bg-slate-800/20 transition-colors group ${isProcessing ? 'opacity-50 pointer-events-none' : ''}`}
                   >
                     <td className="px-8 py-6">
                       <div className="flex items-center gap-4">
@@ -427,23 +426,56 @@ const UsersView: React.FC = () => {
                       </span>
                     </td>
                     <td className="px-8 py-6 text-right">
-                      <div className="flex items-center justify-end">
+                      <div className="flex items-center justify-end gap-2">
+                        {/* Status Action Button */}
+                        {user.status === "Pending" && (
+                          <button
+                            onClick={() => handleStatusChange(user, "Active")}
+                            title="Activate User"
+                            className="flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black tracking-[0.1em] transition-all shadow-sm text-white bg-primary hover:bg-blue-600 shadow-primary/20"
+                          >
+                            <span className="material-symbols-outlined text-[16px]">
+                              check_circle
+                            </span>
+                            ACTIVATE
+                          </button>
+                        )}
+
+                        {user.status === "Active" && (
+                          <button
+                            onClick={() => handleStatusChange(user, "Suspended")}
+                            title="Suspend User"
+                            className="flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black tracking-[0.1em] transition-all shadow-sm text-rose-500 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20"
+                          >
+                            <span className="material-symbols-outlined text-[16px]">
+                              block
+                            </span>
+                            SUSPEND
+                          </button>
+                        )}
+
+                        {user.status === "Suspended" && (
+                          <button
+                            onClick={() => handleStatusChange(user, "Active")}
+                            title="Reactivate User"
+                            className="flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black tracking-[0.1em] transition-all shadow-sm text-emerald-500 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20"
+                          >
+                            <span className="material-symbols-outlined text-[16px]">
+                              history
+                            </span>
+                            UNSUSPEND
+                          </button>
+                        )}
+
+                        {/* Delete Button */}
                         <button
-                          onClick={() => handleStatusToggle(user.id)}
-                          className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-[10px] font-black tracking-[0.15em] transition-all shadow-sm ${
-                            user.status !== "Suspended"
-                              ? "text-rose-500 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20"
-                              : "text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20"
-                          }`}
+                          onClick={() => handleDeleteUser(user)}
+                          title="Delete User"
+                          className="flex items-center justify-center w-8 h-8 rounded-full text-slate-400 bg-slate-100 dark:bg-slate-800 hover:bg-rose-500 hover:text-white transition-all ml-2"
                         >
                           <span className="material-symbols-outlined text-[18px]">
-                            {user.status !== "Suspended"
-                              ? "block"
-                              : "check_circle"}
+                            delete
                           </span>
-                          {user.status !== "Suspended"
-                            ? "REVOKE ACCESS"
-                            : "ACTIVATE ACCOUNT"}
                         </button>
                       </div>
                     </td>
@@ -458,8 +490,8 @@ const UsersView: React.FC = () => {
       {/* Invite Modal */}
       {isInviteOpen && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in">
-          <div className="bg-white dark:bg-surface-dark w-full max-w-lg rounded-[32px] shadow-2xl border border-slate-100 dark:border-slate-800 overflow-hidden animate-in zoom-in-95 duration-300">
-            <div className="p-8 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+          <div className="bg-white dark:bg-surface-dark w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-[32px] shadow-2xl border border-slate-100 dark:border-slate-800 animate-in zoom-in-95 duration-300">
+            <div className="p-8 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between sticky top-0 bg-white dark:bg-surface-dark z-10">
               <div>
                 <h3 className="text-2xl font-black text-slate-900 dark:text-white">
                   Invite Team Member
