@@ -1,6 +1,7 @@
 import supabase from "./supabase";
 import { UserRole } from "../types";
 import { isAdminRole } from "./rbac";
+import { logAuthEvent } from "../services/auditService";
 
 export interface AuthUser {
   id: string;
@@ -31,6 +32,8 @@ export async function signInWithEmail(
       });
 
     if (authError) {
+      // Log failed login attempt
+      await logAuthEvent("AUTH_FAILED", undefined, email);
       return { user: null, error: authError.message };
     }
 
@@ -85,6 +88,9 @@ export async function signInWithEmail(
       lastActive: new Date().toISOString(),
     };
 
+    // Log successful login
+    await logAuthEvent("LOGIN", user.id, user.email);
+
     return { user, error: null };
   } catch (error) {
     console.error("Sign in error:", error);
@@ -101,10 +107,21 @@ export async function signInWithEmail(
  */
 export async function signOut(): Promise<{ error: string | null }> {
   try {
+    // Get current user before signing out
+    const { data: { session } } = await supabase.auth.getSession();
+    const userId = session?.user?.id;
+    const userEmail = session?.user?.email;
+
     const { error } = await supabase.auth.signOut();
     if (error) {
       return { error: error.message };
     }
+
+    // Log logout
+    if (userId) {
+      await logAuthEvent("LOGOUT", userId, userEmail);
+    }
+
     return { error: null };
   } catch (error) {
     console.error("Sign out error:", error);

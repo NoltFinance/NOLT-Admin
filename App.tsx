@@ -17,6 +17,7 @@ import LoanView from "./components/LoanView";
 import SettingsView from "./components/SettingsView";
 import UsersView from "./components/UsersView";
 import SecurityLogsView from "./components/SecurityLogsView";
+import AuditLogsView from "./components/AuditLogsView";
 import FormBuilderView from "./components/FormBuilderView";
 import NotificationPanel from "./components/NotificationPanel";
 import LogoutModal from "./components/LogoutModal";
@@ -643,7 +644,6 @@ const App: React.FC = () => {
                 <Header
                   onMenuClick={() => setIsSidebarOpen(true)}
                   onNotificationClick={() => setIsNotifPanelOpen(true)}
-                  unreadCount={unreadCount}
                   isDarkMode={isDarkMode}
                   onToggleTheme={() => setIsDarkMode(!isDarkMode)}
                 />
@@ -736,6 +736,19 @@ const App: React.FC = () => {
                     />
 
                     <Route
+                      path="/audit-logs"
+                      element={
+                        <ProtectedRoute
+                          currentUser={currentUser}
+                          isAuthenticated={isAuthenticated}
+                          requiredView="audit-logs"
+                        >
+                          <AuditLogsView />
+                        </ProtectedRoute>
+                      }
+                    />
+
+                    <Route
                       path="/form-builder"
                       element={
                         <ProtectedRoute
@@ -758,9 +771,6 @@ const App: React.FC = () => {
               <NotificationPanel
                 isOpen={isNotifPanelOpen}
                 onClose={() => setIsNotifPanelOpen(false)}
-                notifications={notifications}
-                onMarkAllRead={markAllAsRead}
-                onClearAll={clearNotifications}
               />
 
               <LogoutModal

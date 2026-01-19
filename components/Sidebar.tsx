@@ -29,6 +29,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       "/settings": "settings",
       "/users": "users",
       "/security": "security",
+      "/audit-logs": "audit-logs",
       "/form-builder": "form-builder",
     };
     return pathMap[path] || "dashboard";
@@ -175,6 +176,12 @@ const Sidebar: React.FC<SidebarProps> = ({
               label="Audit Trail"
               to="/security"
               view="security"
+            />
+            <NavLink
+              icon="receipt_long"
+              label="Audit Logs"
+              to="/audit-logs"
+              view="audit-logs"
             />
             <NavLink
               icon="dynamic_form"

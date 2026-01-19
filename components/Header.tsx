@@ -1,15 +1,15 @@
-
 import React from 'react';
+import { useNotifications } from '../utils/notificationService';
 
 interface HeaderProps {
   onMenuClick: () => void;
   onNotificationClick: () => void;
-  unreadCount: number;
   isDarkMode: boolean;
   onToggleTheme: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ onMenuClick, onNotificationClick, unreadCount, isDarkMode, onToggleTheme }) => {
+const Header: React.FC<HeaderProps> = ({ onMenuClick, onNotificationClick, isDarkMode, onToggleTheme }) => {
+  const { unreadCount } = useNotifications();
   return (
     <header className="sticky top-0 z-30 flex items-center justify-between px-6 py-4 bg-white/80 dark:bg-surface-darker/80 backdrop-blur-md border-b border-slate-100 dark:border-slate-800/50 transition-colors duration-300">
       <div className="flex items-center gap-4 flex-1">
