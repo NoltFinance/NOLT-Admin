@@ -42,7 +42,7 @@ export async function setRequestMetadata(): Promise<void> {
  * Higher-order function to wrap database operations with metadata capture
  */
 export function withAuditMetadata<T extends (...args: any[]) => Promise<any>>(
-  fn: T
+  fn: T,
 ): T {
   return (async (...args: any[]) => {
     await setRequestMetadata();
