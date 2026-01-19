@@ -130,7 +130,10 @@ const SecurityLogsView: React.FC = () => {
             <select
               value={filters.table_name || ""}
               onChange={(e) =>
-                setFilters({ ...filters, table_name: e.target.value || undefined })
+                setFilters({
+                  ...filters,
+                  table_name: e.target.value || undefined,
+                })
               }
               className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm font-bold"
             >
@@ -376,23 +379,24 @@ const SecurityLogsView: React.FC = () => {
                   </div>
                 </div>
 
-                {selectedLog.changed_fields && selectedLog.changed_fields.length > 0 && (
-                  <div>
-                    <label className="block text-[10px] font-black text-slate-500 uppercase mb-2">
-                      Changed Fields
-                    </label>
-                    <div className="flex flex-wrap gap-2">
-                      {selectedLog.changed_fields.map((field) => (
-                        <span
-                          key={field}
-                          className="px-3 py-1 bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-400 rounded-lg text-xs font-bold"
-                        >
-                          {field}
-                        </span>
-                      ))}
+                {selectedLog.changed_fields &&
+                  selectedLog.changed_fields.length > 0 && (
+                    <div>
+                      <label className="block text-[10px] font-black text-slate-500 uppercase mb-2">
+                        Changed Fields
+                      </label>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedLog.changed_fields.map((field) => (
+                          <span
+                            key={field}
+                            className="px-3 py-1 bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-400 rounded-lg text-xs font-bold"
+                          >
+                            {field}
+                          </span>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
                 {selectedLog.old_data && (
                   <div>

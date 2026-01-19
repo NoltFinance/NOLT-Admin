@@ -16,7 +16,6 @@ import InvestmentView from "./components/InvestmentView";
 import LoanView from "./components/LoanView";
 import SettingsView from "./components/SettingsView";
 import UsersView from "./components/UsersView";
-import SecurityLogsView from "./components/SecurityLogsView";
 import AuditLogsView from "./components/AuditLogsView";
 import FormBuilderView from "./components/FormBuilderView";
 import NotificationPanel from "./components/NotificationPanel";
@@ -729,19 +728,6 @@ const App: React.FC = () => {
                           currentUser={currentUser}
                           isAuthenticated={isAuthenticated}
                           requiredView="security"
-                        >
-                          <SecurityLogsView />
-                        </ProtectedRoute>
-                      }
-                    />
-
-                    <Route
-                      path="/audit-logs"
-                      element={
-                        <ProtectedRoute
-                          currentUser={currentUser}
-                          isAuthenticated={isAuthenticated}
-                          requiredView="audit-logs"
                         >
                           <AuditLogsView />
                         </ProtectedRoute>

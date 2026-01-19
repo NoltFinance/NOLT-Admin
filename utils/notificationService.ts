@@ -27,7 +27,7 @@ let notificationChannel: RealtimeChannel | null = null;
  * Hook to listen for real-time audit log changes
  */
 export function useAuditNotifications(
-  onNewLog?: (notification: AuditNotification) => void
+  onNewLog?: (notification: AuditNotification) => void,
 ) {
   const [isConnected, setIsConnected] = useState(false);
 
@@ -44,7 +44,7 @@ export function useAuditNotifications(
         },
         (payload) => {
           const log = payload.new as any;
-          
+
           // Create notification from audit log
           const notification: AuditNotification = {
             action: log.action,
@@ -57,7 +57,7 @@ export function useAuditNotifications(
           if (onNewLog) {
             onNewLog(notification);
           }
-        }
+        },
       )
       .subscribe((status) => {
         if (status === "SUBSCRIBED") {
@@ -111,7 +111,7 @@ export function useNotifications() {
   }, [notifications]);
 
   const addNotification = (
-    notification: Omit<Notification, "id" | "created_at" | "read">
+    notification: Omit<Notification, "id" | "created_at" | "read">,
   ) => {
     const newNotification: Notification = {
       ...notification,
@@ -125,7 +125,7 @@ export function useNotifications() {
 
   const markAsRead = (id: string) => {
     setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
+      prev.map((n) => (n.id === id ? { ...n, read: true } : n)),
     );
   };
 
@@ -157,7 +157,7 @@ export function useNotifications() {
  * Format audit notification for display
  */
 export function formatAuditNotification(
-  auditNotification: AuditNotification
+  auditNotification: AuditNotification,
 ): Omit<Notification, "id" | "created_at" | "read"> {
   const actionColors = {
     INSERT: { severity: "low" as const, icon: "add_circle" },

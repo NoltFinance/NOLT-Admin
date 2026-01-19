@@ -2,6 +2,7 @@ import supabase from "./supabase";
 import { UserRole } from "../types";
 import { isAdminRole } from "./rbac";
 import { logAuthEvent } from "../services/auditService";
+import { setRequestMetadata } from "./requestMetadata";
 
 export interface AuthUser {
   id: string;
@@ -24,6 +25,9 @@ export async function signInWithEmail(
   requiresOTP?: boolean;
 }> {
   try {
+    // Set request metadata for audit logging
+    await setRequestMetadata();
+
     // Authenticate with Supabase
     const { data: authData, error: authError } =
       await supabase.auth.signInWithPassword({
@@ -107,8 +111,13 @@ export async function signInWithEmail(
  */
 export async function signOut(): Promise<{ error: string | null }> {
   try {
+    // Set request metadata for audit logging
+    await setRequestMetadata();
+
     // Get current user before signing out
-    const { data: { session } } = await supabase.auth.getSession();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
     const userId = session?.user?.id;
     const userEmail = session?.user?.email;
 

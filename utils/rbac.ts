@@ -52,7 +52,6 @@ export const PERMISSIONS = {
   ] as UserRole[],
   MANAGE_USERS: ["Super Admin"] as UserRole[],
   VIEW_SECURITY_LOGS: ["Super Admin", "Internal Control"] as UserRole[],
-  VIEW_AUDIT_LOGS: ["Super Admin", "Internal Control"] as UserRole[],
   MANAGE_SETTINGS: ["Super Admin"] as UserRole[],
   FORM_BUILDER: ["Super Admin", "Credit", "Sales Officer"] as UserRole[],
   EXPORT_DATA: [
@@ -111,10 +110,6 @@ export function getAllowedViews(userRole: UserRole): string[] {
 
   if (hasPermission(userRole, "VIEW_SECURITY_LOGS")) {
     views.push("security");
-  }
-
-  if (hasPermission(userRole, "VIEW_AUDIT_LOGS")) {
-    views.push("audit-logs");
   }
 
   if (hasPermission(userRole, "MANAGE_SETTINGS")) {

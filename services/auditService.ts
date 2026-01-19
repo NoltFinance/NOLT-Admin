@@ -4,7 +4,14 @@ export interface AuditLog {
   id: string;
   table_name: string;
   record_id: string | null;
-  action: "INSERT" | "UPDATE" | "DELETE" | "LOGIN" | "LOGOUT" | "AUTH_FAILED" | "PASSWORD_RESET";
+  action:
+    | "INSERT"
+    | "UPDATE"
+    | "DELETE"
+    | "LOGIN"
+    | "LOGOUT"
+    | "AUTH_FAILED"
+    | "PASSWORD_RESET";
   old_data: any;
   new_data: any;
   changed_fields: string[] | null;
@@ -31,7 +38,7 @@ export interface AuditLogFilters {
 export async function getAuditLogs(
   filters?: AuditLogFilters,
   page = 0,
-  perPage = 50
+  perPage = 50,
 ) {
   try {
     let query = supabase
@@ -62,7 +69,7 @@ export async function getAuditLogs(
 
     if (filters?.search) {
       query = query.or(
-        `user_email.ilike.%${filters.search}%,table_name.ilike.%${filters.search}%,record_id.ilike.%${filters.search}%`
+        `user_email.ilike.%${filters.search}%,table_name.ilike.%${filters.search}%,record_id.ilike.%${filters.search}%`,
       );
     }
 
@@ -87,7 +94,7 @@ export async function getAuditLogs(
  */
 export async function getRecordAuditHistory(
   tableName: string,
-  recordId: string
+  recordId: string,
 ) {
   try {
     const { data, error } = await supabase
@@ -103,6 +110,20 @@ export async function getRecordAuditHistory(
   } catch (error: any) {
     console.error("Error fetching record audit history:", error);
     return { data: null, error: error.message };
+  }
+}
+
+/**
+ * Get client IP address using external service
+ */
+async function getClientIP(): Promise<string | null> {
+  try {
+    const response = await fetch("https://api.ipify.org?format=json");
+    const data = await response.json();
+    return data.ip || null;
+  } catch (error) {
+    console.error("Error fetching IP address:", error);
+    return null;
   }
 }
 
@@ -128,14 +149,17 @@ export async function getAuditStats() {
 export async function logAuthEvent(
   action: "LOGIN" | "LOGOUT" | "AUTH_FAILED" | "PASSWORD_RESET",
   userId?: string,
-  userEmail?: string
+  userEmail?: string,
 ) {
   try {
+    // Get client IP address
+    const ipAddress = await getClientIP();
+
     const { error } = await supabase.rpc("log_auth_event", {
       p_action: action,
       p_user_id: userId || null,
       p_user_email: userEmail || null,
-      p_ip_address: null,
+      p_ip_address: ipAddress,
       p_user_agent: navigator.userAgent,
     });
 
@@ -197,7 +221,7 @@ export function exportAuditLogsToCsv(logs: AuditLog[]) {
   const csvContent = [
     headers.join(","),
     ...rows.map((row) =>
-      row.map((cell) => `"${cell.toString().replace(/"/g, '""')}"`).join(",")
+      row.map((cell) => `"${cell.toString().replace(/"/g, '""')}"`).join(","),
     ),
   ].join("\n");
 
