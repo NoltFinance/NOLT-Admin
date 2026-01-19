@@ -1,23 +1,38 @@
+export type RequestType = "Investment" | "Loan";
+export type RequestStatus =
+  | "Pending Review"
+  | "Docs Verification"
+  | "Approved"
+  | "Declined"
+  | "Returned"
+  | "Internal Audit"
+  | "Pending Disbursement";
+export type AppView =
+  | "dashboard"
+  | "queue"
+  | "investments"
+  | "loans"
+  | "reports"
+  | "settings"
+  | "users"
+  | "security"
+  | "form-builder";
 
-export type RequestType = 'Investment' | 'Loan';
-export type RequestStatus = 'Pending Review' | 'Docs Verification' | 'Approved' | 'Declined' | 'Returned' | 'Internal Audit' | 'Pending Disbursement';
-export type AppView = 'dashboard' | 'queue' | 'investments' | 'loans' | 'reports' | 'settings' | 'users' | 'security' | 'form-builder';
+export type UserRole =
+  | "Super Admin"
+  | "Credit"
+  | "Sales Manager"
+  | "Sales Team Lead"
+  | "Sales Officer"
+  | "Customer Experience"
+  | "Internal Control"
+  | "Finance";
 
-export type UserRole = 
-  | 'Super Admin' 
-  | 'Credit' 
-  | 'Sales Manager' 
-  | 'Sales Team Lead'
-  | 'Sales Officer' 
-  | 'Customer Experience'
-  | 'Internal Control'
-  | 'Finance';
-
-export type UserStatus = 'Active' | 'Pending' | 'Suspended';
+export type UserStatus = "Active" | "Pending" | "Suspended";
 
 export interface AppNotification {
   id: string;
-  type: 'loan' | 'investment' | 'security' | 'system';
+  type: "loan" | "investment" | "security" | "system";
   title: string;
   message: string;
   timestamp: string;
@@ -48,7 +63,7 @@ export interface SecurityLog {
   event: string;
   details: string;
   ipAddress: string;
-  severity: 'Low' | 'Medium' | 'High' | 'Critical';
+  severity: "Low" | "Medium" | "High" | "Critical";
 }
 
 export interface OperationLogEntry {
@@ -87,11 +102,11 @@ export interface Applicant {
   nokName?: string;
   nokRelationship?: string;
   nokAddress?: string;
-  
+
   // Loan specific applicant details
   residentialStatus?: string;
   dependents?: number;
-  
+
   // IPPIS specific details
   ippisNumber?: string;
   mda?: string;
@@ -106,33 +121,33 @@ export interface ReviewRequest {
   eligibleAmount?: string; // Added for Credit node
   dateSubmitted: string;
   status: RequestStatus;
-  ownerId?: string; 
-  ownerName?: string; 
+  ownerId?: string;
+  ownerName?: string;
   referralCodeUsed?: string;
   operationLogs?: OperationLogEntry[];
-  
+
   // Investment Specific Fields
-  selectedPlan?: 'NOLT Rise' | 'NOLT Vault';
+  selectedPlan?: "NOLT Rise" | "NOLT Vault";
   targetAmount?: string;
-  rolloverOption?: 'Principal & Interest' | 'Principal Only' | 'Payout';
+  rolloverOption?: "Principal & Interest" | "Principal Only" | "Payout";
   tenure?: string;
-  
+
   // Loan Specific Fields
-  loanCategory?: 'Business' | 'Employees' | 'Niche';
+  loanCategory?: "Business" | "Employees" | "Niche";
   loanProduct?: string;
   hasActiveLoans?: boolean;
   monthlyIncome?: string;
   repaymentPeriod?: string;
   references?: Reference[];
-  
+
   // Document URLs
   governmentIdUrl?: string;
   proofOfAddressUrl?: string;
   transferReceiptUrl?: string;
   bankStatementUrl?: string;
   selfieUrl?: string;
-  
-  paymentStatus?: 'PENDING_PAYMENT' | 'PAID' | 'VERIFIED';
+
+  paymentStatus?: "PENDING_PAYMENT" | "PAID" | "VERIFIED";
 }
 
 export interface StatMetric {
@@ -144,4 +159,74 @@ export interface StatMetric {
   icon: string;
   color: string;
   badgeText?: string;
+}
+
+// Form Builder Types
+export type FormFieldType =
+  | "text"
+  | "number"
+  | "select"
+  | "multiselect"
+  | "date"
+  | "datetime"
+  | "time"
+  | "file"
+  | "textarea"
+  | "email"
+  | "phone"
+  | "url"
+  | "checkbox"
+  | "checkbox_group"
+  | "radio"
+  | "toggle"
+  | "rating"
+  | "slider"
+  | "color"
+  | "signature"
+  | "location";
+export type FormStatus = "Draft" | "Published" | "Archived";
+export type FormVisibility = "Public" | "Internal" | "Private";
+
+export interface FormField {
+  id: string;
+  form_id: string;
+  field_type: FormFieldType;
+  label: string;
+  placeholder?: string;
+  required: boolean;
+  options?: string[] | Record<string, any>;
+  validation_rules?: Record<string, any>;
+  order_index: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CustomForm {
+  id: string;
+  name: string;
+  type: RequestType;
+  category_type?: string;
+  status: FormStatus;
+  visibility: FormVisibility;
+  description?: string;
+  administrators?: string[];
+  created_by?: string;
+  created_at: string;
+  updated_at: string;
+  published_at?: string;
+  version: number;
+  fields?: FormField[];
+}
+
+export interface FormSubmission {
+  id: string;
+  form_id: string;
+  applicant_email: string;
+  applicant_name: string;
+  field_responses: Record<string, any>;
+  status: "Submitted" | "Under Review" | "Approved" | "Rejected";
+  submitted_at: string;
+  reviewed_by?: string;
+  reviewed_at?: string;
+  review_notes?: string;
 }
