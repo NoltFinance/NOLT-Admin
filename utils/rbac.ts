@@ -117,7 +117,7 @@ export function getAllowedViews(userRole: UserRole): string[] {
   }
 
   if (hasPermission(userRole, "FORM_BUILDER")) {
-    views.push("form-builder");
+    views.push("form-builder", "reports");
   }
 
   return views;
