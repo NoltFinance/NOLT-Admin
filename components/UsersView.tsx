@@ -23,6 +23,7 @@ const UsersView: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
 
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -49,7 +50,10 @@ const UsersView: React.FC = () => {
 
   const fetchCurrentUser = async () => {
     const user = await getCurrentUser();
-    if (user) setCurrentUserId(user.id);
+    if (user) {
+      setCurrentUserId(user.id);
+      setCurrentUser(user as User);
+    }
   };
 
   const loadUsers = async () => {
@@ -239,15 +243,17 @@ const UsersView: React.FC = () => {
             hierarchy.
           </p>
         </div>
-        <button
-          onClick={() => setIsInviteOpen(true)}
-          className="px-8 py-3 bg-primary text-white font-black text-sm rounded-2xl shadow-xl shadow-primary/30 hover:bg-blue-600 transition-all flex items-center gap-2 uppercase tracking-wider"
-        >
-          <span className="material-symbols-outlined text-[22px]">
-            person_add
-          </span>
-          Invite New User
-        </button>
+        {currentUser?.role === "Super Admin" && (
+          <button
+            onClick={() => setIsInviteOpen(true)}
+            className="w-full md:w-auto px-8 py-3 bg-primary text-white font-black text-sm rounded-2xl shadow-xl shadow-primary/30 hover:bg-blue-600 transition-all flex items-center justify-center gap-2 uppercase tracking-wider"
+          >
+            <span className="material-symbols-outlined text-[22px]">
+              person_add
+            </span>
+            Invite New User
+          </button>
+        )}
       </div>
 
       <div className="bg-white dark:bg-surface-dark rounded-[24px] border border-slate-100 dark:border-slate-800 shadow-xl overflow-hidden">
@@ -484,8 +490,8 @@ const UsersView: React.FC = () => {
       {/* Invite Modal */}
       {isInviteOpen && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in">
-          <div className="bg-white dark:bg-surface-dark w-full max-w-lg rounded-[32px] shadow-2xl border border-slate-100 dark:border-slate-800 overflow-hidden animate-in zoom-in-95 duration-300">
-            <div className="p-8 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+          <div className="bg-white dark:bg-surface-dark w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-[32px] shadow-2xl border border-slate-100 dark:border-slate-800 animate-in zoom-in-95 duration-300">
+            <div className="p-8 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between sticky top-0 bg-white dark:bg-surface-dark z-10">
               <div>
                 <h3 className="text-2xl font-black text-slate-900 dark:text-white">
                   Invite Team Member
