@@ -66,6 +66,10 @@ const FormBuilderView: React.FC = () => {
   const [editingOptions, setEditingOptions] = useState<
     Record<string, string[]>
   >({});
+  const [editingFields, setEditingFields] = useState<
+    Record<string, Partial<FormField>>
+  >({});
+  const [editingFormMeta, setEditingFormMeta] = useState<Partial<CustomForm>>({});
   const [newFormData, setNewFormData] = useState({
     name: "",
     type: "Loan" as "Loan" | "Investment",
@@ -78,6 +82,13 @@ const FormBuilderView: React.FC = () => {
     loadForms();
     loadUsers();
   }, []);
+
+  // Clear editing states when form changes
+  useEffect(() => {
+    setEditingFields({});
+    setEditingOptions({});
+    setEditingFormMeta({});
+  }, [selectedForm?.id]);
 
   const loadForms = async () => {
     setLoading(true);
@@ -1090,10 +1101,20 @@ const FormBuilderView: React.FC = () => {
           <div>
             <div className="flex items-center gap-2">
               <input
-                value={selectedForm.name}
+                value={editingFormMeta.name ?? selectedForm.name}
                 onChange={(e) =>
-                  handleUpdateFormMetadata({ name: e.target.value })
+                  setEditingFormMeta(prev => ({ ...prev, name: e.target.value }))
                 }
+                onBlur={() => {
+                  const value = editingFormMeta.name;
+                  if (value !== undefined && value !== selectedForm.name) {
+                    handleUpdateFormMetadata({ name: value });
+                  }
+                  setEditingFormMeta(prev => {
+                    const { name, ...rest } = prev;
+                    return rest;
+                  });
+                }}
                 className="text-xl font-black text-slate-900 dark:text-white bg-transparent border-none focus:ring-0 p-0 uppercase tracking-tight"
               />
               <span className="material-symbols-outlined text-slate-300 text-sm">
@@ -1797,12 +1818,32 @@ const FormBuilderView: React.FC = () => {
                         Input Label
                       </label>
                       <input
-                        value={currentField.label}
+                        value={editingFields[currentField.id]?.label ?? currentField.label}
                         onChange={(e) =>
-                          updateField(currentField.id, {
-                            label: e.target.value,
-                          })
+                          setEditingFields(prev => ({
+                            ...prev,
+                            [currentField.id]: {
+                              ...prev[currentField.id],
+                              label: e.target.value
+                            }
+                          }))
                         }
+                        onBlur={() => {
+                          const value = editingFields[currentField.id]?.label;
+                          if (value !== undefined && value !== currentField.label) {
+                            updateField(currentField.id, { label: value });
+                          }
+                          setEditingFields(prev => {
+                            const newState = { ...prev };
+                            if (newState[currentField.id]) {
+                              delete newState[currentField.id].label;
+                              if (Object.keys(newState[currentField.id]).length === 0) {
+                                delete newState[currentField.id];
+                              }
+                            }
+                            return newState;
+                          });
+                        }}
                         className="w-full bg-slate-50 dark:bg-background-dark/50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-primary dark:text-white"
                       />
                     </div>
@@ -1864,12 +1905,32 @@ const FormBuilderView: React.FC = () => {
                             Placeholder Hint
                           </label>
                           <input
-                            value={currentField.placeholder || ""}
+                            value={editingFields[currentField.id]?.placeholder ?? currentField.placeholder ?? ""}
                             onChange={(e) =>
-                              updateField(currentField.id, {
-                                placeholder: e.target.value,
-                              })
+                              setEditingFields(prev => ({
+                                ...prev,
+                                [currentField.id]: {
+                                  ...prev[currentField.id],
+                                  placeholder: e.target.value
+                                }
+                              }))
                             }
+                            onBlur={() => {
+                              const value = editingFields[currentField.id]?.placeholder;
+                              if (value !== undefined && value !== currentField.placeholder) {
+                                updateField(currentField.id, { placeholder: value });
+                              }
+                              setEditingFields(prev => {
+                                const newState = { ...prev };
+                                if (newState[currentField.id]) {
+                                  delete newState[currentField.id].placeholder;
+                                  if (Object.keys(newState[currentField.id]).length === 0) {
+                                    delete newState[currentField.id];
+                                  }
+                                }
+                                return newState;
+                              });
+                            }}
                             className="w-full bg-slate-50 dark:bg-background-dark/50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-primary dark:text-white"
                           />
                         </div>
