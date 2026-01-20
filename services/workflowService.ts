@@ -13,6 +13,7 @@ import {
   getCurrentStage,
   canViewApplication,
 } from "../utils/workflowManager";
+import { logWorkflowAction } from "./auditService";
 
 /**
  * Workflow Transition Service
@@ -163,6 +164,7 @@ export async function updateEligibleAmount(
   submissionId: string,
   eligibleAmount: string,
   userId: string,
+  userRole?: UserRole,
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const { data: currentSubmission } = await supabase
@@ -189,6 +191,26 @@ export async function updateEligibleAmount(
       return { success: false, error: error.message };
     }
 
+    // Log the eligible amount update
+    const { data: user } = await supabase
+      .from("users")
+      .select("email")
+      .eq("id", userId)
+      .single();
+
+    await logWorkflowAction(
+      "UPDATE",
+      submissionId,
+      {
+        workflowAction: "update_eligible_amount",
+        eligibleAmount: eligibleAmount,
+        previousAmount: currentSubmission.field_responses?.eligible_amount,
+      },
+      userId,
+      user?.email,
+      userRole,
+    );
+
     return { success: true };
   } catch (err) {
     return {
@@ -206,6 +228,7 @@ export async function reassignApplication(
   submissionId: string,
   newOwnerId: string,
   userRole: UserRole,
+  currentUserId?: string,
 ): Promise<{ success: boolean; error?: string }> {
   try {
     if (userRole !== "Sales Manager" && userRole !== "Super Admin") {
@@ -214,6 +237,13 @@ export async function reassignApplication(
         error: "Only Sales Manager and Super Admin can reassign applications",
       };
     }
+
+    // Get current owner before reassignment
+    const { data: currentSubmission } = await supabase
+      .from("form_submissions")
+      .select("reviewed_by")
+      .eq("id", submissionId)
+      .single();
 
     const { error } = await supabase
       .from("form_submissions")
@@ -224,6 +254,34 @@ export async function reassignApplication(
 
     if (error) {
       return { success: false, error: error.message };
+    }
+
+    // Log the reassignment
+    if (currentUserId) {
+      const { data: currentUser } = await supabase
+        .from("users")
+        .select("email")
+        .eq("id", currentUserId)
+        .single();
+
+      const { data: newOwner } = await supabase
+        .from("users")
+        .select("email")
+        .eq("id", newOwnerId)
+        .single();
+
+      await logWorkflowAction(
+        "UPDATE",
+        submissionId,
+        {
+          workflowAction: "reassign",
+          reassignedTo: newOwner?.email || newOwnerId,
+          reassignedFrom: currentSubmission?.reviewed_by || "unassigned",
+        },
+        currentUserId,
+        currentUser?.email,
+        userRole,
+      );
     }
 
     return { success: true };
@@ -321,23 +379,29 @@ async function logWorkflowTransition(params: {
   comment?: string;
 }) {
   try {
-    // This would integrate with your audit logging system
-    console.log("Workflow transition logged:", params);
+    // Get user details
+    const { data: user } = await supabase
+      .from("users")
+      .select("email")
+      .eq("id", params.userId)
+      .single();
 
-    // TODO: Insert into audit_logs table
-    // await supabase.from("audit_logs").insert({
-    //   entity_type: "form_submission",
-    //   entity_id: params.submissionId,
-    //   action: `WORKFLOW_${params.action.toUpperCase()}`,
-    //   details: {
-    //     from_status: params.fromStatus,
-    //     to_status: params.toStatus,
-    //     role: params.userRole,
-    //     comment: params.comment
-    //   },
-    //   user_id: params.userId,
-    //   timestamp: new Date().toISOString()
-    // });
+    // Log to audit_logs table
+    await logWorkflowAction(
+      "UPDATE",
+      params.submissionId,
+      {
+        fromStatus: params.fromStatus,
+        toStatus: params.toStatus,
+        workflowAction: params.action,
+        comment: params.comment,
+      },
+      params.userId,
+      user?.email,
+      params.userRole,
+    );
+
+    console.log("Workflow transition logged:", params);
   } catch (err) {
     console.error("Error logging workflow transition:", err);
   }

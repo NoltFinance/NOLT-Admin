@@ -250,7 +250,7 @@ const LoanView: React.FC<LoanViewProps> = ({
   }, [currentUser.id]);
 
   // Fetch form configuration, fields, and submission data
-  const fetchFormData = async (submissionId: string) => {
+  const fetchFormData = async (submissionId: string, loan: ReviewRequest) => {
     setIsLoadingFormData(true);
     console.log("Fetching form data for submission ID:", submissionId);
     try {
@@ -301,6 +301,32 @@ const LoanView: React.FC<LoanViewProps> = ({
 
       console.log("Form fields fetched:", fields?.length || 0, "fields");
       setFormFields(fields || []);
+
+      // Fetch audit logs for this submission
+      const { data: auditLogs, error: auditError } = await supabase
+        .from("audit_logs")
+        .select("*")
+        .eq("record_id", submissionId)
+        .order("created_at", { ascending: false });
+
+      if (auditError) {
+        console.error("Error fetching audit logs:", auditError);
+      } else {
+        console.log("Audit logs fetched:", auditLogs?.length || 0, "logs");
+        // Update selectedLoan with operation logs
+        const operationLogs: OperationLogEntry[] = (auditLogs || []).map((log: any) => ({
+          id: log.id,
+          timestamp: new Date(log.created_at).toLocaleString(),
+          actor: log.user_email || "System",
+          action: log.action,
+          comment: log.new_data?.comment || "",
+        }));
+        setSelectedLoan({
+          ...loan,
+          operationLogs,
+        });
+      }
+
       setIsLoadingFormData(false);
     } catch (err) {
       console.error("Error fetching form data:", err);
@@ -331,7 +357,7 @@ const LoanView: React.FC<LoanViewProps> = ({
 
         // Fetch form data for selected submission
         console.log("About to fetch form data for ID:", found.id);
-        fetchFormData(found.id);
+        fetchFormData(found.id, found);
       }
     } else {
       setSelectedLoan(null);
@@ -419,6 +445,7 @@ const LoanView: React.FC<LoanViewProps> = ({
         selectedLoan.id,
         selectedUserId,
         currentUser.role,
+        currentUser.id,
       );
 
       if (result.success) {
@@ -539,6 +566,7 @@ const LoanView: React.FC<LoanViewProps> = ({
         selectedLoan.id,
         localEligibleAmount,
         currentUser.id,
+        currentUser.role,
       );
 
       if (!amountResult.success) {

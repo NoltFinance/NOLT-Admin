@@ -364,6 +364,7 @@ const AssignedFormsView: React.FC<AssignedFormsViewProps> = ({
         selectedSubmission.id,
         eligibleAmount,
         currentUser.id,
+        currentUser.role,
       );
 
       if (result.success) {

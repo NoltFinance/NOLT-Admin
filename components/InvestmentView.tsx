@@ -260,7 +260,7 @@ const InvestmentView: React.FC<InvestmentViewProps> = ({
   }, [currentUser.id]);
 
   // Fetch form configuration, fields, and submission data
-  const fetchFormData = async (submissionId: string) => {
+  const fetchFormData = async (submissionId: string, investment: ReviewRequest) => {
     setIsLoadingFormData(true);
     console.log("Fetching form data for submission ID:", submissionId);
     try {
@@ -311,6 +311,32 @@ const InvestmentView: React.FC<InvestmentViewProps> = ({
 
       console.log("Form fields fetched:", fields?.length || 0, "fields");
       setFormFields(fields || []);
+
+      // Fetch audit logs for this submission
+      const { data: auditLogs, error: auditError } = await supabase
+        .from("audit_logs")
+        .select("*")
+        .eq("record_id", submissionId)
+        .order("created_at", { ascending: false });
+
+      if (auditError) {
+        console.error("Error fetching audit logs:", auditError);
+      } else {
+        console.log("Audit logs fetched:", auditLogs?.length || 0, "logs");
+        // Update selectedInvestment with operation logs
+        const operationLogs: OperationLogEntry[] = (auditLogs || []).map((log: any) => ({
+          id: log.id,
+          timestamp: new Date(log.created_at).toLocaleString(),
+          actor: log.user_email || "System",
+          action: log.action,
+          comment: log.new_data?.comment || "",
+        }));
+        setSelectedInvestment({
+          ...investment,
+          operationLogs,
+        });
+      }
+
       setIsLoadingFormData(false);
     } catch (err) {
       console.error("Error fetching form data:", err);
@@ -340,7 +366,7 @@ const InvestmentView: React.FC<InvestmentViewProps> = ({
 
         // Fetch form data for selected submission
         console.log("About to fetch form data for ID:", found.id);
-        fetchFormData(found.id);
+        fetchFormData(found.id, found);
       }
     } else {
       setSelectedInvestment(null);
@@ -429,6 +455,7 @@ const InvestmentView: React.FC<InvestmentViewProps> = ({
         selectedInvestment.id,
         selectedUserId,
         currentUser.role,
+        currentUser.id,
       );
 
       if (result.success) {

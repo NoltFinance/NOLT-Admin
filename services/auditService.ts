@@ -173,6 +173,59 @@ export async function logAuthEvent(
 }
 
 /**
+ * Log workflow action to audit logs
+ */
+export async function logWorkflowAction(
+  action: "UPDATE",
+  recordId: string,
+  details: {
+    fromStatus?: string;
+    toStatus?: string;
+    workflowAction?: string;
+    comment?: string;
+    eligibleAmount?: string;
+    reassignedTo?: string;
+    reassignedFrom?: string;
+    [key: string]: any;
+  },
+  userId?: string,
+  userEmail?: string,
+  userRole?: string,
+) {
+  try {
+    const { error } = await supabase.from("audit_logs").insert({
+      table_name: "form_submissions",
+      record_id: recordId,
+      action: action,
+      old_data: details.fromStatus ? { status: details.fromStatus } : null,
+      new_data: {
+        status: details.toStatus,
+        workflow_action: details.workflowAction,
+        comment: details.comment,
+        eligible_amount: details.eligibleAmount,
+        reassigned_to: details.reassignedTo,
+        reassigned_from: details.reassignedFrom,
+        ...details,
+      },
+      changed_fields: Object.keys(details).filter(k => details[k] !== undefined),
+      user_id: userId || null,
+      user_email: userEmail || null,
+      user_role: userRole || null,
+    });
+
+    if (error) {
+      console.error("Error logging workflow action:", error);
+      return { success: false, error: error.message };
+    }
+
+    return { success: true, error: null };
+  } catch (error: any) {
+    console.error("Error logging workflow action:", error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
  * Get unique table names from audit logs
  */
 export async function getAuditedTables() {
