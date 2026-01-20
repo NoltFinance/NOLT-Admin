@@ -383,7 +383,7 @@ const SecurityLogsView: React.FC = () => {
                   selectedLog.changed_fields.length > 0 && (
                     <div>
                       <label className="block text-[10px] font-black text-slate-500 uppercase mb-2">
-                        Changed Fields
+                        Changed Fields ({selectedLog.changed_fields.length})
                       </label>
                       <div className="flex flex-wrap gap-2">
                         {selectedLog.changed_fields.map((field) => (
@@ -398,26 +398,144 @@ const SecurityLogsView: React.FC = () => {
                     </div>
                   )}
 
-                {selectedLog.old_data && (
+                {/* Field-by-field comparison */}
+                {(selectedLog.old_data || selectedLog.new_data) && (
                   <div>
-                    <label className="block text-[10px] font-black text-slate-500 uppercase mb-2">
-                      Old Data
+                    <label className="block text-[10px] font-black text-slate-500 uppercase mb-3">
+                      Changes Overview
                     </label>
-                    <pre className="bg-slate-50 dark:bg-slate-900 p-4 rounded-xl text-xs font-mono overflow-x-auto">
-                      {JSON.stringify(selectedLog.old_data, null, 2)}
-                    </pre>
+                    <div className="space-y-2">
+                      {(() => {
+                        const oldData = selectedLog.old_data || {};
+                        const newData = selectedLog.new_data || {};
+                        const allKeys = new Set([
+                          ...Object.keys(oldData),
+                          ...Object.keys(newData),
+                        ]);
+
+                        return Array.from(allKeys).map((key) => {
+                          const oldValue = oldData[key];
+                          const newValue = newData[key];
+                          const hasChanged =
+                            JSON.stringify(oldValue) !== JSON.stringify(newValue);
+
+                          // Skip rendering complex objects/arrays in the comparison view
+                          const isComplexOld = typeof oldValue === "object" && oldValue !== null;
+                          const isComplexNew = typeof newValue === "object" && newValue !== null;
+
+                          if (isComplexOld || isComplexNew) {
+                            return (
+                              <div
+                                key={key}
+                                className="p-3 bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-slate-200 dark:border-slate-700"
+                              >
+                                <div className="text-xs font-black text-slate-700 dark:text-slate-300 mb-2">
+                                  {key}
+                                </div>
+                                <div className="text-xs text-slate-500 italic">
+                                  Complex data type - see raw data below
+                                </div>
+                              </div>
+                            );
+                          }
+
+                          return (
+                            <div
+                              key={key}
+                              className={`grid grid-cols-2 gap-3 p-3 rounded-lg border ${
+                                hasChanged
+                                  ? "bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-900"
+                                  : "bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-700"
+                              }`}
+                            >
+                              <div className="col-span-2 text-xs font-black text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-2">
+                                {key}
+                                {hasChanged && (
+                                  <span className="px-2 py-0.5 bg-amber-500 text-white text-[9px] font-black rounded uppercase">
+                                    Modified
+                                  </span>
+                                )}
+                              </div>
+                              <div>
+                                <div className="text-[9px] font-bold text-slate-500 uppercase mb-1 flex items-center gap-1">
+                                  <span className="w-2 h-2 rounded-full bg-red-500"></span>
+                                  Before
+                                </div>
+                                <div
+                                  className={`text-xs p-2 rounded ${
+                                    hasChanged
+                                      ? "bg-red-100 dark:bg-red-950/30 text-red-900 dark:text-red-300 font-semibold"
+                                      : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400"
+                                  }`}
+                                >
+                                  {oldValue !== undefined
+                                    ? String(oldValue)
+                                    : "—"}
+                                </div>
+                              </div>
+                              <div>
+                                <div className="text-[9px] font-bold text-slate-500 uppercase mb-1 flex items-center gap-1">
+                                  <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                                  After
+                                </div>
+                                <div
+                                  className={`text-xs p-2 rounded ${
+                                    hasChanged
+                                      ? "bg-green-100 dark:bg-green-950/30 text-green-900 dark:text-green-300 font-semibold"
+                                      : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400"
+                                  }`}
+                                >
+                                  {newValue !== undefined
+                                    ? String(newValue)
+                                    : "—"}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        });
+                      })()}
+                    </div>
                   </div>
                 )}
 
-                {selectedLog.new_data && (
-                  <div>
-                    <label className="block text-[10px] font-black text-slate-500 uppercase mb-2">
-                      New Data
-                    </label>
-                    <pre className="bg-slate-50 dark:bg-slate-900 p-4 rounded-xl text-xs font-mono overflow-x-auto">
-                      {JSON.stringify(selectedLog.new_data, null, 2)}
-                    </pre>
-                  </div>
+                {/* Raw data for reference (collapsed by default) */}
+                {(selectedLog.old_data || selectedLog.new_data) && (
+                  <details className="group">
+                    <summary className="cursor-pointer list-none">
+                      <div className="flex items-center gap-2 p-3 bg-slate-100 dark:bg-slate-800 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+                        <span className="material-symbols-outlined text-slate-500 group-open:rotate-90 transition-transform">
+                          chevron_right
+                        </span>
+                        <span className="text-xs font-black text-slate-700 dark:text-slate-300 uppercase">
+                          View Raw JSON Data
+                        </span>
+                      </div>
+                    </summary>
+                    <div className="mt-3 space-y-3">
+                      {selectedLog.old_data && (
+                        <div>
+                          <label className="block text-[10px] font-black text-slate-500 uppercase mb-2 flex items-center gap-2">
+                            <span className="w-3 h-3 rounded bg-red-500"></span>
+                            Old Data (Raw JSON)
+                          </label>
+                          <pre className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900 p-4 rounded-xl text-xs font-mono overflow-x-auto text-red-900 dark:text-red-300">
+                            {JSON.stringify(selectedLog.old_data, null, 2)}
+                          </pre>
+                        </div>
+                      )}
+                      {selectedLog.new_data && (
+                        <div>
+                          <label className="block text-[10px] font-black text-slate-500 uppercase mb-2 flex items-center gap-2">
+                            <span className="w-3 h-3 rounded bg-green-500"></span>
+                            New Data (Raw JSON)
+                          </label>
+                          <pre className="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-900 p-4 rounded-xl text-xs font-mono overflow-x-auto text-green-900 dark:text-green-300">
+                            {JSON.stringify(selectedLog.new_data, null, 2)}
+                          </pre>
+                        </div>
+                      )}
+                    </div>
+                  </details>
                 )}
               </div>
             </div>

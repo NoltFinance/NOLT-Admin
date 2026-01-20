@@ -314,13 +314,52 @@ const LoanView: React.FC<LoanViewProps> = ({
       } else {
         console.log("Audit logs fetched:", auditLogs?.length || 0, "logs");
         // Update selectedLoan with operation logs
-        const operationLogs: OperationLogEntry[] = (auditLogs || []).map((log: any) => ({
-          id: log.id,
-          timestamp: new Date(log.created_at).toLocaleString(),
-          actor: log.user_email || "System",
-          action: log.action,
-          comment: log.new_data?.comment || "",
-        }));
+        const operationLogs: OperationLogEntry[] = (auditLogs || []).map((log: any) => {
+          // Determine the action label based on workflow_action
+          let actionLabel = log.action;
+          if (log.new_data?.workflow_action) {
+            const workflowAction = log.new_data.workflow_action;
+            switch (workflowAction) {
+              case "approve":
+                actionLabel = "APPROVED";
+                break;
+              case "decline":
+                actionLabel = "DECLINED";
+                break;
+              case "return":
+                actionLabel = "RETURNED";
+                break;
+              case "reassign":
+                actionLabel = "REASSIGNED";
+                break;
+              case "update_eligible_amount":
+                actionLabel = "UPDATED ELIGIBLE AMOUNT";
+                break;
+              default:
+                actionLabel = workflowAction.toUpperCase().replace("_", " ");
+            }
+          }
+
+          // Build a detailed comment
+          let detailedComment = log.new_data?.comment || "";
+          if (log.new_data?.fromStatus && log.new_data?.toStatus) {
+            detailedComment = `Status changed from "${log.new_data.fromStatus}" to "${log.new_data.toStatus}". ${detailedComment}`;
+          } else if (log.new_data?.reassignedTo) {
+            detailedComment = `Reassigned to ${log.new_data.reassignedTo}. ${detailedComment}`;
+          } else if (log.new_data?.eligibleAmount) {
+            detailedComment = `Eligible amount set to ${log.new_data.eligibleAmount}. ${detailedComment}`;
+          }
+
+          return {
+            id: log.id,
+            timestamp: new Date(log.created_at).toLocaleString(),
+            actor: log.user_email || "System",
+            action: actionLabel,
+            comment: detailedComment.trim(),
+            fromStatus: log.new_data?.fromStatus,
+            toStatus: log.new_data?.toStatus,
+          };
+        });
         setSelectedLoan({
           ...loan,
           operationLogs,
@@ -999,53 +1038,119 @@ const LoanView: React.FC<LoanViewProps> = ({
             <Field label="Application Source" value={localSource} readOnly />
           </Section>
 
-          {/* Operation Log Section */}
-          <div className="bg-white dark:bg-surface-dark rounded-[24px] p-6 border border-slate-100 dark:border-slate-800 shadow-sm space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+          {/* Operation Log Section - GitHub Style Timeline */}
+          <div className="bg-white dark:bg-surface-dark rounded-[24px] p-6 border border-slate-100 dark:border-slate-800 shadow-sm">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3 mb-4">
               <div className="flex items-center gap-2">
                 <span className="material-symbols-outlined text-primary text-[20px] font-black">
                   history
                 </span>
                 <h5 className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-widest">
-                  Operation Log
+                  Activity Timeline
                 </h5>
               </div>
+              {loan.operationLogs && loan.operationLogs.length > 0 && (
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                  {loan.operationLogs.length} {loan.operationLogs.length === 1 ? 'event' : 'events'}
+                </span>
+              )}
             </div>
-            <div className="space-y-4">
+            <div className="relative">
               {/* Corrected: replaced 'inv' with 'loan' to fix the error */}
               {loan.operationLogs && loan.operationLogs.length > 0 ? (
-                loan.operationLogs.map((log) => (
-                  <div
-                    key={log.id}
-                    className="p-4 bg-slate-50 dark:bg-background-dark/50 rounded-2xl border border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-                  >
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-primary">
-                          {log.action}
-                        </span>
-                        <span className="text-[10px] font-bold text-slate-400">
-                          • {log.timestamp}
-                        </span>
+                <div className="space-y-0">
+                  {loan.operationLogs.map((log, index) => {
+                    // Determine color based on action
+                    let iconBg = "bg-slate-400";
+                    let iconColor = "text-white";
+                    let icon = "circle";
+                    
+                    if (log.action.includes("APPROVED")) {
+                      iconBg = "bg-emerald-500";
+                      icon = "check_circle";
+                    } else if (log.action.includes("DECLINED")) {
+                      iconBg = "bg-rose-500";
+                      icon = "cancel";
+                    } else if (log.action.includes("RETURNED")) {
+                      iconBg = "bg-amber-500";
+                      icon = "undo";
+                    } else if (log.action.includes("REASSIGNED")) {
+                      iconBg = "bg-blue-500";
+                      icon = "swap_horiz";
+                    } else if (log.action.includes("ELIGIBLE")) {
+                      iconBg = "bg-purple-500";
+                      icon = "payments";
+                    }
+
+                    return (
+                      <div key={log.id} className="relative flex gap-3 pb-6 group">
+                        {/* Timeline line */}
+                        {index !== loan.operationLogs!.length - 1 && (
+                          <div className="absolute left-[15px] top-8 bottom-0 w-[2px] bg-slate-200 dark:bg-slate-700" />
+                        )}
+                        
+                        {/* Icon */}
+                        <div className={`relative z-10 flex-shrink-0 w-8 h-8 rounded-full ${iconBg} flex items-center justify-center shadow-sm`}>
+                          <span className={`material-symbols-outlined text-[16px] ${iconColor}`}>
+                            {icon}
+                          </span>
+                        </div>
+
+                        {/* Content */}
+                        <div className="flex-1 pt-0.5">
+                          <div className="flex items-start justify-between gap-2 mb-1">
+                            <div className="flex-1">
+                              <span className="font-semibold text-sm text-slate-900 dark:text-white">
+                                {log.actor}
+                              </span>
+                              <span className="text-sm text-slate-600 dark:text-slate-400 ml-1">
+                                {log.action.toLowerCase().replace(/_/g, ' ')}
+                              </span>
+                              {/* Status badges */}
+                              {(log.fromStatus || log.toStatus) && (
+                                <div className="flex items-center gap-2 mt-1">
+                                  {log.fromStatus && (
+                                    <span className="px-2 py-0.5 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded text-[10px] font-bold">
+                                      {log.fromStatus}
+                                    </span>
+                                  )}
+                                  {log.fromStatus && log.toStatus && (
+                                    <span className="text-slate-400">
+                                      →
+                                    </span>
+                                  )}
+                                  {log.toStatus && (
+                                    <span className="px-2 py-0.5 bg-primary/10 text-primary rounded text-[10px] font-bold">
+                                      {log.toStatus}
+                                    </span>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                            <span className="text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                              {log.timestamp}
+                            </span>
+                          </div>
+                          
+                          {log.comment && (
+                            <div className="mt-2 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
+                              <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
+                                {log.comment}
+                              </p>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                      <p className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wide">
-                        {log.actor}
-                      </p>
-                      {log.comment && (
-                        <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium leading-relaxed italic">
-                          "{log.comment}"
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                ))
+                    );
+                  })}
+                </div>
               ) : (
-                <div className="text-center py-6 text-slate-400">
+                <div className="text-center py-8 text-slate-400">
                   <span className="material-symbols-outlined text-4xl opacity-20">
                     history_edu
                   </span>
-                  <p className="text-[10px] font-black uppercase tracking-widest mt-2">
-                    No activity logged yet
+                  <p className="text-xs font-medium mt-2">
+                    No activity recorded yet
                   </p>
                 </div>
               )}

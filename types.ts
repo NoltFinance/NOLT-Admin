@@ -73,6 +73,8 @@ export interface OperationLogEntry {
   actor: string;
   action: string;
   comment?: string;
+  fromStatus?: string;
+  toStatus?: string;
 }
 
 export interface Reference {
