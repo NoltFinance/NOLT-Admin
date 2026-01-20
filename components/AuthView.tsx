@@ -344,6 +344,14 @@ const AuthView: React.FC<AuthViewProps> = ({ onLoginSuccess }) => {
                         Don't have an account?{" "}
                         <span className="text-primary">Request Access</span>
                       </button>
+                      <span className="text-slate-700 mx-2">•</span>
+                      <button
+                        type="button"
+                        onClick={() => (window.location.href = "/forms")}
+                        className="text-[10px] font-black text-slate-500 hover:text-primary uppercase tracking-widest transition-colors"
+                      >
+                        <span className="text-primary">Apply for Services</span>
+                      </button>
                     </div>
                   </form>
                 ) : (

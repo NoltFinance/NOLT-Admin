@@ -41,6 +41,9 @@ export async function getForms(filters?: {
 
     const { data, error } = await query;
 
+    console.log("getForms - Raw data:", data?.length, "forms");
+    console.log("getForms - Error:", error);
+
     if (error) {
       console.error("Error fetching forms:", error);
       return { data: null, error: error.message };
@@ -84,6 +87,104 @@ export async function getForms(filters?: {
     return {
       data: null,
       error: err instanceof Error ? err.message : "Failed to fetch forms",
+    };
+  }
+}
+
+/**
+ * Fetch public forms (no authentication required)
+ * This function is specifically for the public-facing forms page
+ */
+export async function getPublicForms(): Promise<{
+  data: CustomForm[] | null;
+  error: string | null;
+}> {
+  try {
+    console.log("Fetching public forms...");
+
+    // Use select with specific columns to avoid RLS issues
+    const { data, error } = await supabase
+      .from("forms")
+      .select(
+        `
+        id,
+        name,
+        type,
+        category_type,
+        status,
+        visibility,
+        description,
+        created_at,
+        updated_at,
+        form_fields (
+          id,
+          form_id,
+          field_type,
+          label,
+          placeholder,
+          required,
+          options,
+          order_index
+        )
+      `,
+      )
+      .eq("status", "Published")
+      .eq("visibility", "Public")
+      .order("updated_at", { ascending: false });
+
+    console.log("Raw data from Supabase:", data);
+    console.log("Error from Supabase:", error);
+
+    if (error) {
+      console.error("Error fetching public forms:", error);
+      return { data: null, error: error.message };
+    }
+
+    if (!data || data.length === 0) {
+      console.warn("No published public forms found");
+      return { data: [], error: null };
+    }
+
+    // Transform the data
+    const forms: CustomForm[] = data.map((form: any) => ({
+      id: form.id,
+      name: form.name,
+      type: form.type,
+      category_type: form.category_type,
+      status: form.status,
+      visibility: form.visibility,
+      description: form.description,
+      administrators: [],
+      created_by: "",
+      created_at: form.created_at,
+      updated_at: form.updated_at,
+      published_at: form.published_at,
+      version: 1,
+      fields: (form.form_fields || [])
+        .sort((a: any, b: any) => a.order_index - b.order_index)
+        .map((field: any) => ({
+          id: field.id,
+          form_id: field.form_id,
+          field_type: field.field_type,
+          label: field.label,
+          placeholder: field.placeholder,
+          required: field.required,
+          options: field.options,
+          validation_rules: {},
+          order_index: field.order_index,
+          created_at: field.created_at || "",
+          updated_at: field.updated_at || "",
+        })),
+    }));
+
+    console.log("Transformed forms:", forms);
+    return { data: forms, error: null };
+  } catch (err) {
+    console.error("Unexpected error fetching public forms:", err);
+    return {
+      data: null,
+      error:
+        err instanceof Error ? err.message : "Failed to fetch public forms",
     };
   }
 }

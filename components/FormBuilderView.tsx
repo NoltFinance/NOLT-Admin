@@ -78,6 +78,8 @@ const FormBuilderView: React.FC = () => {
     category_type: "",
     visibility: "Public" as "Public" | "Internal" | "Private",
     description: "",
+    enable_steps: false,
+    step_labels: [] as string[],
   });
 
   useEffect(() => {
@@ -260,6 +262,8 @@ const FormBuilderView: React.FC = () => {
       status: "Draft",
       visibility: newFormData.visibility,
       description: newFormData.description || undefined,
+      enable_steps: newFormData.enable_steps,
+      step_labels: newFormData.step_labels.length > 0 ? newFormData.step_labels : undefined,
     });
 
     if (error) {
@@ -275,6 +279,8 @@ const FormBuilderView: React.FC = () => {
         category_type: "",
         visibility: "Public",
         description: "",
+        enable_steps: false,
+        step_labels: [],
       });
     }
     setSaving(false);
@@ -292,6 +298,7 @@ const FormBuilderView: React.FC = () => {
       placeholder: "Enter hint text...",
       required: false,
       order_index: nextOrderIndex,
+      step_number: 1,
     });
 
     if (error) {

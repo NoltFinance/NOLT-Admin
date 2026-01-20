@@ -23,6 +23,8 @@ import LogoutModal from "./components/LogoutModal";
 import AuthView from "./components/AuthView";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AccessDenied from "./components/AccessDenied";
+import PublicFormsView from "./components/PublicFormsView";
+import PublicFormSubmissionView from "./components/PublicFormSubmissionView";
 import { getDashboardInsights } from "./services/geminiService";
 import { getCurrentUser, signOut, AuthUser } from "./utils/authService";
 import { canAccessView } from "./utils/rbac";
@@ -598,7 +600,10 @@ const App: React.FC = () => {
 
   return (
     <Routes>
-      {/* Public Route */}
+      {/* Public Routes */}
+      <Route path="/forms" element={<PublicFormsView />} />
+      <Route path="/apply/:formId" element={<PublicFormSubmissionView />} />
+
       <Route
         path="/login"
         element={

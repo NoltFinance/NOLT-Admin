@@ -197,6 +197,7 @@ export interface FormField {
   options?: string[] | Record<string, any>;
   validation_rules?: Record<string, any>;
   order_index: number;
+  step_number?: number;
   created_at: string;
   updated_at: string;
 }
@@ -215,6 +216,8 @@ export interface CustomForm {
   updated_at: string;
   published_at?: string;
   version: number;
+  enable_steps?: boolean;
+  step_labels?: string[];
   fields?: FormField[];
 }
 
