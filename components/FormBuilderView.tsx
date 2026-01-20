@@ -6,6 +6,7 @@ import {
 } from "../types";
 import {
   getForms,
+  getFormById,
   createForm,
   updateForm,
   deleteForm,
@@ -30,7 +31,7 @@ interface FormField {
 interface User {
   id: string;
   email: string;
-  full_name: string;
+  name: string;
   role: string;
 }
 
@@ -109,17 +110,13 @@ const FormBuilderView: React.FC = () => {
     setLoadingUsers(true);
 
     let query = supabase
-      .from("admin_users")
-      .select("id, email, name, role", { count: "exact" });
+      .from("users")
+      .select("id, email, name, role", { count: "exact" })
+      .eq("role", "Sales Officer"); // Only fetch Sales Officers
 
     // Apply search filter
     if (search.trim()) {
       query = query.or(`name.ilike.%${search}%,email.ilike.%${search}%`);
-    }
-
-    // Apply role filter
-    if (roleFilter) {
-      query = query.eq("role", roleFilter);
     }
 
     // Apply pagination
@@ -241,9 +238,9 @@ const FormBuilderView: React.FC = () => {
 
   const handleSelectForm = async (formId: string) => {
     setLoading(true);
-    const { data, error } = await getForms({ id: formId });
-    if (!error && data && data.length > 0) {
-      setSelectedForm(data[0]);
+    const { data, error } = await getFormById(formId);
+    if (!error && data) {
+      setSelectedForm(data);
     }
     setLoading(false);
   };
@@ -2168,27 +2165,23 @@ const FormBuilderView: React.FC = () => {
                     onChange={(e) => {
                       setUserSearch(e.target.value);
                       setUserPage(0);
-                      loadUsers(e.target.value, userRoleFilter, 0);
+                      loadUsers(e.target.value, "", 0);
                     }}
-                    placeholder="Search by name or email..."
+                    placeholder="Search Sales Officers by name or email..."
                     className="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-background-dark/50 border-none rounded-xl text-sm font-bold focus:ring-2 focus:ring-primary dark:text-white placeholder:text-slate-400"
                   />
                 </div>
-                <select
-                  value={userRoleFilter}
-                  onChange={(e) => {
-                    setUserRoleFilter(e.target.value);
-                    setUserPage(0);
-                    loadUsers(userSearch, e.target.value, 0);
-                  }}
-                  className="px-4 py-3 bg-slate-50 dark:bg-background-dark/50 border-none rounded-xl text-sm font-bold focus:ring-2 focus:ring-primary dark:text-white cursor-pointer"
-                >
-                  <option value="">All Roles</option>
-                  <option value="Super Admin">Super Admin</option>
-                  <option value="Admin">Admin</option>
-                  <option value="Manager">Manager</option>
-                  <option value="Viewer">Viewer</option>
-                </select>
+                {selectedAdmins.length > 0 && (
+                  <button
+                    onClick={() => setSelectedAdmins([])}
+                    className="px-4 py-3 bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800 rounded-xl text-sm font-bold hover:bg-rose-100 dark:hover:bg-rose-900/30 transition-colors flex items-center gap-2"
+                  >
+                    <span className="material-symbols-outlined text-lg">
+                      clear_all
+                    </span>
+                    Clear All
+                  </button>
+                )}
               </div>
 
               {/* Users List */}
@@ -2203,9 +2196,9 @@ const FormBuilderView: React.FC = () => {
                 ) : users.length === 0 ? (
                   <div className="text-center py-10">
                     <p className="text-sm text-slate-400 font-bold">
-                      {userSearch || userRoleFilter
-                        ? "No users found"
-                        : "No users available"}
+                      {userSearch
+                        ? "No Sales Officers found"
+                        : "No Sales Officers available"}
                     </p>
                   </div>
                 ) : (
@@ -2236,7 +2229,7 @@ const FormBuilderView: React.FC = () => {
                           </div>
                           <div>
                             <p className="text-sm font-black text-slate-900 dark:text-white">
-                              {user.full_name || user.email}
+                              {user.name || user.email}
                             </p>
                             <div className="flex items-center gap-2">
                               <p className="text-xs text-slate-500 font-bold">
@@ -2274,7 +2267,7 @@ const FormBuilderView: React.FC = () => {
                       onClick={() => {
                         const newPage = userPage - 1;
                         setUserPage(newPage);
-                        loadUsers(userSearch, userRoleFilter, newPage);
+                        loadUsers(userSearch, "", newPage);
                       }}
                       disabled={userPage === 0 || loadingUsers}
                       className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 text-xs font-black text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
@@ -2289,7 +2282,7 @@ const FormBuilderView: React.FC = () => {
                       onClick={() => {
                         const newPage = userPage + 1;
                         setUserPage(newPage);
-                        loadUsers(userSearch, userRoleFilter, newPage);
+                        loadUsers(userSearch, "", newPage);
                       }}
                       disabled={
                         (userPage + 1) * usersPerPage >= userTotal ||

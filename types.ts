@@ -16,7 +16,8 @@ export type AppView =
   | "settings"
   | "users"
   | "security"
-  | "form-builder";
+  | "form-builder"
+  | "assigned-forms";
 
 export type UserRole =
   | "Super Admin"

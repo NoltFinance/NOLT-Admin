@@ -25,191 +25,18 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import AccessDenied from "./components/AccessDenied";
 import PublicFormsView from "./components/PublicFormsView";
 import PublicFormSubmissionView from "./components/PublicFormSubmissionView";
+import AssignedFormsView from "./components/AssignedFormsView";
+import ApprovalGatesView from "./components/ApprovalGatesView";
 import { getDashboardInsights } from "./services/geminiService";
 import { getCurrentUser, signOut, AuthUser } from "./utils/authService";
 import { canAccessView } from "./utils/rbac";
+import {
+  getAllSubmissionsAsRequests,
+  getDashboardStats,
+} from "./services/submissionsService";
 
-const INITIAL_REQUESTS: ReviewRequest[] = [
-  {
-    id: "1",
-    referenceId: "#INV-8821",
-    type: "Investment",
-    amount: "₦2,500,000",
-    targetAmount: "₦5,000,000",
-    dateSubmitted: "Oct 24, 2023",
-    status: "Pending Review",
-    selectedPlan: "NOLT Vault",
-    tenure: "12 Months",
-    rolloverOption: "Principal & Interest",
-    paymentStatus: "PAID",
-    ownerId: "u5",
-    ownerName: "Chidi Okoro",
-    referralCodeUsed: "SO-CHIDI",
-    transferReceiptUrl: "https://placehold.co/400x600?text=Transfer+Receipt",
-    governmentIdUrl: "https://placehold.co/600x400?text=Government+ID",
-    proofOfAddressUrl: "https://placehold.co/600x400?text=Utility+Bill",
-    applicant: {
-      title: "Mr",
-      name: "David Chen",
-      email: "david.c@example.com",
-      avatar: "https://picsum.photos/seed/david/100/100",
-      isPep: true,
-      gender: "Male",
-      dateOfBirth: "1985-03-15",
-      mothersMaidenName: "Rosemary",
-      religion: "Christianity",
-      maritalStatus: "Married",
-      countryCode: "+234",
-      phone: "9012345678",
-      bvn: "22233344455",
-      nin: "11122233344",
-      stateOfOrigin: "Lagos",
-      stateOfResidence: "Lagos",
-      address: "No 42, Victoria Island, Lagos",
-      occupation: "Business Executive",
-      nokName: "Linda Chen",
-      nokRelationship: "Spouse",
-      nokAddress: "No 42, Victoria Island, Lagos",
-    },
-  },
-  {
-    id: "2",
-    referenceId: "#LON-8822",
-    type: "Loan",
-    amount: "₦450,000",
-    dateSubmitted: "Oct 24, 2023",
-    status: "Pending Review",
-    loanCategory: "Employees",
-    loanProduct: "Salary Advance",
-    repaymentPeriod: "6 Months",
-    hasActiveLoans: false,
-    monthlyIncome: "₦280,000",
-    ownerId: "u5",
-    ownerName: "Chidi Okoro",
-    referralCodeUsed: "SO-CHIDI",
-    governmentIdUrl: "https://placehold.co/600x400?text=Gov+ID",
-    bankStatementUrl: "https://placehold.co/600x400?text=Bank+Statement",
-    proofOfAddressUrl: "https://placehold.co/600x400?text=Utility+Bill",
-    selfieUrl: "https://placehold.co/400x400?text=Selfie",
-    references: [
-      {
-        name: "John Miller",
-        phone: "08012345678",
-        relationship: "Family Member",
-      },
-      { name: "Alice Smith", phone: "08123456789", relationship: "Colleague" },
-      { name: "Peter Parker", phone: "09011223344", relationship: "Friend" },
-    ],
-    applicant: {
-      title: "Mrs",
-      name: "Sarah Miller",
-      email: "sarah.m@example.com",
-      avatar: "https://picsum.photos/seed/sarah/100/100",
-      isPep: false,
-      gender: "Female",
-      dateOfBirth: "1992-07-22",
-      mothersMaidenName: "Elizabeth",
-      religion: "Christianity",
-      maritalStatus: "Married",
-      countryCode: "+234",
-      phone: "8123456789",
-      bvn: "55566677788",
-      nin: "99988877766",
-      stateOfOrigin: "Ogun",
-      stateOfResidence: "Lagos",
-      address: "7, Admiralty Way, Lekki",
-      occupation: "Nurse",
-      residentialStatus: "Rent",
-      dependents: 2,
-    },
-  },
-  {
-    id: "3",
-    referenceId: "#LON-9904",
-    type: "Loan",
-    amount: "₦2,500,000",
-    dateSubmitted: "Oct 25, 2023",
-    status: "Returned",
-    loanCategory: "Business",
-    loanProduct: "Working Capital",
-    repaymentPeriod: "12 Months",
-    hasActiveLoans: true,
-    monthlyIncome: "₦850,000",
-    ownerId: "u5",
-    ownerName: "Chidi Okoro",
-    referralCodeUsed: "SO-CHIDI",
-    applicant: {
-      title: "Mr",
-      name: "Boluwatife Adeyemi",
-      email: "bolu.ade@techhub.ng",
-      avatar: "https://picsum.photos/seed/bolu/100/100",
-      isPep: false,
-      gender: "Male",
-      dateOfBirth: "1988-11-05",
-      phone: "7034455667",
-      address: "Surulere, Lagos",
-      occupation: "Software Engineer",
-    },
-  },
-  {
-    id: "4",
-    referenceId: "#INV-1021",
-    type: "Investment",
-    amount: "₦10,000,000",
-    targetAmount: "₦10,000,000",
-    dateSubmitted: "Oct 22, 2023",
-    status: "Approved",
-    selectedPlan: "NOLT Rise",
-    tenure: "24 Months",
-    rolloverOption: "Payout",
-    paymentStatus: "VERIFIED",
-    ownerId: "u1",
-    ownerName: "Alex Morgan",
-    referralCodeUsed: "ALEX-ADMIN",
-    applicant: {
-      title: "Dr",
-      name: "Emily Nwosu",
-      email: "e.nwosu@med.com",
-      avatar: "https://picsum.photos/seed/emily/100/100",
-      isPep: false,
-      gender: "Female",
-      dateOfBirth: "1975-04-12",
-      phone: "8023344556",
-      address: "Maitama, Abuja",
-      occupation: "Medical Consultant",
-    },
-  },
-  {
-    id: "5",
-    referenceId: "#LON-1105",
-    type: "Loan",
-    amount: "₦1,200,000",
-    dateSubmitted: "Oct 26, 2023",
-    status: "Internal Audit",
-    loanCategory: "Employees",
-    loanProduct: "IPPIS",
-    repaymentPeriod: "18 Months",
-    hasActiveLoans: false,
-    monthlyIncome: "₦400,000",
-    ownerId: "u5",
-    ownerName: "Chidi Okoro",
-    referralCodeUsed: "SO-CHIDI",
-    applicant: {
-      title: "Ms",
-      name: "Chioma Okeke",
-      email: "c.okeke@lifestyle.ng",
-      avatar: "https://picsum.photos/seed/chioma/100/100",
-      isPep: false,
-      gender: "Female",
-      dateOfBirth: "1995-09-30",
-      phone: "9051122334",
-      address: "Enugu, Nigeria",
-      occupation: "Civil Servant",
-      ippisNumber: "IP-9901223",
-      mda: "Federal Ministry of Health",
-    },
-  },
-];
+// Real data will be fetched from the database
+// Initial requests are now empty and will be populated on component mount
 
 const USERS: User[] = [
   {
@@ -299,7 +126,9 @@ const App: React.FC = () => {
 
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
 
-  const [requests, setRequests] = useState<ReviewRequest[]>(INITIAL_REQUESTS);
+  const [requests, setRequests] = useState<ReviewRequest[]>([]);
+  const [stats, setStats] = useState<StatMetric[]>([]);
+  const [isLoadingData, setIsLoadingData] = useState(true);
   const [notifications, setNotifications] = useState<AppNotification[]>(
     INITIAL_NOTIFICATIONS,
   );
@@ -337,6 +166,69 @@ const App: React.FC = () => {
       checkAuth();
     }
   }, []);
+
+  // Fetch real data from database
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!isAuthenticated) return;
+
+      setIsLoadingData(true);
+      try {
+        // Fetch submissions
+        const { data: submissions } = await getAllSubmissionsAsRequests();
+        if (submissions) {
+          setRequests(submissions);
+        }
+
+        // Fetch dashboard stats
+        const statsData = await getDashboardStats();
+        if (!statsData.error) {
+          const newStats: StatMetric[] = [
+            {
+              label: "Investment Applications",
+              value: `${statsData.investmentStats.count} Applications`,
+              subValue: `₦${statsData.investmentStats.totalAmount.toLocaleString()}.00`,
+              change: "+12.5%",
+              isPositive: true,
+              icon: "trending_up",
+              color: "bg-blue-500 text-blue-500",
+            },
+            {
+              label: "Loan Requests",
+              value: `${statsData.loanStats.count} Applications`,
+              subValue: `₦${statsData.loanStats.totalAmount.toLocaleString()}.00`,
+              change: "+5.0%",
+              isPositive: true,
+              icon: "payments",
+              color: "bg-indigo-500 text-indigo-500",
+            },
+            {
+              label: "Total Submissions",
+              value: `${submissions?.length || 0} Submissions`,
+              change: "+8.4%",
+              isPositive: true,
+              icon: "group",
+              color: "bg-purple-500 text-purple-500",
+            },
+            {
+              label: "Pending Review",
+              value: `${statsData.pendingCount} Pending`,
+              badgeText: "High Priority",
+              icon: "pending_actions",
+              color: "bg-amber-500 text-amber-500",
+            },
+          ];
+          setStats(newStats);
+        }
+      } catch (error) {
+        console.error("Error fetching dashboard data:", error);
+      } finally {
+        setIsLoadingData(false);
+      }
+    };
+
+    fetchData();
+  }, [isAuthenticated]);
 
   useEffect(() => {
     if (isDarkMode) {
@@ -567,9 +459,18 @@ const App: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {STATS.map((stat, idx) => (
-          <StatCard key={idx} stat={stat} />
-        ))}
+        {isLoadingData ? (
+          <div className="col-span-full flex items-center justify-center py-12">
+            <div className="text-center">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-4"></div>
+              <p className="text-sm font-bold text-slate-600 dark:text-slate-400">
+                Loading dashboard data...
+              </p>
+            </div>
+          </div>
+        ) : (
+          stats.map((stat, idx) => <StatCard key={idx} stat={stat} />)
+        )}
       </div>
 
       <ReviewQueue
@@ -748,6 +649,32 @@ const App: React.FC = () => {
                           requiredView="form-builder"
                         >
                           <FormBuilderView />
+                        </ProtectedRoute>
+                      }
+                    />
+
+                    <Route
+                      path="/assigned-forms"
+                      element={
+                        <ProtectedRoute
+                          currentUser={currentUser}
+                          isAuthenticated={isAuthenticated}
+                          requiredView="assigned-forms"
+                        >
+                          <AssignedFormsView currentUser={currentUser!} />
+                        </ProtectedRoute>
+                      }
+                    />
+
+                    <Route
+                      path="/approval-gates"
+                      element={
+                        <ProtectedRoute
+                          currentUser={currentUser}
+                          isAuthenticated={isAuthenticated}
+                          requiredView="approval-gates"
+                        >
+                          <ApprovalGatesView currentUser={currentUser!} />
                         </ProtectedRoute>
                       }
                     />

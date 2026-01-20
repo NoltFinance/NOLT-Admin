@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { CustomForm, FormField } from "../types";
 import { getForms, submitForm } from "../services/formsService";
@@ -11,10 +11,14 @@ const PublicFormSubmissionView: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [formData, setFormData] = useState<Record<string, any>>({});
-  const [applicantName, setApplicantName] = useState("");
-  const [applicantEmail, setApplicantEmail] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [currentStep, setCurrentStep] = useState(1);
+  const signatureCanvasRefs = useRef<Record<string, HTMLCanvasElement | null>>(
+    {},
+  );
+  const [drawingStates, setDrawingStates] = useState<Record<string, boolean>>(
+    {},
+  );
 
   useEffect(() => {
     if (formId) {
@@ -94,6 +98,71 @@ const PublicFormSubmissionView: React.FC = () => {
     return null;
   };
 
+  const startDrawing = (
+    fieldId: string,
+    e:
+      | React.MouseEvent<HTMLCanvasElement>
+      | React.TouchEvent<HTMLCanvasElement>,
+  ) => {
+    const canvas = signatureCanvasRefs.current[fieldId];
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    const rect = canvas.getBoundingClientRect();
+    const x =
+      "touches" in e ? e.touches[0].clientX - rect.left : e.clientX - rect.left;
+    const y =
+      "touches" in e ? e.touches[0].clientY - rect.top : e.clientY - rect.top;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    setDrawingStates((prev) => ({ ...prev, [fieldId]: true }));
+  };
+
+  const draw = (
+    fieldId: string,
+    e:
+      | React.MouseEvent<HTMLCanvasElement>
+      | React.TouchEvent<HTMLCanvasElement>,
+  ) => {
+    if (!drawingStates[fieldId] || !signatureCanvasRefs.current[fieldId])
+      return;
+    const canvas = signatureCanvasRefs.current[fieldId];
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    const rect = canvas.getBoundingClientRect();
+    const x =
+      "touches" in e ? e.touches[0].clientX - rect.left : e.clientX - rect.left;
+    const y =
+      "touches" in e ? e.touches[0].clientY - rect.top : e.clientY - rect.top;
+    ctx.lineTo(x, y);
+    ctx.strokeStyle = "#028FF5";
+    ctx.lineWidth = 2;
+    ctx.lineCap = "round";
+    ctx.stroke();
+  };
+
+  const stopDrawing = (fieldId: string) => {
+    setDrawingStates((prev) => ({ ...prev, [fieldId]: false }));
+    // Save signature as data URL
+    const canvas = signatureCanvasRefs.current[fieldId];
+    if (canvas) {
+      const dataUrl = canvas.toDataURL();
+      setFormData((prev) => ({ ...prev, [fieldId]: dataUrl }));
+    }
+  };
+
+  const clearSignature = (fieldId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const canvas = signatureCanvasRefs.current[fieldId];
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (ctx) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      setFormData((prev) => ({ ...prev, [fieldId]: "" }));
+    }
+  };
+
   const handleInputChange = (fieldId: string, value: any, field: FormField) => {
     setFormData((prev) => ({ ...prev, [fieldId]: value }));
 
@@ -103,6 +172,28 @@ const PublicFormSubmissionView: React.FC = () => {
         const newErrors = { ...prev };
         delete newErrors[fieldId];
         return newErrors;
+      });
+    }
+  };
+
+  const handleCheckboxGroupToggle = (
+    fieldId: string,
+    optionValue: string,
+    isChecked: boolean,
+  ) => {
+    setFormData((prev) => {
+      const currentArray = Array.isArray(prev[fieldId]) ? prev[fieldId] : [];
+      const newArray = isChecked
+        ? [...currentArray, optionValue]
+        : currentArray.filter((item: string) => item !== optionValue);
+      return { ...prev, [fieldId]: newArray };
+    });
+
+    // Clear error
+    if (errors[fieldId]) {
+      setErrors((prev) => {
+        const { [fieldId]: _, ...rest } = prev;
+        return rest;
       });
     }
   };
@@ -318,29 +409,34 @@ const PublicFormSubmissionView: React.FC = () => {
             </div>
           ) : field.field_type === "checkbox_group" ? (
             <div className="space-y-3 p-4 bg-white dark:bg-background-dark/50 border border-slate-100 dark:border-slate-800 rounded-xl">
-              {field.options?.map((option, idx) => (
-                <div key={idx} className="flex items-center gap-3">
-                  <input
-                    type="checkbox"
-                    id={`${field.id}-${idx}`}
-                    value={option}
-                    checked={value?.includes(option)}
-                    onChange={(e) => {
-                      const newValue = e.target.checked
-                        ? [...(value || []), option]
-                        : (value || []).filter((v: string) => v !== option);
-                      handleInputChange(field.id, newValue, field);
-                    }}
-                    className="w-5 h-5 rounded border-slate-300 text-primary focus:ring-2 focus:ring-primary cursor-pointer"
-                  />
-                  <label
-                    htmlFor={`${field.id}-${idx}`}
-                    className="text-sm text-slate-600 dark:text-slate-300 font-bold cursor-pointer"
-                  >
-                    {option}
-                  </label>
-                </div>
-              ))}
+              {field.options?.map((option, idx) => {
+                const currentValues = Array.isArray(value) ? value : [];
+                const isChecked = currentValues.includes(option);
+
+                return (
+                  <div key={idx} className="flex items-center gap-3">
+                    <input
+                      type="checkbox"
+                      id={`${field.id}-${idx}`}
+                      checked={isChecked}
+                      onChange={(e) =>
+                        handleCheckboxGroupToggle(
+                          field.id,
+                          option,
+                          e.target.checked,
+                        )
+                      }
+                      className="w-5 h-5 rounded border-slate-300 text-primary focus:ring-2 focus:ring-primary cursor-pointer"
+                    />
+                    <label
+                      htmlFor={`${field.id}-${idx}`}
+                      className="text-sm text-slate-600 dark:text-slate-300 font-bold cursor-pointer"
+                    >
+                      {option}
+                    </label>
+                  </div>
+                );
+              })}
             </div>
           ) : field.field_type === "date" ? (
             <input
@@ -469,6 +565,51 @@ const PublicFormSubmissionView: React.FC = () => {
               <span className="text-sm text-slate-500 dark:text-slate-400 font-bold">
                 {value || "Pick a color"}
               </span>
+            </div>
+          ) : field.field_type === "signature" ? (
+            <div className="space-y-3">
+              <div className="relative">
+                <canvas
+                  ref={(el) => {
+                    if (el) signatureCanvasRefs.current[field.id] = el;
+                  }}
+                  width={600}
+                  height={200}
+                  onMouseDown={(e) => startDrawing(field.id, e)}
+                  onMouseMove={(e) => draw(field.id, e)}
+                  onMouseUp={() => stopDrawing(field.id)}
+                  onMouseOut={() => stopDrawing(field.id)}
+                  onTouchStart={(e) => startDrawing(field.id, e)}
+                  onTouchMove={(e) => draw(field.id, e)}
+                  onTouchEnd={() => stopDrawing(field.id)}
+                  className="w-full h-48 bg-white dark:bg-background-dark/50 border-2 border-dashed border-slate-100 dark:border-slate-800 rounded-xl cursor-crosshair hover:border-primary transition-colors"
+                />
+                <button
+                  type="button"
+                  onClick={(e) => clearSignature(field.id, e)}
+                  className="absolute top-3 right-3 text-[10px] font-black uppercase text-red-500 hover:text-red-600 bg-white dark:bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-100 dark:border-slate-700 shadow-sm transition-all"
+                >
+                  Clear
+                </button>
+              </div>
+              <p className="text-xs text-slate-400 font-bold text-center">
+                {field.placeholder || "Draw your signature above"}
+              </p>
+            </div>
+          ) : field.field_type === "location" ? (
+            <div className="space-y-2">
+              <input
+                type="text"
+                value={value}
+                onChange={(e) =>
+                  handleInputChange(field.id, e.target.value, field)
+                }
+                placeholder={field.placeholder || "Enter location..."}
+                className="w-full h-12 bg-white dark:bg-background-dark/50 border border-slate-100 dark:border-slate-800 rounded-xl px-4 text-sm font-bold focus:ring-2 focus:ring-primary dark:text-white placeholder:text-slate-300"
+              />
+              <p className="text-xs text-slate-400">
+                Enter your location or address
+              </p>
             </div>
           ) : (
             <input

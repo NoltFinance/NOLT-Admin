@@ -30,6 +30,8 @@ const Sidebar: React.FC<SidebarProps> = ({
       "/users": "users",
       "/security": "security",
       "/form-builder": "form-builder",
+      "/assigned-forms": "assigned-forms",
+      "/approval-gates": "approval-gates",
     };
     return pathMap[path] || "dashboard";
   };
@@ -181,6 +183,18 @@ const Sidebar: React.FC<SidebarProps> = ({
               label="Form Designer"
               to="/form-builder"
               view="form-builder"
+            />
+            <NavLink
+              icon="assignment"
+              label="Assigned Forms"
+              to="/assigned-forms"
+              view="assigned-forms"
+            />
+            <NavLink
+              icon="shield"
+              label="Approval Gates"
+              to="/approval-gates"
+              view="approval-gates"
             />
           </div>
         </div>

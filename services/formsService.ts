@@ -618,6 +618,7 @@ export async function getFormSubmissions(filters?: {
 
 /**
  * Submit a form (public access - no auth required)
+ * Automatically assigns to a random form administrator
  */
 export async function submitForm(
   formId: string,
@@ -626,6 +627,32 @@ export async function submitForm(
   fieldResponses: Record<string, any>,
 ): Promise<{ data: FormSubmission | null; error: string | null }> {
   try {
+    // First, get the form to check administrators
+    const { data: formData, error: formError } = await supabase
+      .from("forms")
+      .select("administrators")
+      .eq("id", formId)
+      .single();
+
+    if (formError) {
+      console.error("Error fetching form:", formError);
+      return { data: null, error: formError.message };
+    }
+
+    // Randomly select an administrator if available
+    let reviewedBy = null;
+    if (
+      formData.administrators &&
+      Array.isArray(formData.administrators) &&
+      formData.administrators.length > 0
+    ) {
+      const randomIndex = Math.floor(
+        Math.random() * formData.administrators.length,
+      );
+      reviewedBy = formData.administrators[randomIndex];
+      console.log(`[submitForm] Randomly assigned to admin: ${reviewedBy}`);
+    }
+
     const { data, error } = await supabase
       .from("form_submissions")
       .insert({
@@ -634,6 +661,7 @@ export async function submitForm(
         applicant_name: applicantName,
         field_responses: fieldResponses,
         status: "Submitted",
+        reviewed_by: reviewedBy, // Auto-assign to random administrator
       })
       .select()
       .single();
