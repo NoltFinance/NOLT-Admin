@@ -582,6 +582,7 @@ const App: React.FC = () => {
                             onBack={() => navigate("/")}
                             selectedId={selectedRequestId}
                             onClearSelection={() => setSelectedRequestId(null)}
+                            onSelectInvestment={(id) => setSelectedRequestId(id)}
                             currentUser={currentUser!}
                           />
                         )
@@ -596,6 +597,7 @@ const App: React.FC = () => {
                           onBack={() => navigate("/")}
                           selectedId={selectedRequestId}
                           onClearSelection={() => setSelectedRequestId(null)}
+                          onSelectLoan={(id) => setSelectedRequestId(id)}
                           currentUser={currentUser!}
                         />
                       }

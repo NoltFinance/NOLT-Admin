@@ -31,6 +31,7 @@ interface LoanViewProps {
   onBack: () => void;
   selectedId?: string | null;
   onClearSelection?: () => void;
+  onSelectLoan?: (id: string) => void;
   currentUser: AuthUser;
 }
 
@@ -155,8 +156,11 @@ const LoanView: React.FC<LoanViewProps> = ({
   onBack,
   selectedId,
   onClearSelection,
+  onSelectLoan,
   currentUser,
 }) => {
+  console.log('🏗️ LoanView mounted/rendered - selectedId:', selectedId);
+  
   const [selectedLoan, setSelectedLoan] = useState<ReviewRequest | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("All Status");
@@ -196,13 +200,16 @@ const LoanView: React.FC<LoanViewProps> = ({
     null,
   );
   const [formConfig, setFormConfig] = useState<CustomForm | null>(null);
+  const [isLoadingFormData, setIsLoadingFormData] = useState(false);
 
   // Fetch loan submissions from database
   useEffect(() => {
     const fetchLoans = async () => {
+      console.log('🔄 Fetching loans from database...');
       setIsLoadingLoans(true);
       try {
         const { data, error } = await getSubmissionsByType("Loan");
+        console.log('📊 Loan data received:', data?.length || 0, 'records');
         if (!error && data) {
           setLoanRequests(data);
         } else {
@@ -219,7 +226,7 @@ const LoanView: React.FC<LoanViewProps> = ({
     };
 
     fetchLoans();
-  }, [requests]);
+  }, []); // Remove requests dependency - we fetch directly from database
 
   // Fetch users for reassignment
   useEffect(() => {
@@ -244,6 +251,8 @@ const LoanView: React.FC<LoanViewProps> = ({
 
   // Fetch form configuration, fields, and submission data
   const fetchFormData = async (submissionId: string) => {
+    setIsLoadingFormData(true);
+    console.log("Fetching form data for submission ID:", submissionId);
     try {
       // Fetch the submission
       const { data: submission, error: subError } = await supabase
@@ -254,9 +263,11 @@ const LoanView: React.FC<LoanViewProps> = ({
 
       if (subError || !submission) {
         console.error("Error fetching submission:", subError);
+        setIsLoadingFormData(false);
         return;
       }
 
+      console.log("Submission fetched:", submission);
       setFormSubmission(submission);
 
       // Fetch the form configuration
@@ -268,9 +279,11 @@ const LoanView: React.FC<LoanViewProps> = ({
 
       if (formError || !form) {
         console.error("Error fetching form:", formError);
+        setIsLoadingFormData(false);
         return;
       }
 
+      console.log("Form config fetched:", form);
       setFormConfig(form);
 
       // Fetch form fields
@@ -282,24 +295,32 @@ const LoanView: React.FC<LoanViewProps> = ({
 
       if (fieldsError) {
         console.error("Error fetching form fields:", fieldsError);
+        setIsLoadingFormData(false);
         return;
       }
 
+      console.log("Form fields fetched:", fields?.length || 0, "fields");
       setFormFields(fields || []);
+      setIsLoadingFormData(false);
     } catch (err) {
       console.error("Error fetching form data:", err);
+      setIsLoadingFormData(false);
     }
   };
 
   useEffect(() => {
+    console.log('🎯 Selection changed - selectedId:', selectedId, 'loanRequests:', loanRequests.length);
     if (selectedId) {
       const found = loanRequests.find((r) => r.id === selectedId);
+      console.log('🔍 Search result for ID', selectedId, ':', found ? 'FOUND' : 'NOT FOUND');
       if (found) {
+        console.log('✅ Selected loan found:', found);
         setSelectedLoan(found);
         setLocalOwnerName(found.ownerName || "UNASSIGNED");
         setLocalEligibleAmount(found.eligibleAmount || "");
 
         // Fetch form data for selected submission
+        console.log('About to fetch form data for ID:', found.id);
         fetchFormData(found.id);
       }
     } else {
@@ -930,13 +951,7 @@ const LoanView: React.FC<LoanViewProps> = ({
             icon="fingerprint"
             step={0}
           >
-            <Field
-              label="Linked Sales Officer"
-              value={localOwnerName}
-              isEditable={isReassigning}
-              onEdit={setLocalOwnerName}
-              options={SALES_OFFICERS}
-            />
+            <Field label="Assigned To" value={localOwnerName} readOnly />
             <Field
               label="Referral Code Used"
               value={loan.referralCodeUsed}
@@ -1031,7 +1046,16 @@ const LoanView: React.FC<LoanViewProps> = ({
               </div>
             </div>
             <div className="space-y-4">
-              {formFields.length > 0 && formSubmission ? (
+              {isLoadingFormData ? (
+                <div className="text-center py-6 text-slate-400">
+                  <span className="material-symbols-outlined text-4xl opacity-20 animate-spin">
+                    progress_activity
+                  </span>
+                  <p className="text-[10px] font-black uppercase tracking-widest mt-2">
+                    Loading form details...
+                  </p>
+                </div>
+              ) : formFields.length > 0 && formSubmission ? (
                 formFields.map((field) => {
                   const value = formSubmission.field_responses[field.id];
                   return (
@@ -1085,10 +1109,10 @@ const LoanView: React.FC<LoanViewProps> = ({
               ) : (
                 <div className="text-center py-6 text-slate-400">
                   <span className="material-symbols-outlined text-4xl opacity-20">
-                    description
+                    error
                   </span>
                   <p className="text-[10px] font-black uppercase tracking-widest mt-2">
-                    Loading form details...
+                    No form data available
                   </p>
                 </div>
               )}
@@ -1380,7 +1404,13 @@ const LoanView: React.FC<LoanViewProps> = ({
                   return (
                     <tr
                       key={req.id}
-                      onClick={() => setSelectedLoan(req)}
+                      onClick={() => {
+                        if (onSelectLoan) {
+                          onSelectLoan(req.id);
+                        } else {
+                          setSelectedLoan(req);
+                        }
+                      }}
                       className={`hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors cursor-pointer group ${isChecked ? "bg-primary/5 dark:bg-primary/10" : ""}`}
                     >
                       <td

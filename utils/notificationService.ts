@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import supabase from "@/utils/supabase";
 import { RealtimeChannel } from "@supabase/supabase-js";
 
@@ -30,6 +30,12 @@ export function useAuditNotifications(
   onNewLog?: (notification: AuditNotification) => void,
 ) {
   const [isConnected, setIsConnected] = useState(false);
+  const callbackRef = useRef(onNewLog);
+
+  // Update ref when callback changes
+  useEffect(() => {
+    callbackRef.current = onNewLog;
+  }, [onNewLog]);
 
   useEffect(() => {
     // Subscribe to audit_logs table changes
@@ -54,8 +60,8 @@ export function useAuditNotifications(
             changed_fields: log.changed_fields,
           };
 
-          if (onNewLog) {
-            onNewLog(notification);
+          if (callbackRef.current) {
+            callbackRef.current(notification);
           }
         },
       )
@@ -76,7 +82,7 @@ export function useAuditNotifications(
         setIsConnected(false);
       }
     };
-  }, [onNewLog]);
+  }, []); // Remove onNewLog from dependencies
 
   return { isConnected };
 }

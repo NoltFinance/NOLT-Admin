@@ -29,6 +29,7 @@ interface InvestmentViewProps {
   onBack: () => void;
   selectedId?: string | null;
   onClearSelection?: () => void;
+  onSelectInvestment?: (id: string) => void;
   currentUser: AuthUser;
 }
 
@@ -157,8 +158,11 @@ const InvestmentView: React.FC<InvestmentViewProps> = ({
   onBack,
   selectedId,
   onClearSelection,
+  onSelectInvestment,
   currentUser,
 }) => {
+  console.log('🏗️ InvestmentView mounted/rendered - selectedId:', selectedId);
+  
   const [selectedInvestment, setSelectedInvestment] =
     useState<ReviewRequest | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -198,13 +202,16 @@ const InvestmentView: React.FC<InvestmentViewProps> = ({
     null,
   );
   const [formConfig, setFormConfig] = useState<CustomForm | null>(null);
+  const [isLoadingFormData, setIsLoadingFormData] = useState(false);
 
   // Fetch investment submissions from database
   useEffect(() => {
     const fetchInvestments = async () => {
+      console.log('🔄 Fetching investments from database...');
       setIsLoadingInvestments(true);
       try {
         const { data, error } = await getSubmissionsByType("Investment");
+        console.log('📊 Investment data received:', data?.length || 0, 'records');
         if (!error && data) {
           setInvestmentRequests(data);
         } else {
@@ -225,7 +232,7 @@ const InvestmentView: React.FC<InvestmentViewProps> = ({
     };
 
     fetchInvestments();
-  }, [requests]);
+  }, []); // Remove requests dependency - we fetch directly from database
 
   // Fetch users for reassignment
   useEffect(() => {
@@ -250,6 +257,8 @@ const InvestmentView: React.FC<InvestmentViewProps> = ({
 
   // Fetch form configuration, fields, and submission data
   const fetchFormData = async (submissionId: string) => {
+    setIsLoadingFormData(true);
+    console.log("Fetching form data for submission ID:", submissionId);
     try {
       // Fetch the submission
       const { data: submission, error: subError } = await supabase
@@ -260,9 +269,11 @@ const InvestmentView: React.FC<InvestmentViewProps> = ({
 
       if (subError || !submission) {
         console.error("Error fetching submission:", subError);
+        setIsLoadingFormData(false);
         return;
       }
 
+      console.log("Submission fetched:", submission);
       setFormSubmission(submission);
 
       // Fetch the form configuration
@@ -274,9 +285,11 @@ const InvestmentView: React.FC<InvestmentViewProps> = ({
 
       if (formError || !form) {
         console.error("Error fetching form:", formError);
+        setIsLoadingFormData(false);
         return;
       }
 
+      console.log("Form config fetched:", form);
       setFormConfig(form);
 
       // Fetch form fields
@@ -288,23 +301,31 @@ const InvestmentView: React.FC<InvestmentViewProps> = ({
 
       if (fieldsError) {
         console.error("Error fetching form fields:", fieldsError);
+        setIsLoadingFormData(false);
         return;
       }
 
+      console.log("Form fields fetched:", fields?.length || 0, "fields");
       setFormFields(fields || []);
+      setIsLoadingFormData(false);
     } catch (err) {
       console.error("Error fetching form data:", err);
+      setIsLoadingFormData(false);
     }
   };
 
   useEffect(() => {
+    console.log('🎯 Selection changed - selectedId:', selectedId, 'investmentRequests:', investmentRequests.length);
     if (selectedId) {
       const found = investmentRequests.find((r) => r.id === selectedId);
+      console.log('🔍 Search result for ID', selectedId, ':', found ? 'FOUND' : 'NOT FOUND');
       if (found) {
+        console.log('✅ Selected investment found:', found);
         setSelectedInvestment(found);
         setLocalOwnerName(found.ownerName || "UNASSIGNED");
 
         // Fetch form data for selected submission
+        console.log('About to fetch form data for ID:', found.id);
         fetchFormData(found.id);
       }
     } else {
@@ -847,13 +868,7 @@ const InvestmentView: React.FC<InvestmentViewProps> = ({
             icon="fingerprint"
             step={0}
           >
-            <Field
-              label="Linked Sales Officer"
-              value={localOwnerName}
-              isEditable={isReassigning}
-              onEdit={setLocalOwnerName}
-              options={SALES_OFFICERS}
-            />
+            <Field label="Assigned To" value={localOwnerName} readOnly />
             <Field
               label="Referral Code Used"
               value={inv.referralCodeUsed}
@@ -928,7 +943,16 @@ const InvestmentView: React.FC<InvestmentViewProps> = ({
               </div>
             </div>
             <div className="space-y-4">
-              {formFields.length > 0 && formSubmission ? (
+              {isLoadingFormData ? (
+                <div className="text-center py-6 text-slate-400">
+                  <span className="material-symbols-outlined text-4xl opacity-20 animate-spin">
+                    progress_activity
+                  </span>
+                  <p className="text-[10px] font-black uppercase tracking-widest mt-2">
+                    Loading form details...
+                  </p>
+                </div>
+              ) : formFields.length > 0 && formSubmission ? (
                 formFields.map((field) => {
                   const value = formSubmission.field_responses[field.id];
                   return (
@@ -982,10 +1006,10 @@ const InvestmentView: React.FC<InvestmentViewProps> = ({
               ) : (
                 <div className="text-center py-6 text-slate-400">
                   <span className="material-symbols-outlined text-4xl opacity-20">
-                    description
+                    error
                   </span>
                   <p className="text-[10px] font-black uppercase tracking-widest mt-2">
-                    Loading form details...
+                    No form data available
                   </p>
                 </div>
               )}
@@ -1276,7 +1300,13 @@ const InvestmentView: React.FC<InvestmentViewProps> = ({
                   return (
                     <tr
                       key={req.id}
-                      onClick={() => setSelectedInvestment(req)}
+                      onClick={() => {
+                        if (onSelectInvestment) {
+                          onSelectInvestment(req.id);
+                        } else {
+                          setSelectedInvestment(req);
+                        }
+                      }}
                       className={`hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors cursor-pointer group ${isChecked ? "bg-primary/5 dark:bg-primary/10" : ""}`}
                     >
                       <td
