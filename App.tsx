@@ -582,7 +582,9 @@ const App: React.FC = () => {
                             onBack={() => navigate("/")}
                             selectedId={selectedRequestId}
                             onClearSelection={() => setSelectedRequestId(null)}
-                            onSelectInvestment={(id) => setSelectedRequestId(id)}
+                            onSelectInvestment={(id) =>
+                              setSelectedRequestId(id)
+                            }
                             currentUser={currentUser!}
                           />
                         )

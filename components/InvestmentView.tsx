@@ -161,8 +161,8 @@ const InvestmentView: React.FC<InvestmentViewProps> = ({
   onSelectInvestment,
   currentUser,
 }) => {
-  console.log('🏗️ InvestmentView mounted/rendered - selectedId:', selectedId);
-  
+  console.log("🏗️ InvestmentView mounted/rendered - selectedId:", selectedId);
+
   const [selectedInvestment, setSelectedInvestment] =
     useState<ReviewRequest | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -207,11 +207,15 @@ const InvestmentView: React.FC<InvestmentViewProps> = ({
   // Fetch investment submissions from database
   useEffect(() => {
     const fetchInvestments = async () => {
-      console.log('🔄 Fetching investments from database...');
+      console.log("🔄 Fetching investments from database...");
       setIsLoadingInvestments(true);
       try {
         const { data, error } = await getSubmissionsByType("Investment");
-        console.log('📊 Investment data received:', data?.length || 0, 'records');
+        console.log(
+          "📊 Investment data received:",
+          data?.length || 0,
+          "records",
+        );
         if (!error && data) {
           setInvestmentRequests(data);
         } else {
@@ -315,17 +319,27 @@ const InvestmentView: React.FC<InvestmentViewProps> = ({
   };
 
   useEffect(() => {
-    console.log('🎯 Selection changed - selectedId:', selectedId, 'investmentRequests:', investmentRequests.length);
+    console.log(
+      "🎯 Selection changed - selectedId:",
+      selectedId,
+      "investmentRequests:",
+      investmentRequests.length,
+    );
     if (selectedId) {
       const found = investmentRequests.find((r) => r.id === selectedId);
-      console.log('🔍 Search result for ID', selectedId, ':', found ? 'FOUND' : 'NOT FOUND');
+      console.log(
+        "🔍 Search result for ID",
+        selectedId,
+        ":",
+        found ? "FOUND" : "NOT FOUND",
+      );
       if (found) {
-        console.log('✅ Selected investment found:', found);
+        console.log("✅ Selected investment found:", found);
         setSelectedInvestment(found);
         setLocalOwnerName(found.ownerName || "UNASSIGNED");
 
         // Fetch form data for selected submission
-        console.log('About to fetch form data for ID:', found.id);
+        console.log("About to fetch form data for ID:", found.id);
         fetchFormData(found.id);
       }
     } else {

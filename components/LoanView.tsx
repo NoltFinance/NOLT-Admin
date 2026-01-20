@@ -159,8 +159,8 @@ const LoanView: React.FC<LoanViewProps> = ({
   onSelectLoan,
   currentUser,
 }) => {
-  console.log('🏗️ LoanView mounted/rendered - selectedId:', selectedId);
-  
+  console.log("🏗️ LoanView mounted/rendered - selectedId:", selectedId);
+
   const [selectedLoan, setSelectedLoan] = useState<ReviewRequest | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("All Status");
@@ -205,11 +205,11 @@ const LoanView: React.FC<LoanViewProps> = ({
   // Fetch loan submissions from database
   useEffect(() => {
     const fetchLoans = async () => {
-      console.log('🔄 Fetching loans from database...');
+      console.log("🔄 Fetching loans from database...");
       setIsLoadingLoans(true);
       try {
         const { data, error } = await getSubmissionsByType("Loan");
-        console.log('📊 Loan data received:', data?.length || 0, 'records');
+        console.log("📊 Loan data received:", data?.length || 0, "records");
         if (!error && data) {
           setLoanRequests(data);
         } else {
@@ -309,18 +309,28 @@ const LoanView: React.FC<LoanViewProps> = ({
   };
 
   useEffect(() => {
-    console.log('🎯 Selection changed - selectedId:', selectedId, 'loanRequests:', loanRequests.length);
+    console.log(
+      "🎯 Selection changed - selectedId:",
+      selectedId,
+      "loanRequests:",
+      loanRequests.length,
+    );
     if (selectedId) {
       const found = loanRequests.find((r) => r.id === selectedId);
-      console.log('🔍 Search result for ID', selectedId, ':', found ? 'FOUND' : 'NOT FOUND');
+      console.log(
+        "🔍 Search result for ID",
+        selectedId,
+        ":",
+        found ? "FOUND" : "NOT FOUND",
+      );
       if (found) {
-        console.log('✅ Selected loan found:', found);
+        console.log("✅ Selected loan found:", found);
         setSelectedLoan(found);
         setLocalOwnerName(found.ownerName || "UNASSIGNED");
         setLocalEligibleAmount(found.eligibleAmount || "");
 
         // Fetch form data for selected submission
-        console.log('About to fetch form data for ID:', found.id);
+        console.log("About to fetch form data for ID:", found.id);
         fetchFormData(found.id);
       }
     } else {
