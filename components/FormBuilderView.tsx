@@ -263,7 +263,10 @@ const FormBuilderView: React.FC = () => {
       visibility: newFormData.visibility,
       description: newFormData.description || undefined,
       enable_steps: newFormData.enable_steps,
-      step_labels: newFormData.step_labels.length > 0 ? newFormData.step_labels : undefined,
+      step_labels:
+        newFormData.step_labels.length > 0
+          ? newFormData.step_labels
+          : undefined,
     });
 
     if (error) {

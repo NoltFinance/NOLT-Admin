@@ -700,9 +700,7 @@ const PublicFormSubmissionView: React.FC = () => {
                   onClick={handlePreviousStep}
                   className="flex-1 py-4 bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-white font-black uppercase tracking-[0.2em] text-sm rounded-[24px] hover:bg-slate-200 dark:hover:bg-slate-600 transition-all flex items-center justify-center gap-2"
                 >
-                  <span className="material-symbols-outlined">
-                    arrow_back
-                  </span>
+                  <span className="material-symbols-outlined">arrow_back</span>
                   Previous
                 </button>
               )}
