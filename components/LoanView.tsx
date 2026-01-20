@@ -192,7 +192,9 @@ const LoanView: React.FC<LoanViewProps> = ({
 
   // Form fields and submission data
   const [formFields, setFormFields] = useState<FormField[]>([]);
-  const [formSubmission, setFormSubmission] = useState<FormSubmission | null>(null);
+  const [formSubmission, setFormSubmission] = useState<FormSubmission | null>(
+    null,
+  );
   const [formConfig, setFormConfig] = useState<CustomForm | null>(null);
 
   // Fetch loan submissions from database
@@ -296,7 +298,7 @@ const LoanView: React.FC<LoanViewProps> = ({
         setSelectedLoan(found);
         setLocalOwnerName(found.ownerName || "UNASSIGNED");
         setLocalEligibleAmount(found.eligibleAmount || "");
-        
+
         // Fetch form data for selected submission
         fetchFormData(found.id);
       }

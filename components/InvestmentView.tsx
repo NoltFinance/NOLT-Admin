@@ -13,7 +13,10 @@ import ApprovalStepper from "./ApprovalStepper";
 import WorkflowStageIndicator from "./WorkflowStageIndicator";
 import { flattenInvestment, downloadAsCSV } from "../utils/exportUtils";
 import { getSubmissionsByType } from "../services/submissionsService";
-import { executeWorkflowTransition, reassignApplication } from "../services/workflowService";
+import {
+  executeWorkflowTransition,
+  reassignApplication,
+} from "../services/workflowService";
 import {
   getAvailableActions,
   canPerformAction,
@@ -191,7 +194,9 @@ const InvestmentView: React.FC<InvestmentViewProps> = ({
 
   // Form fields and submission data
   const [formFields, setFormFields] = useState<FormField[]>([]);
-  const [formSubmission, setFormSubmission] = useState<FormSubmission | null>(null);
+  const [formSubmission, setFormSubmission] = useState<FormSubmission | null>(
+    null,
+  );
   const [formConfig, setFormConfig] = useState<CustomForm | null>(null);
 
   // Fetch investment submissions from database
@@ -298,7 +303,7 @@ const InvestmentView: React.FC<InvestmentViewProps> = ({
       if (found) {
         setSelectedInvestment(found);
         setLocalOwnerName(found.ownerName || "UNASSIGNED");
-        
+
         // Fetch form data for selected submission
         fetchFormData(found.id);
       }

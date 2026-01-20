@@ -221,12 +221,14 @@ const AssignedFormsView: React.FC<AssignedFormsViewProps> = ({
   };
 
   // Map submission status to RequestStatus
-  const mapToRequestStatus = (status: FormSubmission["status"]): RequestStatus => {
+  const mapToRequestStatus = (
+    status: FormSubmission["status"],
+  ): RequestStatus => {
     const statusMap: Record<FormSubmission["status"], RequestStatus> = {
-      "Submitted": "Pending Review",
+      Submitted: "Pending Review",
       "Under Review": "Docs Verification",
-      "Approved": "Approved",
-      "Rejected": "Declined",
+      Approved: "Approved",
+      Rejected: "Declined",
     };
     return statusMap[status];
   };
@@ -253,7 +255,7 @@ const AssignedFormsView: React.FC<AssignedFormsViewProps> = ({
 
       if (result.success && result.newStatus) {
         alert(result.message || "Application approved successfully");
-        
+
         // Refresh data
         if (selectedForm) {
           await fetchSubmissions(selectedForm.id);
@@ -297,7 +299,7 @@ const AssignedFormsView: React.FC<AssignedFormsViewProps> = ({
 
       if (result.success && result.newStatus) {
         alert(result.message || `Application ${action}ed successfully`);
-        
+
         // Refresh data
         if (selectedForm) {
           await fetchSubmissions(selectedForm.id);
@@ -323,7 +325,7 @@ const AssignedFormsView: React.FC<AssignedFormsViewProps> = ({
   const handleReassign = async () => {
     if (!selectedSubmission || !selectedUserId) return;
 
-    const selectedUser = availableUsers.find(u => u.id === selectedUserId);
+    const selectedUser = availableUsers.find((u) => u.id === selectedUserId);
     if (!selectedUser) return;
 
     try {
@@ -331,12 +333,12 @@ const AssignedFormsView: React.FC<AssignedFormsViewProps> = ({
       const result = await reassignApplication(
         selectedSubmission.id,
         selectedUserId,
-        currentUser.role
+        currentUser.role,
       );
 
       if (result.success) {
         alert(`Application successfully reassigned to ${selectedUser.name}`);
-        
+
         // Refresh data
         if (selectedForm) {
           await fetchSubmissions(selectedForm.id);
@@ -346,8 +348,8 @@ const AssignedFormsView: React.FC<AssignedFormsViewProps> = ({
         alert(result.error || "Failed to reassign application");
       }
     } catch (err) {
-      console.error('Reassignment error:', err);
-      alert('Failed to reassign application');
+      console.error("Reassignment error:", err);
+      alert("Failed to reassign application");
     } finally {
       setIsProcessing(false);
     }
@@ -361,7 +363,7 @@ const AssignedFormsView: React.FC<AssignedFormsViewProps> = ({
       const result = await updateEligibleAmount(
         selectedSubmission.id,
         eligibleAmount,
-        currentUser.id
+        currentUser.id,
       );
 
       if (result.success) {
@@ -370,8 +372,8 @@ const AssignedFormsView: React.FC<AssignedFormsViewProps> = ({
         alert(result.error || "Failed to update eligible amount");
       }
     } catch (err) {
-      console.error('Update eligible amount error:', err);
-      alert('Failed to update eligible amount');
+      console.error("Update eligible amount error:", err);
+      alert("Failed to update eligible amount");
     } finally {
       setIsProcessing(false);
     }
@@ -601,43 +603,50 @@ const AssignedFormsView: React.FC<AssignedFormsViewProps> = ({
           {/* Actions Panel */}
           <div className="space-y-6">
             {/* Workflow Stage Indicator */}
-            {selectedForm.type && (selectedForm.type === "Investment" || selectedForm.type === "Loan") && (
-              <div className="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-800 rounded-xl p-6">
-                <WorkflowStageIndicator
-                  currentStatus={mapToRequestStatus(selectedSubmission.status)}
-                  workflowType={selectedForm.type as "Investment" | "Loan"}
-                  userRole={currentUser.role}
-                />
-              </div>
-            )}
+            {selectedForm.type &&
+              (selectedForm.type === "Investment" ||
+                selectedForm.type === "Loan") && (
+                <div className="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-800 rounded-xl p-6">
+                  <WorkflowStageIndicator
+                    currentStatus={mapToRequestStatus(
+                      selectedSubmission.status,
+                    )}
+                    workflowType={selectedForm.type as "Investment" | "Loan"}
+                    userRole={currentUser.role}
+                  />
+                </div>
+              )}
 
             {/* Eligible Amount (Credit Check for Loans) */}
-            {selectedForm.type === "Loan" && mapToRequestStatus(selectedSubmission.status) === "Internal Audit" && currentUser.role === "Credit" && (
-              <div className="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-800 rounded-xl p-6">
-                <h2 className="text-lg font-black text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-                  <span className="material-symbols-outlined text-primary">
-                    payments
-                  </span>
-                  Eligible Amount
-                </h2>
-                <div className="space-y-3">
-                  <input
-                    type="text"
-                    value={eligibleAmount}
-                    onChange={(e) => setEligibleAmount(e.target.value)}
-                    placeholder="Enter eligible amount..."
-                    className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-surface-darker text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
-                  />
-                  <button
-                    onClick={handleUpdateEligibleAmount}
-                    disabled={isProcessing || !eligibleAmount}
-                    className="w-full px-4 py-3 bg-indigo-500 text-white rounded-lg text-sm font-bold hover:bg-indigo-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Set Eligible Amount
-                  </button>
+            {selectedForm.type === "Loan" &&
+              mapToRequestStatus(selectedSubmission.status) ===
+                "Internal Audit" &&
+              currentUser.role === "Credit" && (
+                <div className="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-800 rounded-xl p-6">
+                  <h2 className="text-lg font-black text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-primary">
+                      payments
+                    </span>
+                    Eligible Amount
+                  </h2>
+                  <div className="space-y-3">
+                    <input
+                      type="text"
+                      value={eligibleAmount}
+                      onChange={(e) => setEligibleAmount(e.target.value)}
+                      placeholder="Enter eligible amount..."
+                      className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-surface-darker text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
+                    />
+                    <button
+                      onClick={handleUpdateEligibleAmount}
+                      disabled={isProcessing || !eligibleAmount}
+                      className="w-full px-4 py-3 bg-indigo-500 text-white rounded-lg text-sm font-bold hover:bg-indigo-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Set Eligible Amount
+                    </button>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
             {/* Review Notes */}
             <div className="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-800 rounded-xl p-6">
@@ -656,77 +665,94 @@ const AssignedFormsView: React.FC<AssignedFormsViewProps> = ({
             </div>
 
             {/* Workflow Actions */}
-            {selectedForm.type && (selectedForm.type === "Investment" || selectedForm.type === "Loan") && (
-              <div className="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-800 rounded-xl p-6">
-                <h2 className="text-lg font-black text-slate-900 dark:text-white mb-4">
-                  Workflow Actions
-                </h2>
-                <div className="space-y-3">
-                  {/* Approve Action */}
-                  <button
-                    onClick={handleApprove}
-                    disabled={isProcessing || !canPerformAction(
-                      currentUser.role,
-                      mapToRequestStatus(selectedSubmission.status),
-                      selectedForm.type as "Investment" | "Loan",
-                      "approve"
-                    )}
-                    className="w-full px-4 py-3 bg-emerald-500 text-white rounded-lg text-sm font-bold hover:bg-emerald-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-slate-300 dark:disabled:bg-slate-700 flex items-center justify-center gap-2"
-                  >
-                    <span className="material-symbols-outlined text-sm">
-                      check_circle
-                    </span>
-                    Approve & Continue
-                  </button>
+            {selectedForm.type &&
+              (selectedForm.type === "Investment" ||
+                selectedForm.type === "Loan") && (
+                <div className="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-800 rounded-xl p-6">
+                  <h2 className="text-lg font-black text-slate-900 dark:text-white mb-4">
+                    Workflow Actions
+                  </h2>
+                  <div className="space-y-3">
+                    {/* Approve Action */}
+                    <button
+                      onClick={handleApprove}
+                      disabled={
+                        isProcessing ||
+                        !canPerformAction(
+                          currentUser.role,
+                          mapToRequestStatus(selectedSubmission.status),
+                          selectedForm.type as "Investment" | "Loan",
+                          "approve",
+                        )
+                      }
+                      className="w-full px-4 py-3 bg-emerald-500 text-white rounded-lg text-sm font-bold hover:bg-emerald-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-slate-300 dark:disabled:bg-slate-700 flex items-center justify-center gap-2"
+                    >
+                      <span className="material-symbols-outlined text-sm">
+                        check_circle
+                      </span>
+                      Approve & Continue
+                    </button>
 
-                  {/* Return Action */}
-                  <button
-                    onClick={() => handleActionTrigger("Return")}
-                    disabled={isProcessing || !canPerformAction(
-                      currentUser.role,
-                      mapToRequestStatus(selectedSubmission.status),
-                      selectedForm.type as "Investment" | "Loan",
-                      "return"
-                    )}
-                    className="w-full px-4 py-3 bg-amber-500 text-white rounded-lg text-sm font-bold hover:bg-amber-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-slate-300 dark:disabled:bg-slate-700 flex items-center justify-center gap-2"
-                  >
-                    <span className="material-symbols-outlined text-sm">
-                      undo
-                    </span>
-                    Return to Previous
-                  </button>
+                    {/* Return Action */}
+                    <button
+                      onClick={() => handleActionTrigger("Return")}
+                      disabled={
+                        isProcessing ||
+                        !canPerformAction(
+                          currentUser.role,
+                          mapToRequestStatus(selectedSubmission.status),
+                          selectedForm.type as "Investment" | "Loan",
+                          "return",
+                        )
+                      }
+                      className="w-full px-4 py-3 bg-amber-500 text-white rounded-lg text-sm font-bold hover:bg-amber-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-slate-300 dark:disabled:bg-slate-700 flex items-center justify-center gap-2"
+                    >
+                      <span className="material-symbols-outlined text-sm">
+                        undo
+                      </span>
+                      Return to Previous
+                    </button>
 
-                  {/* Decline Action */}
-                  <button
-                    onClick={() => handleActionTrigger("Decline")}
-                    disabled={isProcessing || !canPerformAction(
-                      currentUser.role,
-                      mapToRequestStatus(selectedSubmission.status),
-                      selectedForm.type as "Investment" | "Loan",
-                      "decline"
-                    )}
-                    className="w-full px-4 py-3 bg-rose-500 text-white rounded-lg text-sm font-bold hover:bg-rose-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-slate-300 dark:disabled:bg-slate-700 flex items-center justify-center gap-2"
-                  >
-                    <span className="material-symbols-outlined text-sm">
-                      cancel
-                    </span>
-                    Decline Application
-                  </button>
+                    {/* Decline Action */}
+                    <button
+                      onClick={() => handleActionTrigger("Decline")}
+                      disabled={
+                        isProcessing ||
+                        !canPerformAction(
+                          currentUser.role,
+                          mapToRequestStatus(selectedSubmission.status),
+                          selectedForm.type as "Investment" | "Loan",
+                          "decline",
+                        )
+                      }
+                      className="w-full px-4 py-3 bg-rose-500 text-white rounded-lg text-sm font-bold hover:bg-rose-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-slate-300 dark:disabled:bg-slate-700 flex items-center justify-center gap-2"
+                    >
+                      <span className="material-symbols-outlined text-sm">
+                        cancel
+                      </span>
+                      Decline Application
+                    </button>
 
-                  {/* Reassign Action */}
-                  <button
-                    onClick={handleOpenReassignModal}
-                    disabled={isProcessing || !(currentUser.role === "Sales Manager" || currentUser.role === "Super Admin")}
-                    className="w-full px-4 py-3 bg-indigo-500 text-white rounded-lg text-sm font-bold hover:bg-indigo-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-slate-300 dark:disabled:bg-slate-700 flex items-center justify-center gap-2"
-                  >
-                    <span className="material-symbols-outlined text-sm">
-                      swap_horiz
-                    </span>
-                    Reassign Owner
-                  </button>
+                    {/* Reassign Action */}
+                    <button
+                      onClick={handleOpenReassignModal}
+                      disabled={
+                        isProcessing ||
+                        !(
+                          currentUser.role === "Sales Manager" ||
+                          currentUser.role === "Super Admin"
+                        )
+                      }
+                      className="w-full px-4 py-3 bg-indigo-500 text-white rounded-lg text-sm font-bold hover:bg-indigo-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-slate-300 dark:disabled:bg-slate-700 flex items-center justify-center gap-2"
+                    >
+                      <span className="material-symbols-outlined text-sm">
+                        swap_horiz
+                      </span>
+                      Reassign Owner
+                    </button>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
             {/* Previous Notes */}
             {selectedSubmission.review_notes && (
@@ -1104,7 +1130,7 @@ const AssignedFormsView: React.FC<AssignedFormsViewProps> = ({
           )}
         </>
       )}
-      
+
       {/* Action Modal (Decline/Return) */}
       {isActionModalOpen && (
         <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in">
@@ -1112,7 +1138,9 @@ const AssignedFormsView: React.FC<AssignedFormsViewProps> = ({
             <div className="p-8 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
               <div>
                 <h3 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight">
-                  {actionMode === "Decline" ? "Decline Application" : "Return to Previous Node"}
+                  {actionMode === "Decline"
+                    ? "Decline Application"
+                    : "Return to Previous Node"}
                 </h3>
                 <p className="text-sm text-slate-500 mt-1 font-bold">
                   {actionMode === "Decline"
@@ -1218,7 +1246,9 @@ const AssignedFormsView: React.FC<AssignedFormsViewProps> = ({
                       Reassignment Notice
                     </p>
                     <p className="text-[11px] text-indigo-700 dark:text-indigo-300 leading-relaxed">
-                      The selected user will become the new owner and will be notified of this change. This action will be logged in the operation history.
+                      The selected user will become the new owner and will be
+                      notified of this change. This action will be logged in the
+                      operation history.
                     </p>
                   </div>
                 </div>
