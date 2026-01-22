@@ -14,7 +14,7 @@ export interface AuthUser {
 }
 
 /**
- * Sign in user with email and password
+ * Sign in user with email and password (Step 1: Verify credentials and send OTP)
  */
 export async function signInWithEmail(
   email: string,
@@ -28,7 +28,7 @@ export async function signInWithEmail(
     // Set request metadata for audit logging
     await setRequestMetadata();
 
-    // Authenticate with Supabase
+    // Step 1: Verify credentials with password
     const { data: authData, error: authError } =
       await supabase.auth.signInWithPassword({
         email,
@@ -45,7 +45,7 @@ export async function signInWithEmail(
       return { user: null, error: "Authentication failed" };
     }
 
-    // Fetch user profile from database
+    // Fetch user profile to verify role and status
     const { data: profile, error: profileError } = await supabase
       .from("users")
       .select("*")
@@ -53,14 +53,12 @@ export async function signInWithEmail(
       .single();
 
     if (profileError || !profile) {
-      // If profile doesn't exist, sign out and return error
       await supabase.auth.signOut();
       return { user: null, error: "User profile not found" };
     }
 
     // Check if user has admin role
     if (!isAdminRole(profile.role as UserRole)) {
-      // Sign out non-admin users
       await supabase.auth.signOut();
       return {
         user: null,
@@ -77,25 +75,32 @@ export async function signInWithEmail(
       };
     }
 
-    // Update last active timestamp
-    await supabase
-      .from("users")
-      .update({ lastActive: new Date().toISOString() })
-      .eq("id", authData.user.id);
+    // Step 2: Sign out immediately and send OTP for 2FA
+    await supabase.auth.signOut();
 
-    const user: AuthUser = {
-      id: profile.id,
-      email: profile.email,
-      name: profile.name,
-      role: profile.role as UserRole,
-      avatar: profile.avatar,
-      lastActive: new Date().toISOString(),
+    // Send OTP code (not magic link) to user's email
+    const { error: otpError } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        shouldCreateUser: false,
+        emailRedirectTo: undefined, // Don't include redirect to prevent magic link
+      },
+    });
+
+    if (otpError) {
+      console.error("OTP send error:", otpError);
+      return {
+        user: null,
+        error: "Failed to send verification code. Please try again.",
+      };
+    }
+
+    // Return requiring OTP verification
+    return {
+      user: null,
+      error: null,
+      requiresOTP: true,
     };
-
-    // Log successful login
-    await logAuthEvent("LOGIN", user.id, user.email);
-
-    return { user, error: null };
   } catch (error) {
     console.error("Sign in error:", error);
     return {
@@ -225,8 +230,7 @@ export async function signUpWithEmail(
       },
     });
 
-    console.log("SignUp metadata:", { name, role }); // Debug log
-    console.log("Auth data:", authData); // Debug log
+    console.log("SignUp data:", authData); // Debug log
 
     if (authError) {
       return { success: false, error: authError.message };
@@ -235,6 +239,9 @@ export async function signUpWithEmail(
     if (!authData.user) {
       return { success: false, error: "Signup failed" };
     }
+
+    // Profile is automatically created by the database trigger
+    console.log("User created, profile will be created by trigger");
 
     // If email confirmation is required
     if (authData.user && !authData.session) {
@@ -322,6 +329,9 @@ export async function verifyOTP(
       avatar: profile.avatar,
       lastActive: new Date().toISOString(),
     };
+
+    // Log successful login for OTP-based authentication
+    await logAuthEvent("LOGIN", user.id, user.email);
 
     return { success: true, user, error: null };
   } catch (error) {
@@ -564,17 +574,19 @@ export async function createAdminUser(params: {
     });
 
     // Sign up the new user
-    const { data: authData, error: authError } = await tempSupabase.auth.signUp({
-      email: params.email,
-      password: params.password,
-      options: {
-        data: {
-          name: params.name,
-          role: params.role, // Trigger will use this to create profile
-          avatar: `https://picsum.photos/seed/${Date.now()}/100/100`, // Pass avatar to meta for trigger
+    const { data: authData, error: authError } = await tempSupabase.auth.signUp(
+      {
+        email: params.email,
+        password: params.password,
+        options: {
+          data: {
+            name: params.name,
+            role: params.role, // Trigger will use this to create profile
+            avatar: `https://picsum.photos/seed/${Date.now()}/100/100`, // Pass avatar to meta for trigger
+          },
         },
       },
-    });
+    );
 
     if (authError) {
       return {
@@ -599,9 +611,9 @@ export async function createAdminUser(params: {
       avatar: `https://picsum.photos/seed/${authData.user.id}/100/100`,
     };
 
-    // If referral code was provided, we might need to update it manually 
+    // If referral code was provided, we might need to update it manually
     // since the trigger doesn't know about it unless we added it to metadata.
-    // However, the trigger defaults are fine for now. 
+    // However, the trigger defaults are fine for now.
     // We can do a quick update if needed, but we need to wait for trigger to finish.
     // For now, let's assume the basic profile is created.
 
@@ -609,7 +621,10 @@ export async function createAdminUser(params: {
       // Best effort update for referral code
       // We use the main client (which is Admin) to update the new user's profile
       // This works because Super Admins have RLS permission to update all profiles
-      await supabase.from("users").update({ referral_code: params.referralCode }).eq("id", authData.user.id);
+      await supabase
+        .from("users")
+        .update({ referral_code: params.referralCode })
+        .eq("id", authData.user.id);
     }
 
     return { user: newUser, error: null };
@@ -790,9 +805,11 @@ export async function fetchAllUsers(): Promise<{
       role: u.role as UserRole,
       status: u.status as UserStatus,
       referralCode: u.referral_code,
-      lastActive: u.last_active ? new Date(u.last_active).toLocaleString() : "Never",
+      lastActive: u.last_active
+        ? new Date(u.last_active).toLocaleString()
+        : "Never",
       avatar: u.avatar || `https://picsum.photos/seed/${u.id}/100/100`,
-      teamLeadId: u.team_lead_id
+      teamLeadId: u.team_lead_id,
     }));
 
     return { users: formattedUsers, error: null };
@@ -800,7 +817,8 @@ export async function fetchAllUsers(): Promise<{
     console.error("Fetch users error:", error);
     return {
       users: null,
-      error: error instanceof Error ? error.message : "An unexpected error occurred",
+      error:
+        error instanceof Error ? error.message : "An unexpected error occurred",
     };
   }
 }
@@ -810,7 +828,7 @@ export async function fetchAllUsers(): Promise<{
  */
 export async function updateUserProfile(
   userId: string,
-  updates: Partial<User>
+  updates: Partial<User>,
 ): Promise<{
   success: boolean;
   error: string | null;
@@ -820,7 +838,8 @@ export async function updateUserProfile(
     const dbUpdates: any = {};
     if (updates.role) dbUpdates.role = updates.role;
     if (updates.status) dbUpdates.status = updates.status;
-    if (updates.teamLeadId !== undefined) dbUpdates.team_lead_id = updates.teamLeadId;
+    if (updates.teamLeadId !== undefined)
+      dbUpdates.team_lead_id = updates.teamLeadId;
     if (updates.referralCode) dbUpdates.referral_code = updates.referralCode;
 
     const { error } = await supabase
@@ -837,7 +856,8 @@ export async function updateUserProfile(
     console.error("Update user error:", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : "An unexpected error occurred",
+      error:
+        error instanceof Error ? error.message : "An unexpected error occurred",
     };
   }
 }
@@ -850,10 +870,7 @@ export async function deleteUserProfile(userId: string): Promise<{
   error: string | null;
 }> {
   try {
-    const { error } = await supabase
-      .from("users")
-      .delete()
-      .eq("id", userId);
+    const { error } = await supabase.from("users").delete().eq("id", userId);
 
     if (error) {
       return { success: false, error: error.message };
@@ -864,7 +881,8 @@ export async function deleteUserProfile(userId: string): Promise<{
     console.error("Delete user error:", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : "An unexpected error occurred",
+      error:
+        error instanceof Error ? error.message : "An unexpected error occurred",
     };
   }
 }
