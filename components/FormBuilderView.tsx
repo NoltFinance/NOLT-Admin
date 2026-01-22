@@ -746,7 +746,7 @@ const FormBuilderView: React.FC = () => {
               {/* Quick Actions */}
               <div className="mt-4 flex gap-2">
                 <button
-                  onClick={() => window.open(`/apply/${form.id}`, '_blank')}
+                  onClick={() => window.open(`/apply/${form.id}`, "_blank")}
                   className="flex-1 px-4 py-2.5 bg-primary text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
                 >
                   <span className="material-symbols-outlined text-base">
