@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
+import { toast } from "sonner";
 import {
   ReviewRequest,
   UserRole,
@@ -518,13 +519,13 @@ const InvestmentView: React.FC<InvestmentViewProps> = ({
         const { data } = await getSubmissionsByType("Investment");
         if (data) setInvestmentRequests(data);
 
-        alert(`Application successfully reassigned to ${selectedUser.name}`);
+        toast.success(`Application successfully reassigned to ${selectedUser.name}`);
       } else {
-        alert(result.error || "Failed to reassign application");
+        toast.error(result.error || "Failed to reassign application");
       }
     } catch (err) {
       console.error("Reassignment error:", err);
-      alert("Failed to reassign application");
+      toast.error("Failed to reassign application");
     } finally {
       setIsReassignModalOpen(false);
       setIsReassigning(false);
@@ -562,8 +563,9 @@ const InvestmentView: React.FC<InvestmentViewProps> = ({
 
       const { data } = await getSubmissionsByType("Investment");
       if (data) setInvestmentRequests(data);
+      toast.success(result.message || "Audit passed successfully");
     } else {
-      alert(result.error || "Failed to pass audit");
+      toast.error(result.error || "Failed to pass audit");
     }
   };
 
@@ -597,8 +599,9 @@ const InvestmentView: React.FC<InvestmentViewProps> = ({
 
       const { data } = await getSubmissionsByType("Investment");
       if (data) setInvestmentRequests(data);
+      toast.success(result.message || "Disbursement confirmed successfully");
     } else {
-      alert(result.error || "Failed to confirm disbursement");
+      toast.error(result.error || "Failed to confirm disbursement");
     }
   };
 
@@ -636,8 +639,9 @@ const InvestmentView: React.FC<InvestmentViewProps> = ({
 
       const { data } = await getSubmissionsByType("Investment");
       if (data) setInvestmentRequests(data);
+      toast.success(result.message || `Application ${action}ed successfully`);
     } else {
-      alert(result.error || `Failed to ${action} application`);
+      toast.error(result.error || `Failed to ${action} application`);
     }
 
     setIsDeclineModalOpen(false);
@@ -1613,8 +1617,8 @@ const InvestmentView: React.FC<InvestmentViewProps> = ({
                     </div>
                     <span
                       className={`inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide ${req.status === 'Approved' ? 'text-emerald-600' :
-                          req.status === 'Declined' ? 'text-rose-600' :
-                            'text-amber-600'
+                        req.status === 'Declined' ? 'text-rose-600' :
+                          'text-amber-600'
                         }`}
                     >
                       {req.status}

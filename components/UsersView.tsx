@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { toast } from "sonner";
 import { User, UserRole, UserStatus } from "../types";
 import {
   createAdminUser,
@@ -97,8 +98,9 @@ const UsersView: React.FC = () => {
 
     if (success) {
       await loadUsers();
+      toast.success(`User status updated to ${newStatus}`);
     } else {
-      alert(`Failed to update status: ${error}`);
+      toast.error(`Failed to update status: ${error}`);
     }
     setActionLoading(null);
   };
@@ -110,8 +112,9 @@ const UsersView: React.FC = () => {
     if (success) {
       await loadUsers();
       setEditingUser(null);
+      toast.success("User role updated successfully");
     } else {
-      alert(`Failed to update role: ${error}`);
+      toast.error(`Failed to update role: ${error}`);
     }
     setActionLoading(null);
   };
@@ -123,8 +126,9 @@ const UsersView: React.FC = () => {
     if (success) {
       await loadUsers();
       setEditingHierarchyId(null);
+      toast.success("Team Lead updated successfully");
     } else {
-      alert(`Failed to update team lead: ${error}`);
+      toast.error(`Failed to update team lead: ${error}`);
     }
     setActionLoading(null);
   };
@@ -137,26 +141,36 @@ const UsersView: React.FC = () => {
 
     if (success) {
       await loadUsers();
+      toast.success("Referral code regenerated");
     } else {
-      alert(`Failed to update referral code: ${error}`);
+      toast.error(`Failed to update referral code: ${error}`);
     }
     setActionLoading(null);
   };
 
   const handleDeleteUser = async (user: User) => {
-    if (!window.confirm(`Are you sure you want to delete ${user.name}? This action cannot be undone.`)) {
-      return;
-    }
+    toast("Are you sure?", {
+      description: `You are about to delete ${user.name}. This cannot be undone.`,
+      action: {
+        label: "Delete",
+        onClick: async () => {
+          setActionLoading(user.id);
+          const { success, error } = await deleteUserProfile(user.id);
 
-    setActionLoading(user.id);
-    const { success, error } = await deleteUserProfile(user.id);
-
-    if (success) {
-      await loadUsers();
-    } else {
-      alert(`Failed to delete user: ${error}`);
-    }
-    setActionLoading(null);
+          if (success) {
+            await loadUsers();
+            toast.success(`User ${user.name} deleted`);
+          } else {
+            toast.error(`Failed to delete user: ${error}`);
+          }
+          setActionLoading(null);
+        },
+      },
+      cancel: {
+        label: "Cancel",
+      },
+      duration: 5000,
+    });
   };
 
   const handleCreateUser = async () => {
@@ -200,11 +214,14 @@ const UsersView: React.FC = () => {
           setInviteRole("Sales Officer");
           setCreateSuccess(false);
         }, 1500);
+
+        toast.success("User created successfully");
       }
     } catch (err) {
       setCreateError(
         err instanceof Error ? err.message : "Failed to create user",
       );
+      toast.error("Failed to create user");
     } finally {
       setIsCreating(false);
     }

@@ -625,6 +625,7 @@ export async function submitForm(
   applicantEmail: string,
   applicantName: string,
   fieldResponses: Record<string, any>,
+  referralCode?: string,
 ): Promise<{ data: FormSubmission | null; error: string | null }> {
   try {
     // First, get the form to check administrators
@@ -662,6 +663,7 @@ export async function submitForm(
         field_responses: fieldResponses,
         status: "Submitted",
         reviewed_by: reviewedBy, // Auto-assign to random administrator
+        referral_code: referralCode,
       })
       .select()
       .single();

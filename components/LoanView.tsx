@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
+import { toast } from "sonner";
 import {
   ReviewRequest,
   UserRole,
@@ -508,13 +509,13 @@ const LoanView: React.FC<LoanViewProps> = ({
         const { data } = await getSubmissionsByType("Loan");
         if (data) setLoanRequests(data);
 
-        alert(`Application successfully reassigned to ${selectedUser.name}`);
+        toast.success(`Application successfully reassigned to ${selectedUser.name}`);
       } else {
-        alert(result.error || "Failed to reassign application");
+        toast.error(result.error || "Failed to reassign application");
       }
     } catch (err) {
       console.error("Reassignment error:", err);
-      alert("Failed to reassign application");
+      toast.error("Failed to reassign application");
     } finally {
       setIsReassignModalOpen(false);
       setIsReassigning(false);
@@ -546,12 +547,14 @@ const LoanView: React.FC<LoanViewProps> = ({
           );
           if (updated) setSelectedLoan(updated);
         }
+
+        toast.success(result.message || "Audit pass completed successfully");
       } else {
-        alert(result.error || "Failed to complete audit pass");
+        toast.error(result.error || "Failed to complete audit pass");
       }
     } catch (error) {
       console.error("Error passing audit:", error);
-      alert("Failed to complete audit pass. Please try again.");
+      toast.error("Failed to complete audit pass. Please try again.");
     }
   };
 
@@ -579,19 +582,21 @@ const LoanView: React.FC<LoanViewProps> = ({
           );
           if (updated) setSelectedLoan(updated);
         }
+
+        toast.success(result.message || "Disbursement passed successfully");
       } else {
-        alert(result.error || "Failed to confirm disbursement");
+        toast.error(result.error || "Failed to confirm disbursement");
       }
     } catch (error) {
       console.error("Error confirming disbursement:", error);
-      alert("Failed to confirm disbursement. Please try again.");
+      toast.error("Failed to confirm disbursement. Please try again.");
     }
   };
 
   // Special Credit Approval Logic
   const handleCreditVerify = async () => {
     if (!localEligibleAmount.trim()) {
-      alert(
+      toast.error(
         "Please supply the applicant's eligible amount before completing approval.",
       );
       return;
@@ -609,7 +614,7 @@ const LoanView: React.FC<LoanViewProps> = ({
       );
 
       if (!amountResult.success) {
-        alert(amountResult.error || "Failed to update eligible amount.");
+        toast.error(amountResult.error || "Failed to update eligible amount.");
         return;
       }
 
@@ -635,12 +640,14 @@ const LoanView: React.FC<LoanViewProps> = ({
           );
           if (updated) setSelectedLoan(updated);
         }
+
+        toast.success(result.message || "Credit verification completed successfully");
       } else {
-        alert(result.error || "Failed to complete credit verification");
+        toast.error(result.error || "Failed to complete credit verification");
       }
     } catch (error) {
       console.error("Error verifying credit:", error);
-      alert("Failed to complete credit verification. Please try again.");
+      toast.error("Failed to complete credit verification. Please try again.");
     }
   };
 
@@ -671,15 +678,17 @@ const LoanView: React.FC<LoanViewProps> = ({
           );
           if (updated) setSelectedLoan(updated);
         }
+
+        toast.success(result.message || `Application ${action}ed successfully`);
       } else {
-        alert(result.error || "Failed to process action");
+        toast.error(result.error || "Failed to process action");
       }
 
       setIsDeclineModalOpen(false);
       setDeclineComment("");
     } catch (error) {
       console.error("Error processing decline/return:", error);
-      alert("Failed to process action. Please try again.");
+      toast.error("Failed to process action. Please try again.");
     }
   };
 
@@ -955,11 +964,10 @@ const LoanView: React.FC<LoanViewProps> = ({
                     <button
                       onClick={handleCreditVerify}
                       disabled={!canProceedWithCredit}
-                      className={`px-6 py-2.5 text-[10px] font-black uppercase tracking-widest text-white rounded-xl transition-all ${
-                        canProceedWithCredit
-                          ? "bg-primary hover:bg-blue-600 shadow-xl shadow-primary/30"
-                          : "bg-slate-400 cursor-not-allowed"
-                      }`}
+                      className={`px-6 py-2.5 text-[10px] font-black uppercase tracking-widest text-white rounded-xl transition-all ${canProceedWithCredit
+                        ? "bg-primary hover:bg-blue-600 shadow-xl shadow-primary/30"
+                        : "bg-slate-400 cursor-not-allowed"
+                        }`}
                     >
                       Verify & Approve
                     </button>
@@ -1064,7 +1072,7 @@ const LoanView: React.FC<LoanViewProps> = ({
                     let iconBg = "bg-slate-400";
                     let iconColor = "text-white";
                     let icon = "circle";
-                    
+
                     if (log.action.includes("APPROVED")) {
                       iconBg = "bg-emerald-500";
                       icon = "check_circle";
@@ -1088,7 +1096,7 @@ const LoanView: React.FC<LoanViewProps> = ({
                         {index !== loan.operationLogs!.length - 1 && (
                           <div className="absolute left-[15px] top-8 bottom-0 w-[2px] bg-slate-200 dark:bg-slate-700" />
                         )}
-                        
+
                         {/* Icon */}
                         <div className={`relative z-10 flex-shrink-0 w-8 h-8 rounded-full ${iconBg} flex items-center justify-center shadow-sm`}>
                           <span className={`material-symbols-outlined text-[16px] ${iconColor}`}>
@@ -1131,7 +1139,7 @@ const LoanView: React.FC<LoanViewProps> = ({
                               {log.timestamp}
                             </span>
                           </div>
-                          
+
                           {log.comment && (
                             <div className="mt-2 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
                               <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">

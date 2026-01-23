@@ -1,11 +1,15 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { toast } from "sonner";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { CustomForm, FormField } from "../types";
 import { getForms, submitForm } from "../services/formsService";
+import imageCompression from "browser-image-compression";
+import { uploadFile } from "../services/storageService";
 
 const PublicFormSubmissionView: React.FC = () => {
   const navigate = useNavigate();
   const { formId } = useParams<{ formId: string }>();
+  const [searchParams] = useSearchParams();
   const [form, setForm] = useState<CustomForm | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -292,17 +296,19 @@ const PublicFormSubmissionView: React.FC = () => {
         formId!,
         submitterEmail,
         submitterName,
+
         formData,
+        searchParams.get("ref") || undefined,
       );
 
       if (error) {
-        alert(`Error submitting form: ${error}`);
+        toast.error(`Error submitting form: ${error}`);
       } else {
         setSubmitted(true);
       }
     } catch (error) {
       console.error("Submission error:", error);
-      alert("An error occurred while submitting the form");
+      toast.error("An error occurred while submitting the form");
     } finally {
       setSubmitting(false);
     }
@@ -334,23 +340,88 @@ const PublicFormSubmissionView: React.FC = () => {
               className="w-full h-24 bg-white dark:bg-background-dark/50 border border-slate-100 dark:border-slate-800 rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-primary dark:text-white placeholder:text-slate-300 resize-none"
             />
           ) : field.field_type === "file" ? (
-            <div className="w-full py-6 flex flex-col items-center gap-2 border-2 border-dashed border-slate-100 dark:border-slate-800 rounded-xl text-slate-400 hover:border-primary hover:text-primary transition-colors cursor-pointer">
-              <span className="material-symbols-outlined">cloud_upload</span>
-              <span className="text-[10px] font-black uppercase">
-                {value || "Upload Supporting Document"}
+            <div className="w-full py-6 flex flex-col items-center gap-2 border-2 border-dashed border-slate-100 dark:border-slate-800 rounded-xl text-slate-400 hover:border-primary hover:text-primary transition-colors cursor-pointer relative">
+              <span className="material-symbols-outlined">
+                {formData[field.id + "_uploading"] ? "sync" : "cloud_upload"}
               </span>
+              <span className={`text-[10px] font-black uppercase ${formData[field.id + "_uploading"] ? "animate-pulse" : ""}`}>
+                {formData[field.id + "_uploading"]
+                  ? "Compressing & Uploading..."
+                  : value
+                    ? "File Uploaded (Click to change)"
+                    : "Upload Supporting Document"}
+              </span>
+              {value && !formData[field.id + "_uploading"] && (
+                <a
+                  href={value}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="text-xs text-primary underline z-10"
+                >
+                  View Uploaded File
+                </a>
+              )}
               <input
                 type="file"
-                onChange={(e) => {
+                onChange={async (e) => {
                   const file = e.target.files?.[0];
                   if (file) {
-                    handleInputChange(field.id, file.name, field);
+                    try {
+                      setFormData((prev) => ({
+                        ...prev,
+                        [field.id + "_uploading"]: true,
+                      }));
+
+                      let fileToUpload = file;
+
+                      // Compress if image
+                      if (file.type.startsWith("image/")) {
+                        const options = {
+                          maxSizeMB: 1,
+                          maxWidthOrHeight: 1920,
+                          useWebWorker: true,
+                        };
+                        try {
+                          fileToUpload = await imageCompression(file, options);
+                          console.log(
+                            `Compressed file size: ${(fileToUpload.size / 1024 / 1024).toFixed(2)} MB`,
+                          );
+                        } catch (error) {
+                          console.error("Compression error:", error);
+                          toast.error("Failed to compress image, uploading original...");
+                        }
+                      }
+
+                      // Upload
+                      const { url, error } = await uploadFile(fileToUpload);
+
+                      if (error) {
+                        toast.error(`Upload failed: ${error}`);
+                      } else if (url) {
+                        handleInputChange(field.id, url, field);
+                        toast.success("File uploaded successfully");
+                      }
+                    } catch (err) {
+                      console.error("File processing error:", err);
+                      toast.error("An error occurred while processing the file");
+                    } finally {
+                      setFormData((prev) => {
+                        const newState = { ...prev };
+                        delete newState[field.id + "_uploading"];
+                        return newState;
+                      });
+                    }
                   }
                 }}
                 className="hidden"
                 id={`file-${field.id}`}
+                accept="image/*,.pdf,.doc,.docx"
               />
-              <label htmlFor={`file-${field.id}`} className="cursor-pointer" />
+              <label
+                htmlFor={`file-${field.id}`}
+                className="absolute inset-0 cursor-pointer"
+              />
             </div>
           ) : field.field_type === "select" ? (
             <select

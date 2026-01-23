@@ -1,13 +1,20 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
-type SettingsTab = 'Integrations' | 'API & Webhooks';
+import supabase from "../utils/supabase";
+
+type SettingsTab = 'Integrations' | 'API & Webhooks' | 'Notifications';
 type EmailMethod = 'SMTP' | 'API';
 
 const SettingsView: React.FC = () => {
   const [activeTab, setActiveTab] = useState<SettingsTab>('Integrations');
   const [visibleFields, setVisibleFields] = useState<Set<string>>(new Set());
   const [emailMethod, setEmailMethod] = useState<EmailMethod>('SMTP');
+  const [notificationPrefs, setNotificationPrefs] = useState({
+    submissions: true,
+    updates: true,
+    system: true
+  });
 
   const toggleVisibility = (id: string) => {
     const next = new Set(visibleFields);
@@ -46,7 +53,7 @@ const SettingsView: React.FC = () => {
       <div className="space-y-2">
         <label className="text-xs font-black text-slate-400 uppercase tracking-[0.1em]">{label}</label>
         <div className="relative">
-          <input 
+          <input
             type={isSensitive && !isVisible ? 'password' : 'text'}
             placeholder={placeholder}
             value={value}
@@ -54,7 +61,7 @@ const SettingsView: React.FC = () => {
             className="w-full bg-slate-50 dark:bg-background-dark/50 border border-transparent dark:border-slate-800 rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-primary dark:text-slate-200 transition-all"
           />
           {isSensitive && (
-            <button 
+            <button
               onClick={() => toggleVisibility(label)}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-primary transition-colors"
             >
@@ -68,6 +75,48 @@ const SettingsView: React.FC = () => {
     );
   };
 
+  useEffect(() => {
+    fetchNotificationPreferences();
+  }, []);
+
+  const fetchNotificationPreferences = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('users')
+        .select('notification_preferences')
+        .eq('id', user.id)
+        .single();
+
+      if (data?.notification_preferences) {
+        setNotificationPrefs(data.notification_preferences);
+      }
+    } catch (error) {
+      console.error('Error fetching notification preferences:', error);
+    }
+  };
+
+  const handlePreferenceToggle = async (key: keyof typeof notificationPrefs) => {
+    const newPrefs = { ...notificationPrefs, [key]: !notificationPrefs[key] };
+    setNotificationPrefs(newPrefs);
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      await supabase
+        .from('users')
+        .update({ notification_preferences: newPrefs })
+        .eq('id', user.id);
+    } catch (error) {
+      console.error('Error saving notification preferences:', error);
+      // Revert on error
+      setNotificationPrefs({ ...notificationPrefs, [key]: !newPrefs[key] });
+    }
+  };
+
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-20">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -75,23 +124,18 @@ const SettingsView: React.FC = () => {
           <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight uppercase">System Settings</h2>
           <p className="text-slate-500 dark:text-slate-400 mt-1 font-bold">Manage external connections, security credentials, and system parameters.</p>
         </div>
-        <button className="px-8 py-3 bg-primary text-white font-black text-sm rounded-2xl shadow-xl shadow-primary/30 hover:bg-blue-600 transition-all flex items-center gap-2 uppercase tracking-widest">
-          <span className="material-symbols-outlined text-[20px]">save</span>
-          Save All Changes
-        </button>
       </div>
 
       {/* Tabs */}
       <div className="flex items-center gap-1 border-b border-slate-200 dark:border-slate-800 overflow-x-auto pb-px">
-        {(['Integrations', 'API & Webhooks'] as SettingsTab[]).map(tab => (
+        {(['Integrations', 'API & Webhooks', 'Notifications'] as SettingsTab[]).map(tab => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`px-8 py-5 text-xs font-black uppercase tracking-[0.15em] transition-all relative whitespace-nowrap ${
-              activeTab === tab 
-                ? 'text-primary' 
-                : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
-            }`}
+            className={`px-8 py-5 text-xs font-black uppercase tracking-[0.15em] transition-all relative whitespace-nowrap ${activeTab === tab
+              ? 'text-primary'
+              : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
+              }`}
           >
             {tab}
             {activeTab === tab && (
@@ -109,22 +153,22 @@ const SettingsView: React.FC = () => {
               <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">KYC & Identity Verification</h3>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <IntegrationCard 
-                name="SmileID" 
+              <IntegrationCard
+                name="SmileID"
                 description="Global KYC & identity verification including biometrics and document validation."
                 icon="face"
                 status="Connected"
                 color="bg-emerald-500 text-emerald-500"
               />
-              <IntegrationCard 
-                name="VerifyMe" 
+              <IntegrationCard
+                name="VerifyMe"
                 description="Address verification and identity matching for Nigerian market standards."
                 icon="location_searching"
                 status="Disconnected"
                 color="bg-blue-500 text-blue-500"
               />
-              <IntegrationCard 
-                name="Dojo ID" 
+              <IntegrationCard
+                name="Dojo ID"
                 description="Real-time AML screening and Politically Exposed Person (PEP) list integration."
                 icon="policy"
                 status="Connected"
@@ -139,22 +183,22 @@ const SettingsView: React.FC = () => {
               <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Credit Bureaus</h3>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <IntegrationCard 
-                name="CRC Credit Bureau" 
+              <IntegrationCard
+                name="CRC Credit Bureau"
                 description="Direct access to credit reports and historical financial reliability data."
                 icon="history_edu"
                 status="Connected"
                 color="bg-purple-500 text-purple-500"
               />
-              <IntegrationCard 
-                name="FirstCentral" 
+              <IntegrationCard
+                name="FirstCentral"
                 description="Alternate credit scoring and fraud detection metrics for retail lending."
                 icon="troubleshoot"
                 status="Disconnected"
                 color="bg-rose-500 text-rose-500"
               />
-              <IntegrationCard 
-                name="CreditRegistry" 
+              <IntegrationCard
+                name="CreditRegistry"
                 description="Automated credit check during loan application processing."
                 icon="inventory"
                 status="Disconnected"
@@ -212,13 +256,13 @@ const SettingsView: React.FC = () => {
                 <h3 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight">Email Service Integration</h3>
               </div>
               <div className="flex bg-slate-100 dark:bg-background-dark p-1 rounded-xl">
-                <button 
+                <button
                   onClick={() => setEmailMethod('SMTP')}
                   className={`px-6 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${emailMethod === 'SMTP' ? 'bg-white dark:bg-surface-dark text-primary shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
                 >
                   SMTP
                 </button>
-                <button 
+                <button
                   onClick={() => setEmailMethod('API')}
                   className={`px-6 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${emailMethod === 'API' ? 'bg-white dark:bg-surface-dark text-primary shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
                 >
@@ -232,13 +276,13 @@ const SettingsView: React.FC = () => {
                 <InputField label="SMTP Host" placeholder="smtp.gmail.com" />
                 <InputField label="SMTP Port" placeholder="587" />
                 <div className="space-y-2">
-                   <label className="text-xs font-black text-slate-400 uppercase tracking-[0.1em]">Encryption Type</label>
-                   <select className="w-full bg-slate-50 dark:bg-background-dark/50 border border-transparent dark:border-slate-800 rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-primary dark:text-slate-200">
-                      <option>None</option>
-                      <option>SSL</option>
-                      <option>TLS</option>
-                      <option selected>STARTTLS</option>
-                   </select>
+                  <label className="text-xs font-black text-slate-400 uppercase tracking-[0.1em]">Encryption Type</label>
+                  <select className="w-full bg-slate-50 dark:bg-background-dark/50 border border-transparent dark:border-slate-800 rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-primary dark:text-slate-200">
+                    <option>None</option>
+                    <option>SSL</option>
+                    <option>TLS</option>
+                    <option selected>STARTTLS</option>
+                  </select>
                 </div>
                 <InputField label="SMTP Username" placeholder="sender@nolt.finance" />
                 <InputField label="SMTP Password" placeholder="••••••••••••" isSensitive />
@@ -247,13 +291,13 @@ const SettingsView: React.FC = () => {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in slide-in-from-right-4 duration-300">
                 <div className="space-y-2">
-                   <label className="text-xs font-black text-slate-400 uppercase tracking-[0.1em]">API Provider</label>
-                   <select className="w-full bg-slate-50 dark:bg-background-dark/50 border border-transparent dark:border-slate-800 rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-primary dark:text-slate-200">
-                      <option>SendGrid</option>
-                      <option>Mailgun</option>
-                      <option>Amazon SES</option>
-                      <option>Postmark</option>
-                   </select>
+                  <label className="text-xs font-black text-slate-400 uppercase tracking-[0.1em]">API Provider</label>
+                  <select className="w-full bg-slate-50 dark:bg-background-dark/50 border border-transparent dark:border-slate-800 rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-primary dark:text-slate-200">
+                    <option>SendGrid</option>
+                    <option>Mailgun</option>
+                    <option>Amazon SES</option>
+                    <option>Postmark</option>
+                  </select>
                 </div>
                 <InputField label="API Secret Key" placeholder="SG.••••••••••••" isSensitive />
                 <InputField label="Sender Name" placeholder="NOLT Finance Support" />
@@ -273,6 +317,62 @@ const SettingsView: React.FC = () => {
                 <span className="text-primary uppercase tracking-tighter">Pro Tip:</span> SMTP is standard for existing mail servers, while API integration offers higher deliverability and granular tracking for transactional system notifications.
               </p>
             </div>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'Notifications' && (
+        <div className="max-w-4xl space-y-6">
+          <div className="bg-white dark:bg-surface-dark rounded-2xl p-6 border border-slate-100 dark:border-slate-800 text-center">
+            <span className="material-symbols-outlined text-primary text-4xl mb-2">notifications_active</span>
+            <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight mb-2">Notification Preferences</h3>
+            <p className="text-slate-500 dark:text-slate-400 font-bold text-sm max-w-lg mx-auto">
+              Control which system events trigger real-time notifications. These settings apply to your account only.
+            </p>
+          </div>
+
+          <div className="bg-white dark:bg-surface-dark rounded-2xl border border-slate-100 dark:border-slate-800 divide-y divide-slate-100 dark:divide-slate-800">
+            {[
+              {
+                id: 'submissions',
+                icon: 'inbox',
+                title: 'New Submissions',
+                description: 'Get notified when a new loan or investment application is submitted.'
+              },
+              {
+                id: 'updates',
+                icon: 'update',
+                title: 'Status Updates',
+                description: 'Receive alerts when an application status changes (e.g., Approved, Rejected).'
+              },
+              {
+                id: 'system',
+                icon: 'dns',
+                title: 'System Alerts',
+                description: 'Important system health warnings, error reports, and maintenance notifications.'
+              }
+            ].map((item) => (
+              <div key={item.id} className="p-6 flex items-start gap-4">
+                <div className={`w-10 h-10 rounded-xl ${notificationPrefs[item.id as keyof typeof notificationPrefs] ? 'bg-primary/10 text-primary' : 'bg-slate-100 text-slate-400'} flex items-center justify-center transition-colors`}>
+                  <span className="material-symbols-outlined">{item.icon}</span>
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center justify-between mb-1">
+                    <h4 className="text-base font-bold text-slate-900 dark:text-white">{item.title}</h4>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        className="sr-only peer"
+                        checked={notificationPrefs[item.id as keyof typeof notificationPrefs]}
+                        onChange={() => handlePreferenceToggle(item.id as keyof typeof notificationPrefs)}
+                      />
+                      <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+                    </label>
+                  </div>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">{item.description}</p>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}

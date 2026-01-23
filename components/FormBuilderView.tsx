@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { toast } from "sonner";
 import {
   CustomForm,
   FormField as FormFieldType,
@@ -412,9 +413,9 @@ const FormBuilderView: React.FC = () => {
 
     if (error) {
       setError(error);
-      alert("Error saving form: " + error);
+      toast.error("Error saving form: " + error);
     } else {
-      alert("Form configuration synced with production applicant portal.");
+      toast.success("Form configuration synced with production applicant portal.");
     }
     setSaving(false);
   };
@@ -444,9 +445,9 @@ const FormBuilderView: React.FC = () => {
         {/* Create New Form Modal */}
         {showCreateModal && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-            <div className="bg-white dark:bg-surface-dark rounded-[32px] shadow-2xl border border-slate-100 dark:border-slate-800 w-full max-w-2xl animate-in slide-in-from-bottom-4 duration-300">
+            <div className="bg-white dark:bg-surface-dark rounded-[32px] shadow-2xl border border-slate-100 dark:border-slate-800 w-full max-w-2xl animate-in slide-in-from-bottom-4 duration-300 max-h-[85vh] flex flex-col">
               {/* Modal Header */}
-              <div className="flex items-center justify-between p-8 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex items-center justify-between p-5 md:p-8 border-b border-slate-100 dark:border-slate-800 flex-shrink-0">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
                     <span className="material-symbols-outlined text-2xl">
@@ -474,7 +475,7 @@ const FormBuilderView: React.FC = () => {
               </div>
 
               {/* Modal Body */}
-              <div className="p-8 space-y-6">
+              <div className="p-5 md:p-8 space-y-6 overflow-y-auto">
                 {error && (
                   <div className="bg-red-500/10 border border-red-500/20 rounded-2xl px-4 py-3 text-red-400 text-xs font-bold">
                     {error}
@@ -623,7 +624,7 @@ const FormBuilderView: React.FC = () => {
               </div>
 
               {/* Modal Footer */}
-              <div className="flex items-center justify-end gap-3 p-8 border-t border-slate-100 dark:border-slate-800">
+              <div className="flex items-center justify-end gap-3 p-5 md:p-8 border-t border-slate-100 dark:border-slate-800 flex-shrink-0 bg-white dark:bg-surface-dark rounded-b-[32px]">
                 <button
                   onClick={() => {
                     setShowCreateModal(false);

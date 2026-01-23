@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { toast } from "sonner";
 import supabase from "../utils/supabase";
 import { AuthUser } from "../utils/authService";
 import WorkflowStageIndicator from "./WorkflowStageIndicator";
@@ -7,6 +8,7 @@ import {
   updateEligibleAmount,
   reassignApplication,
 } from "../services/workflowService";
+import { generateSubmissionPDF } from "../utils/pdfGenerator";
 import {
   getAvailableActions,
   canPerformAction,
@@ -158,6 +160,16 @@ const AssignedFormsView: React.FC<AssignedFormsViewProps> = ({
     }
   };
 
+  const handleCopyLink = (e: React.MouseEvent, formId: string) => {
+    e.stopPropagation();
+    let link = `${window.location.origin}/apply/${formId}`;
+    if (currentUser.referralCode) {
+      link += `?ref=${currentUser.referralCode}`;
+    }
+    navigator.clipboard.writeText(link);
+    toast.success("Form link copied to clipboard!");
+  };
+
   const fetchSubmissions = async (formId: string) => {
     try {
       setSubmissionsLoading(true);
@@ -171,7 +183,7 @@ const AssignedFormsView: React.FC<AssignedFormsViewProps> = ({
       setSubmissions(data || []);
     } catch (err: any) {
       console.error("Error fetching submissions:", err);
-      alert("Failed to load submissions");
+      toast.error("Failed to load submissions");
     } finally {
       setSubmissionsLoading(false);
     }
@@ -254,7 +266,7 @@ const AssignedFormsView: React.FC<AssignedFormsViewProps> = ({
       });
 
       if (result.success && result.newStatus) {
-        alert(result.message || "Application approved successfully");
+        toast.success(result.message || "Application approved successfully");
 
         // Refresh data
         if (selectedForm) {
@@ -262,11 +274,11 @@ const AssignedFormsView: React.FC<AssignedFormsViewProps> = ({
         }
         handleBackToSubmissions();
       } else {
-        alert(result.error || "Failed to approve application");
+        toast.error(result.error || "Failed to approve application");
       }
     } catch (err) {
       console.error("Approve error:", err);
-      alert("Failed to approve application");
+      toast.error("Failed to approve application");
     } finally {
       setIsProcessing(false);
     }
@@ -298,7 +310,7 @@ const AssignedFormsView: React.FC<AssignedFormsViewProps> = ({
       });
 
       if (result.success && result.newStatus) {
-        alert(result.message || `Application ${action}ed successfully`);
+        toast.success(result.message || `Application ${action}ed successfully`);
 
         // Refresh data
         if (selectedForm) {
@@ -307,11 +319,11 @@ const AssignedFormsView: React.FC<AssignedFormsViewProps> = ({
         setIsActionModalOpen(false);
         handleBackToSubmissions();
       } else {
-        alert(result.error || `Failed to ${action} application`);
+        toast.error(result.error || `Failed to ${action} application`);
       }
     } catch (err) {
       console.error(`${action} error:`, err);
-      alert(`Failed to ${action} application`);
+      toast.error(`Failed to ${action} application`);
     } finally {
       setIsProcessing(false);
     }
@@ -337,7 +349,7 @@ const AssignedFormsView: React.FC<AssignedFormsViewProps> = ({
       );
 
       if (result.success) {
-        alert(`Application successfully reassigned to ${selectedUser.name}`);
+        toast.success(`Application successfully reassigned to ${selectedUser.name}`);
 
         // Refresh data
         if (selectedForm) {
@@ -345,11 +357,11 @@ const AssignedFormsView: React.FC<AssignedFormsViewProps> = ({
         }
         setIsReassignModalOpen(false);
       } else {
-        alert(result.error || "Failed to reassign application");
+        toast.error(result.error || "Failed to reassign application");
       }
     } catch (err) {
       console.error("Reassignment error:", err);
-      alert("Failed to reassign application");
+      toast.error("Failed to reassign application");
     } finally {
       setIsProcessing(false);
     }
@@ -368,13 +380,13 @@ const AssignedFormsView: React.FC<AssignedFormsViewProps> = ({
       );
 
       if (result.success) {
-        alert("Eligible amount updated successfully");
+        toast.success("Eligible amount updated successfully");
       } else {
-        alert(result.error || "Failed to update eligible amount");
+        toast.error(result.error || "Failed to update eligible amount");
       }
     } catch (err) {
       console.error("Update eligible amount error:", err);
-      alert("Failed to update eligible amount");
+      toast.error("Failed to update eligible amount");
     } finally {
       setIsProcessing(false);
     }
@@ -411,10 +423,10 @@ const AssignedFormsView: React.FC<AssignedFormsViewProps> = ({
         await fetchSubmissions(selectedForm.id);
       }
 
-      alert(`Submission ${newStatus.toLowerCase()} successfully!`);
+      toast.success(`Submission ${newStatus.toLowerCase()} successfully!`);
     } catch (err: any) {
       console.error("Error updating submission:", err);
-      alert("Failed to update submission status");
+      toast.error("Failed to update submission status");
     } finally {
       setIsProcessing(false);
     }
@@ -480,6 +492,22 @@ const AssignedFormsView: React.FC<AssignedFormsViewProps> = ({
           >
             {selectedSubmission.status}
           </div>
+          <button
+            onClick={() =>
+              generateSubmissionPDF(
+                selectedSubmission,
+                formFields,
+                selectedForm.name,
+              )
+            }
+            className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg text-sm font-bold hover:bg-primary-dark transition-all"
+            title="Download PDF Report"
+          >
+            <span className="material-symbols-outlined text-lg">
+              picture_as_pdf
+            </span>
+            Download PDF
+          </button>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -621,7 +649,7 @@ const AssignedFormsView: React.FC<AssignedFormsViewProps> = ({
             {/* Eligible Amount (Credit Check for Loans) */}
             {selectedForm.type === "Loan" &&
               mapToRequestStatus(selectedSubmission.status) ===
-                "Internal Audit" &&
+              "Internal Audit" &&
               currentUser.role === "Credit" && (
                 <div className="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-800 rounded-xl p-6">
                   <h2 className="text-lg font-black text-slate-900 dark:text-white mb-4 flex items-center gap-2">
@@ -801,11 +829,10 @@ const AssignedFormsView: React.FC<AssignedFormsViewProps> = ({
               <button
                 key={status}
                 onClick={() => setStatusFilter(status)}
-                className={`px-4 py-3 text-sm font-bold uppercase tracking-wider transition-all relative ${
-                  statusFilter === status
-                    ? "text-primary"
-                    : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
-                }`}
+                className={`px-4 py-3 text-sm font-bold uppercase tracking-wider transition-all relative ${statusFilter === status
+                  ? "text-primary"
+                  : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
+                  }`}
               >
                 {status}
                 {statusFilter === status && (
@@ -970,11 +997,10 @@ const AssignedFormsView: React.FC<AssignedFormsViewProps> = ({
           <button
             key={tab}
             onClick={() => setFilter(tab as any)}
-            className={`px-4 py-3 text-sm font-bold uppercase tracking-wider transition-all relative ${
-              filter === tab
-                ? "text-primary"
-                : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
-            }`}
+            className={`px-4 py-3 text-sm font-bold uppercase tracking-wider transition-all relative ${filter === tab
+              ? "text-primary"
+              : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
+              }`}
           >
             {tab === "all" ? "All Forms" : `${tab}s`}
             {filter === tab && (
@@ -1054,6 +1080,26 @@ const AssignedFormsView: React.FC<AssignedFormsViewProps> = ({
                         {form.type}
                       </span>
                     </div>
+
+                    <button
+                      onClick={(e) => handleCopyLink(e, form.id)}
+                      className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-primary hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                      title="Copy Form Link"
+                    >
+                      <span className="material-symbols-outlined text-lg">
+                        link
+                      </span>
+                    </button>
+
+                    <button
+                      onClick={(e) => handleCopyLink(e, form.id)}
+                      className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-primary hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                      title="Copy Form Link"
+                    >
+                      <span className="material-symbols-outlined text-lg">
+                        link
+                      </span>
+                    </button>
                   </div>
 
                   {/* Form Name */}

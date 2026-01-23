@@ -11,6 +11,7 @@ export interface AuthUser {
   role: UserRole;
   avatar?: string;
   lastActive?: string;
+  referralCode?: string;
 }
 
 /**
@@ -182,6 +183,7 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
       role: profile.role as UserRole,
       avatar: profile.avatar,
       lastActive: profile.lastActive,
+      referralCode: profile.referral_code,
     };
   } catch (error) {
     console.error("Get current user error:", error);
@@ -328,6 +330,7 @@ export async function verifyOTP(
       role: profile.role as UserRole,
       avatar: profile.avatar,
       lastActive: new Date().toISOString(),
+      referralCode: profile.referral_code,
     };
 
     // Log successful login for OTP-based authentication

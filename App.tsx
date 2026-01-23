@@ -36,6 +36,7 @@ import {
   getDashboardStats,
 } from "./services/submissionsService";
 import { useInactivityTimer } from "./hooks/useInactivityTimer";
+import { Toaster, toast } from "sonner";
 
 // Real data will be fetched from the database
 // Initial requests are now empty and will be populated on component mount
@@ -515,211 +516,214 @@ const App: React.FC = () => {
   );
 
   return (
-    <Routes>
-      {/* Public Routes */}
-      <Route path="/forms" element={<PublicFormsView />} />
-      <Route path="/apply/:formId" element={<PublicFormSubmissionView />} />
-      <Route path="/reset-password" element={<ResetPasswordView />} />
+    <>
+      <Routes>
+        {/* Public Routes */}
+        <Route path="/forms" element={<PublicFormsView />} />
+        <Route path="/apply/:formId" element={<PublicFormSubmissionView />} />
+        <Route path="/reset-password" element={<ResetPasswordView />} />
 
-      <Route
-        path="/login"
-        element={
-          isAuthenticated && currentUser ? (
-            <Navigate to="/" replace />
-          ) : (
-            <AuthView onLoginSuccess={handleLoginSuccess} />
-          )
-        }
-      />
+        <Route
+          path="/login"
+          element={
+            isAuthenticated && currentUser ? (
+              <Navigate to="/" replace />
+            ) : (
+              <AuthView onLoginSuccess={handleLoginSuccess} />
+            )
+          }
+        />
 
-      {/* Protected Routes */}
-      <Route
-        path="/*"
-        element={
-          <ProtectedRoute
-            currentUser={currentUser}
-            isAuthenticated={isAuthenticated}
-          >
-            <div className="flex h-screen w-full bg-[#f8fafc] dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 relative overflow-hidden transition-colors duration-300">
-              {isSidebarOpen && (
+        {/* Protected Routes */}
+        <Route
+          path="/*"
+          element={
+            <ProtectedRoute
+              currentUser={currentUser}
+              isAuthenticated={isAuthenticated}
+            >
+              <div className="flex h-screen w-full bg-[#f8fafc] dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 relative overflow-hidden transition-colors duration-300">
+                {isSidebarOpen && (
+                  <div
+                    className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden animate-in fade-in"
+                    onClick={() => setIsSidebarOpen(false)}
+                  />
+                )}
+
                 <div
-                  className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden animate-in fade-in"
-                  onClick={() => setIsSidebarOpen(false)}
-                />
-              )}
+                  className={`fixed inset-y-0 left-0 z-50 transform ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+                    } md:relative md:translate-x-0 transition-transform duration-300 ease-in-out`}
+                >
+                  <Sidebar
+                    onClose={() => setIsSidebarOpen(false)}
+                    onLogoutClick={() => setIsLogoutModalOpen(true)}
+                    currentUser={currentUser!}
+                    onRoleChange={handleRoleChange}
+                  />
+                </div>
 
-              <div
-                className={`fixed inset-y-0 left-0 z-50 transform ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-                  } md:relative md:translate-x-0 transition-transform duration-300 ease-in-out`}
-              >
-                <Sidebar
-                  onClose={() => setIsSidebarOpen(false)}
-                  onLogoutClick={() => setIsLogoutModalOpen(true)}
-                  currentUser={currentUser!}
-                  onRoleChange={handleRoleChange}
-                />
-              </div>
+                <main className="flex-1 h-full overflow-y-auto bg-[#f8fafc] dark:bg-surface-darker relative flex flex-col transition-colors duration-300">
+                  <Header
+                    onMenuClick={() => setIsSidebarOpen(true)}
+                    onNotificationClick={() => setIsNotifPanelOpen(true)}
+                    isDarkMode={isDarkMode}
+                    onToggleTheme={() => setIsDarkMode(!isDarkMode)}
+                  />
 
-              <main className="flex-1 h-full overflow-y-auto bg-[#f8fafc] dark:bg-surface-darker relative flex flex-col transition-colors duration-300">
-                <Header
-                  onMenuClick={() => setIsSidebarOpen(true)}
-                  onNotificationClick={() => setIsNotifPanelOpen(true)}
-                  isDarkMode={isDarkMode}
-                  onToggleTheme={() => setIsDarkMode(!isDarkMode)}
-                />
+                  <div className="p-4 md:p-8 max-w-[1600px] mx-auto w-full flex-1">
+                    <Routes>
+                      <Route path="/" element={renderDashboard()} />
 
-                <div className="p-4 md:p-8 max-w-[1600px] mx-auto w-full flex-1">
-                  <Routes>
-                    <Route path="/" element={renderDashboard()} />
-
-                    <Route
-                      path="/queue"
-                      element={
-                        <QueueView
-                          requests={getVisibleQueue()}
-                          onBack={() => navigate("/")}
-                          onSelectRequest={handleSelectRequest}
-                        />
-                      }
-                    />
-
-                    <Route
-                      path="/investments"
-                      element={
-                        currentUser?.role === "Credit" ? (
-                          <AccessDenied
-                            title="Access Restricted"
-                            message="The Credit team scope is limited to Loan Records only. You do not have permissions to view Investment data."
+                      <Route
+                        path="/queue"
+                        element={
+                          <QueueView
+                            requests={getVisibleQueue()}
+                            onBack={() => navigate("/")}
+                            onSelectRequest={handleSelectRequest}
                           />
-                        ) : (
-                          <InvestmentView
+                        }
+                      />
+
+                      <Route
+                        path="/investments"
+                        element={
+                          currentUser?.role === "Credit" ? (
+                            <AccessDenied
+                              title="Access Restricted"
+                              message="The Credit team scope is limited to Loan Records only. You do not have permissions to view Investment data."
+                            />
+                          ) : (
+                            <InvestmentView
+                              requests={requests}
+                              onBack={() => navigate("/")}
+                              selectedId={selectedRequestId}
+                              onClearSelection={() => setSelectedRequestId(null)}
+                              onSelectInvestment={(id) =>
+                                setSelectedRequestId(id)
+                              }
+                              currentUser={currentUser!}
+                            />
+                          )
+                        }
+                      />
+
+                      <Route
+                        path="/loans"
+                        element={
+                          <LoanView
                             requests={requests}
                             onBack={() => navigate("/")}
                             selectedId={selectedRequestId}
                             onClearSelection={() => setSelectedRequestId(null)}
-                            onSelectInvestment={(id) =>
-                              setSelectedRequestId(id)
-                            }
+                            onSelectLoan={(id) => setSelectedRequestId(id)}
                             currentUser={currentUser!}
                           />
-                        )
-                      }
-                    />
+                        }
+                      />
 
-                    <Route
-                      path="/loans"
-                      element={
-                        <LoanView
-                          requests={requests}
-                          onBack={() => navigate("/")}
-                          selectedId={selectedRequestId}
-                          onClearSelection={() => setSelectedRequestId(null)}
-                          onSelectLoan={(id) => setSelectedRequestId(id)}
-                          currentUser={currentUser!}
-                        />
-                      }
-                    />
+                      <Route
+                        path="/settings"
+                        element={
+                          <ProtectedRoute
+                            currentUser={currentUser}
+                            isAuthenticated={isAuthenticated}
+                            requiredView="settings"
+                          >
+                            <SettingsView />
+                          </ProtectedRoute>
+                        }
+                      />
 
-                    <Route
-                      path="/settings"
-                      element={
-                        <ProtectedRoute
-                          currentUser={currentUser}
-                          isAuthenticated={isAuthenticated}
-                          requiredView="settings"
-                        >
-                          <SettingsView />
-                        </ProtectedRoute>
-                      }
-                    />
+                      <Route
+                        path="/users"
+                        element={
+                          <ProtectedRoute
+                            currentUser={currentUser}
+                            isAuthenticated={isAuthenticated}
+                            requiredView="users"
+                          >
+                            <UsersView />
+                          </ProtectedRoute>
+                        }
+                      />
 
-                    <Route
-                      path="/users"
-                      element={
-                        <ProtectedRoute
-                          currentUser={currentUser}
-                          isAuthenticated={isAuthenticated}
-                          requiredView="users"
-                        >
-                          <UsersView />
-                        </ProtectedRoute>
-                      }
-                    />
+                      <Route
+                        path="/security"
+                        element={
+                          <ProtectedRoute
+                            currentUser={currentUser}
+                            isAuthenticated={isAuthenticated}
+                            requiredView="security"
+                          >
+                            <AuditLogsView />
+                          </ProtectedRoute>
+                        }
+                      />
 
-                    <Route
-                      path="/security"
-                      element={
-                        <ProtectedRoute
-                          currentUser={currentUser}
-                          isAuthenticated={isAuthenticated}
-                          requiredView="security"
-                        >
-                          <AuditLogsView />
-                        </ProtectedRoute>
-                      }
-                    />
+                      <Route
+                        path="/form-builder"
+                        element={
+                          <ProtectedRoute
+                            currentUser={currentUser}
+                            isAuthenticated={isAuthenticated}
+                            requiredView="form-builder"
+                          >
+                            <FormBuilderView />
+                          </ProtectedRoute>
+                        }
+                      />
 
-                    <Route
-                      path="/form-builder"
-                      element={
-                        <ProtectedRoute
-                          currentUser={currentUser}
-                          isAuthenticated={isAuthenticated}
-                          requiredView="form-builder"
-                        >
-                          <FormBuilderView />
-                        </ProtectedRoute>
-                      }
-                    />
+                      <Route
+                        path="/assigned-forms"
+                        element={
+                          <ProtectedRoute
+                            currentUser={currentUser}
+                            isAuthenticated={isAuthenticated}
+                            requiredView="assigned-forms"
+                          >
+                            <AssignedFormsView currentUser={currentUser!} />
+                          </ProtectedRoute>
+                        }
+                      />
 
-                    <Route
-                      path="/assigned-forms"
-                      element={
-                        <ProtectedRoute
-                          currentUser={currentUser}
-                          isAuthenticated={isAuthenticated}
-                          requiredView="assigned-forms"
-                        >
-                          <AssignedFormsView currentUser={currentUser!} />
-                        </ProtectedRoute>
-                      }
-                    />
+                      <Route
+                        path="/approval-gates"
+                        element={
+                          <ProtectedRoute
+                            currentUser={currentUser}
+                            isAuthenticated={isAuthenticated}
+                            requiredView="approval-gates"
+                          >
+                            <ApprovalGatesView currentUser={currentUser!} />
+                          </ProtectedRoute>
+                        }
+                      />
 
-                    <Route
-                      path="/approval-gates"
-                      element={
-                        <ProtectedRoute
-                          currentUser={currentUser}
-                          isAuthenticated={isAuthenticated}
-                          requiredView="approval-gates"
-                        >
-                          <ApprovalGatesView currentUser={currentUser!} />
-                        </ProtectedRoute>
-                      }
-                    />
+                      <Route path="/reports" element={<UnderConstruction />} />
 
-                    <Route path="/reports" element={<UnderConstruction />} />
+                      <Route path="*" element={<Navigate to="/" replace />} />
+                    </Routes>
+                  </div>
+                </main>
 
-                    <Route path="*" element={<Navigate to="/" replace />} />
-                  </Routes>
-                </div>
-              </main>
+                <NotificationPanel
+                  isOpen={isNotifPanelOpen}
+                  onClose={() => setIsNotifPanelOpen(false)}
+                />
 
-              <NotificationPanel
-                isOpen={isNotifPanelOpen}
-                onClose={() => setIsNotifPanelOpen(false)}
-              />
-
-              <LogoutModal
-                isOpen={isLogoutModalOpen}
-                onClose={() => setIsLogoutModalOpen(false)}
-                onConfirm={handleLogout}
-              />
-            </div>
-          </ProtectedRoute>
-        }
-      />
-    </Routes>
+                <LogoutModal
+                  isOpen={isLogoutModalOpen}
+                  onClose={() => setIsLogoutModalOpen(false)}
+                  onConfirm={handleLogout}
+                />
+              </div>
+            </ProtectedRoute>
+          }
+        />
+      </Routes>
+      <Toaster position="top-right" richColors closeButton theme={isDarkMode ? "dark" : "light"} />
+    </>
   );
 };
 
