@@ -1,6 +1,6 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { RequestType, RequestStatus } from "../types";
-import { getWorkflowStages, getCurrentStage } from "../utils/workflowManager";
+import { getWorkflowStages, getCurrentStage, WorkflowStage } from "../utils/workflowManager";
 
 interface WorkflowStageIndicatorProps {
   applicationType: RequestType;
@@ -11,8 +11,36 @@ const WorkflowStageIndicator: React.FC<WorkflowStageIndicatorProps> = ({
   applicationType,
   currentStatus,
 }) => {
-  const stages = getWorkflowStages(applicationType);
-  const currentStageData = getCurrentStage(currentStatus, applicationType);
+  const [stages, setStages] = useState<WorkflowStage[]>([]);
+  const [currentStageData, setCurrentStageData] = useState<WorkflowStage | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const loadStages = async () => {
+      setIsLoading(true);
+      try {
+        const workflowStages = await getWorkflowStages(applicationType);
+        const current = await getCurrentStage(currentStatus, applicationType);
+        setStages(workflowStages);
+        setCurrentStageData(current);
+      } catch (err) {
+        console.error("Error loading workflow stages:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    loadStages();
+  }, [applicationType, currentStatus]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-4">
+        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
   const currentIndex = stages.findIndex((s) => s.id === currentStageData?.id);
 
   const getStageStyle = (index: number) => {

@@ -261,7 +261,10 @@ const InvestmentView: React.FC<InvestmentViewProps> = ({
   }, [currentUser.id]);
 
   // Fetch form configuration, fields, and submission data
-  const fetchFormData = async (submissionId: string, investment: ReviewRequest) => {
+  const fetchFormData = async (
+    submissionId: string,
+    investment: ReviewRequest,
+  ) => {
     setIsLoadingFormData(true);
     console.log("Fetching form data for submission ID:", submissionId);
     try {
@@ -325,52 +328,54 @@ const InvestmentView: React.FC<InvestmentViewProps> = ({
       } else {
         console.log("Audit logs fetched:", auditLogs?.length || 0, "logs");
         // Update selectedInvestment with operation logs
-        const operationLogs: OperationLogEntry[] = (auditLogs || []).map((log: any) => {
-          // Determine the action label based on workflow_action
-          let actionLabel = log.action;
-          if (log.new_data?.workflow_action) {
-            const workflowAction = log.new_data.workflow_action;
-            switch (workflowAction) {
-              case "approve":
-                actionLabel = "APPROVED";
-                break;
-              case "decline":
-                actionLabel = "DECLINED";
-                break;
-              case "return":
-                actionLabel = "RETURNED";
-                break;
-              case "reassign":
-                actionLabel = "REASSIGNED";
-                break;
-              case "update_eligible_amount":
-                actionLabel = "UPDATED ELIGIBLE AMOUNT";
-                break;
-              default:
-                actionLabel = workflowAction.toUpperCase().replace("_", " ");
+        const operationLogs: OperationLogEntry[] = (auditLogs || []).map(
+          (log: any) => {
+            // Determine the action label based on workflow_action
+            let actionLabel = log.action;
+            if (log.new_data?.workflow_action) {
+              const workflowAction = log.new_data.workflow_action;
+              switch (workflowAction) {
+                case "approve":
+                  actionLabel = "APPROVED";
+                  break;
+                case "decline":
+                  actionLabel = "DECLINED";
+                  break;
+                case "return":
+                  actionLabel = "RETURNED";
+                  break;
+                case "reassign":
+                  actionLabel = "REASSIGNED";
+                  break;
+                case "update_eligible_amount":
+                  actionLabel = "UPDATED ELIGIBLE AMOUNT";
+                  break;
+                default:
+                  actionLabel = workflowAction.toUpperCase().replace("_", " ");
+              }
             }
-          }
 
-          // Build a detailed comment
-          let detailedComment = log.new_data?.comment || "";
-          if (log.new_data?.fromStatus && log.new_data?.toStatus) {
-            detailedComment = `Status changed from "${log.new_data.fromStatus}" to "${log.new_data.toStatus}". ${detailedComment}`;
-          } else if (log.new_data?.reassignedTo) {
-            detailedComment = `Reassigned to ${log.new_data.reassignedTo}. ${detailedComment}`;
-          } else if (log.new_data?.eligibleAmount) {
-            detailedComment = `Eligible amount set to ${log.new_data.eligibleAmount}. ${detailedComment}`;
-          }
+            // Build a detailed comment
+            let detailedComment = log.new_data?.comment || "";
+            if (log.new_data?.fromStatus && log.new_data?.toStatus) {
+              detailedComment = `Status changed from "${log.new_data.fromStatus}" to "${log.new_data.toStatus}". ${detailedComment}`;
+            } else if (log.new_data?.reassignedTo) {
+              detailedComment = `Reassigned to ${log.new_data.reassignedTo}. ${detailedComment}`;
+            } else if (log.new_data?.eligibleAmount) {
+              detailedComment = `Eligible amount set to ${log.new_data.eligibleAmount}. ${detailedComment}`;
+            }
 
-          return {
-            id: log.id,
-            timestamp: new Date(log.created_at).toLocaleString(),
-            actor: log.user_email || "System",
-            action: actionLabel,
-            comment: detailedComment.trim(),
-            fromStatus: log.new_data?.fromStatus,
-            toStatus: log.new_data?.toStatus,
-          };
-        });
+            return {
+              id: log.id,
+              timestamp: new Date(log.created_at).toLocaleString(),
+              actor: log.user_email || "System",
+              action: actionLabel,
+              comment: detailedComment.trim(),
+              fromStatus: log.new_data?.fromStatus,
+              toStatus: log.new_data?.toStatus,
+            };
+          },
+        );
         setSelectedInvestment({
           ...investment,
           operationLogs,
@@ -427,9 +432,15 @@ const InvestmentView: React.FC<InvestmentViewProps> = ({
         const node = getApprovalNode(req.status);
         const matchesNode =
           nodeFilter === "All Nodes" || node.label === nodeFilter;
-        return matchesSearch && matchesStatus && matchesNode;
+
+        // Sales officers should only see their own forms
+        const matchesOwner =
+          currentUser.role !== "Sales Officer" ||
+          req.ownerName === currentUser.name;
+
+        return matchesSearch && matchesStatus && matchesNode && matchesOwner;
       }),
-    [investmentRequests, searchTerm, statusFilter, nodeFilter],
+    [investmentRequests, searchTerm, statusFilter, nodeFilter, currentUser],
   );
 
   const toggleSelectAll = () => {
@@ -519,7 +530,9 @@ const InvestmentView: React.FC<InvestmentViewProps> = ({
         const { data } = await getSubmissionsByType("Investment");
         if (data) setInvestmentRequests(data);
 
-        toast.success(`Application successfully reassigned to ${selectedUser.name}`);
+        toast.success(
+          `Application successfully reassigned to ${selectedUser.name}`,
+        );
       } else {
         toast.error(result.error || "Failed to reassign application");
       }
@@ -975,7 +988,8 @@ const InvestmentView: React.FC<InvestmentViewProps> = ({
               </div>
               {inv.operationLogs && inv.operationLogs.length > 0 && (
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                  {inv.operationLogs.length} {inv.operationLogs.length === 1 ? 'event' : 'events'}
+                  {inv.operationLogs.length}{" "}
+                  {inv.operationLogs.length === 1 ? "event" : "events"}
                 </span>
               )}
             </div>
@@ -1006,15 +1020,22 @@ const InvestmentView: React.FC<InvestmentViewProps> = ({
                     }
 
                     return (
-                      <div key={log.id} className="relative flex gap-3 pb-6 group">
+                      <div
+                        key={log.id}
+                        className="relative flex gap-3 pb-6 group"
+                      >
                         {/* Timeline line */}
                         {index !== inv.operationLogs!.length - 1 && (
                           <div className="absolute left-[15px] top-8 bottom-0 w-[2px] bg-slate-200 dark:bg-slate-700" />
                         )}
 
                         {/* Icon */}
-                        <div className={`relative z-10 flex-shrink-0 w-8 h-8 rounded-full ${iconBg} flex items-center justify-center shadow-sm`}>
-                          <span className={`material-symbols-outlined text-[16px] ${iconColor}`}>
+                        <div
+                          className={`relative z-10 flex-shrink-0 w-8 h-8 rounded-full ${iconBg} flex items-center justify-center shadow-sm`}
+                        >
+                          <span
+                            className={`material-symbols-outlined text-[16px] ${iconColor}`}
+                          >
                             {icon}
                           </span>
                         </div>
@@ -1027,7 +1048,7 @@ const InvestmentView: React.FC<InvestmentViewProps> = ({
                                 {log.actor}
                               </span>
                               <span className="text-sm text-slate-600 dark:text-slate-400 ml-1">
-                                {log.action.toLowerCase().replace(/_/g, ' ')}
+                                {log.action.toLowerCase().replace(/_/g, " ")}
                               </span>
                               {/* Status badges */}
                               {(log.fromStatus || log.toStatus) && (
@@ -1038,9 +1059,7 @@ const InvestmentView: React.FC<InvestmentViewProps> = ({
                                     </span>
                                   )}
                                   {log.fromStatus && log.toStatus && (
-                                    <span className="text-slate-400">
-                                      →
-                                    </span>
+                                    <span className="text-slate-400">→</span>
                                   )}
                                   {log.toStatus && (
                                     <span className="px-2 py-0.5 bg-primary/10 text-primary rounded text-[10px] font-bold">
@@ -1584,8 +1603,12 @@ const InvestmentView: React.FC<InvestmentViewProps> = ({
                         alt=""
                       />
                       <div>
-                        <h4 className="font-black text-slate-900 dark:text-white text-sm uppercase tracking-tight line-clamp-1">{req.applicant.name}</h4>
-                        <span className="text-[10px] font-mono font-bold text-slate-400 block mt-0.5">{req.referenceId}</span>
+                        <h4 className="font-black text-slate-900 dark:text-white text-sm uppercase tracking-tight line-clamp-1">
+                          {req.applicant.name}
+                        </h4>
+                        <span className="text-[10px] font-mono font-bold text-slate-400 block mt-0.5">
+                          {req.referenceId}
+                        </span>
                       </div>
                     </div>
                     <div className="flex flex-col items-end gap-1">
@@ -1616,10 +1639,13 @@ const InvestmentView: React.FC<InvestmentViewProps> = ({
                       </span>
                     </div>
                     <span
-                      className={`inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide ${req.status === 'Approved' ? 'text-emerald-600' :
-                        req.status === 'Declined' ? 'text-rose-600' :
-                          'text-amber-600'
-                        }`}
+                      className={`inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide ${
+                        req.status === "Approved"
+                          ? "text-emerald-600"
+                          : req.status === "Declined"
+                            ? "text-rose-600"
+                            : "text-amber-600"
+                      }`}
                     >
                       {req.status}
                     </span>

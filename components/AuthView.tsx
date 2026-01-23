@@ -368,11 +368,8 @@ const AuthView: React.FC<AuthViewProps> = ({ onLoginSuccess }) => {
                         2FA Verification
                       </h2>
                       <p className="text-slate-500 text-xs font-bold leading-relaxed">
-                        Open your{" "}
-                        <span className="text-white">
-                          Microsoft Authenticator
-                        </span>{" "}
-                        app and enter the 6-digit code.
+                        Open your <span className="text-white">Email </span> app
+                        and enter the 6-digit code.
                       </p>
                     </div>
 
