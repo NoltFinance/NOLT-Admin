@@ -404,7 +404,7 @@ const LoanView: React.FC<LoanViewProps> = ({
         // Fetch form data for selected submission
         console.log("About to fetch form data for ID:", found.id);
         fetchFormData(found.id, found);
-        
+
         // Load available actions for this loan
         loadAvailableActions(found);
       }
@@ -425,7 +425,7 @@ const LoanView: React.FC<LoanViewProps> = ({
         currentUser.role,
         loan.status,
         "Loan",
-        loan.eligibleAmount
+        loan.eligibleAmount,
       );
       setAvailableActions(actions);
     } catch (err) {

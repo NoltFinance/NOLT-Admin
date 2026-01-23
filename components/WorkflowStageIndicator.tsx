@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { RequestType, RequestStatus } from "../types";
-import { getWorkflowStages, getCurrentStage, WorkflowStage } from "../utils/workflowManager";
+import {
+  getWorkflowStages,
+  getCurrentStage,
+  WorkflowStage,
+} from "../utils/workflowManager";
 
 interface WorkflowStageIndicatorProps {
   applicationType: RequestType;
@@ -12,7 +16,8 @@ const WorkflowStageIndicator: React.FC<WorkflowStageIndicatorProps> = ({
   currentStatus,
 }) => {
   const [stages, setStages] = useState<WorkflowStage[]>([]);
-  const [currentStageData, setCurrentStageData] = useState<WorkflowStage | null>(null);
+  const [currentStageData, setCurrentStageData] =
+    useState<WorkflowStage | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -29,7 +34,7 @@ const WorkflowStageIndicator: React.FC<WorkflowStageIndicatorProps> = ({
         setIsLoading(false);
       }
     };
-    
+
     loadStages();
   }, [applicationType, currentStatus]);
 

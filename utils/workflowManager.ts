@@ -1,12 +1,15 @@
 import { UserRole, RequestStatus, RequestType } from "../types";
-import { getApprovalGates, ApprovalGate } from "../services/approvalGatesService";
+import {
+  getApprovalGates,
+  ApprovalGate,
+} from "../services/approvalGatesService";
 
 /**
  * NOLT Finance - Approval Workflow Manager
  *
  * This module implements the sequential approval workflow as defined in the
  * Application Process & Approval Workflow document.
- * 
+ *
  * Workflow gates are now loaded from Supabase database.
  */
 
@@ -20,15 +23,15 @@ const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
  */
 async function loadApprovalGates(): Promise<ApprovalGate[]> {
   const now = Date.now();
-  
+
   // Return cached data if still valid
-  if (cachedGates && cacheTimestamp && (now - cacheTimestamp) < CACHE_DURATION) {
+  if (cachedGates && cacheTimestamp && now - cacheTimestamp < CACHE_DURATION) {
     return cachedGates;
   }
 
   try {
     const { data, error } = await getApprovalGates();
-    
+
     if (error || !data) {
       console.error("Error loading approval gates:", error);
       // Return empty array on error, fallback will handle it
@@ -55,12 +58,14 @@ export function clearGatesCache(): void {
 /**
  * Convert ApprovalGate to WorkflowStage format
  */
-function convertGateToStage(gate: ApprovalGate, workflow: ApprovalGate[]): WorkflowStage {
+function convertGateToStage(
+  gate: ApprovalGate,
+  workflow: ApprovalGate[],
+): WorkflowStage {
   // Determine next stages based on order
-  const currentIndex = workflow.findIndex(g => g.id === gate.id);
-  const nextGate = workflow.find(g => 
-    g.workflow_type === gate.workflow_type && 
-    g.order === gate.order + 1
+  const currentIndex = workflow.findIndex((g) => g.id === gate.id);
+  const nextGate = workflow.find(
+    (g) => g.workflow_type === gate.workflow_type && g.order === gate.order + 1,
   );
 
   return {
@@ -73,7 +78,10 @@ function convertGateToStage(gate: ApprovalGate, workflow: ApprovalGate[]): Workf
     nextStageOn: {
       approve: nextGate?.id || gate.id,
       decline: "declined",
-      return: currentIndex > 0 ? workflow[currentIndex - 1]?.id || "returned" : "returned",
+      return:
+        currentIndex > 0
+          ? workflow[currentIndex - 1]?.id || "returned"
+          : "returned",
     },
   };
 }
@@ -84,20 +92,32 @@ function convertGateToStage(gate: ApprovalGate, workflow: ApprovalGate[]): Workf
 function mapOrderToStatus(order: number, workflowType: string): RequestStatus {
   if (workflowType === "Loan" || workflowType === "Both") {
     switch (order) {
-      case 1: return "Pending Review";
-      case 2: return "Docs Verification";
-      case 3: return "Internal Audit";
-      case 4: return "Pending Disbursement";
-      case 5: return "Approved";
-      default: return "Pending Review";
+      case 1:
+        return "Pending Review";
+      case 2:
+        return "Docs Verification";
+      case 3:
+        return "Internal Audit";
+      case 4:
+        return "Pending Disbursement";
+      case 5:
+        return "Approved";
+      default:
+        return "Pending Review";
     }
-  } else { // Investment
+  } else {
+    // Investment
     switch (order) {
-      case 1: return "Pending Review";
-      case 2: return "Docs Verification";
-      case 3: return "Pending Disbursement";
-      case 4: return "Approved";
-      default: return "Pending Review";
+      case 1:
+        return "Pending Review";
+      case 2:
+        return "Docs Verification";
+      case 3:
+        return "Pending Disbursement";
+      case 4:
+        return "Approved";
+      default:
+        return "Pending Review";
     }
   }
 }
@@ -105,17 +125,20 @@ function mapOrderToStatus(order: number, workflowType: string): RequestStatus {
 /**
  * Get workflow stages for a specific type from database
  */
-async function getWorkflowFromDatabase(applicationType: RequestType): Promise<WorkflowStage[]> {
+async function getWorkflowFromDatabase(
+  applicationType: RequestType,
+): Promise<WorkflowStage[]> {
   const gates = await loadApprovalGates();
-  
+
   // Filter gates by workflow type
   const relevantGates = gates
-    .filter(gate => 
-      gate.workflow_type === applicationType || gate.workflow_type === "Both"
+    .filter(
+      (gate) =>
+        gate.workflow_type === applicationType || gate.workflow_type === "Both",
     )
     .sort((a, b) => a.order - b.order);
 
-  return relevantGates.map(gate => convertGateToStage(gate, relevantGates));
+  return relevantGates.map((gate) => convertGateToStage(gate, relevantGates));
 }
 
 // ============================================================================
@@ -380,7 +403,7 @@ export async function getNextStatus(
   const nextStageId = currentStage.nextStageOn[action];
   const workflow = await getWorkflowFromDatabase(applicationType);
   const nextStage = workflow.find((stage) => stage.id === nextStageId);
-  
+
   return nextStage?.status || currentStatus;
 }
 
@@ -405,19 +428,27 @@ export async function getAvailableActions(
     return ["set_eligible_amount"];
   }
 
-  if (await canPerformAction(userRole, currentStatus, applicationType, "approve")) {
+  if (
+    await canPerformAction(userRole, currentStatus, applicationType, "approve")
+  ) {
     actions.push("approve");
   }
 
-  if (await canPerformAction(userRole, currentStatus, applicationType, "decline")) {
+  if (
+    await canPerformAction(userRole, currentStatus, applicationType, "decline")
+  ) {
     actions.push("decline");
   }
 
-  if (await canPerformAction(userRole, currentStatus, applicationType, "return")) {
+  if (
+    await canPerformAction(userRole, currentStatus, applicationType, "return")
+  ) {
     actions.push("return");
   }
 
-  if (await canPerformAction(userRole, currentStatus, applicationType, "edit")) {
+  if (
+    await canPerformAction(userRole, currentStatus, applicationType, "edit")
+  ) {
     actions.push("edit");
   }
 
