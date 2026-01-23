@@ -25,6 +25,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import AccessDenied from "./components/AccessDenied";
 import PublicFormsView from "./components/PublicFormsView";
 import PublicFormSubmissionView from "./components/PublicFormSubmissionView";
+import ResetPasswordView from "./components/ResetPasswordView";
 import AssignedFormsView from "./components/AssignedFormsView";
 import ApprovalGatesView from "./components/ApprovalGatesView";
 import { getDashboardInsights } from "./services/geminiService";
@@ -34,6 +35,7 @@ import {
   getAllSubmissionsAsRequests,
   getDashboardStats,
 } from "./services/submissionsService";
+import { useInactivityTimer } from "./hooks/useInactivityTimer";
 
 // Real data will be fetched from the database
 // Initial requests are now empty and will be populated on component mount
@@ -146,6 +148,19 @@ const App: React.FC = () => {
       (!("theme" in localStorage) &&
         window.matchMedia("(prefers-color-scheme: dark)").matches)
     );
+  });
+
+  // Session Timeout Implementation (30 minutes)
+  useInactivityTimer({
+    onTimeout: () => {
+      if (isAuthenticated) {
+        // Optional: You could set a specific "session expired" state here to show a different message
+        alert("Your session has expired due to inactivity. Please sign in again.");
+        handleLogout();
+      }
+    },
+    timeout: 30 * 60 * 1000, // 30 minutes
+    isActive: isAuthenticated
   });
 
   // Check authentication on mount
@@ -504,6 +519,7 @@ const App: React.FC = () => {
       {/* Public Routes */}
       <Route path="/forms" element={<PublicFormsView />} />
       <Route path="/apply/:formId" element={<PublicFormSubmissionView />} />
+      <Route path="/reset-password" element={<ResetPasswordView />} />
 
       <Route
         path="/login"
