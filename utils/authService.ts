@@ -584,6 +584,7 @@ export async function createAdminUser(params: {
             role: params.role, // Trigger will use this to create profile
             avatar: `https://picsum.photos/seed/${Date.now()}/100/100`, // Pass avatar to meta for trigger
           },
+          emailRedirectTo: window.location.origin,
         },
       },
     );
