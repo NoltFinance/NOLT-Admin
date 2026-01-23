@@ -983,7 +983,7 @@ const InvestmentView: React.FC<InvestmentViewProps> = ({
                     let iconBg = "bg-slate-400";
                     let iconColor = "text-white";
                     let icon = "circle";
-                    
+
                     if (log.action.includes("APPROVED")) {
                       iconBg = "bg-emerald-500";
                       icon = "check_circle";
@@ -1007,7 +1007,7 @@ const InvestmentView: React.FC<InvestmentViewProps> = ({
                         {index !== inv.operationLogs!.length - 1 && (
                           <div className="absolute left-[15px] top-8 bottom-0 w-[2px] bg-slate-200 dark:bg-slate-700" />
                         )}
-                        
+
                         {/* Icon */}
                         <div className={`relative z-10 flex-shrink-0 w-8 h-8 rounded-full ${iconBg} flex items-center justify-center shadow-sm`}>
                           <span className={`material-symbols-outlined text-[16px] ${iconColor}`}>
@@ -1050,7 +1050,7 @@ const InvestmentView: React.FC<InvestmentViewProps> = ({
                               {log.timestamp}
                             </span>
                           </div>
-                          
+
                           {log.comment && (
                             <div className="mt-2 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
                               <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
@@ -1381,7 +1381,8 @@ const InvestmentView: React.FC<InvestmentViewProps> = ({
       </div>
 
       <div className="bg-white dark:bg-surface-dark rounded-[24px] border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* Desktop Table */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left text-sm whitespace-nowrap">
             <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 font-black text-[10px] uppercase tracking-[0.15em] border-b border-slate-100 dark:border-slate-800">
               <tr>
@@ -1532,6 +1533,97 @@ const InvestmentView: React.FC<InvestmentViewProps> = ({
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile Card View */}
+        <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
+          {isLoadingInvestments ? (
+            <div className="px-6 py-20 text-center">
+              <div className="flex flex-col items-center justify-center gap-4">
+                <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                <p className="text-sm font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  Loading Investments...
+                </p>
+              </div>
+            </div>
+          ) : filteredInvestments.length === 0 ? (
+            <div className="px-6 py-20 text-center">
+              <div className="flex flex-col items-center justify-center gap-4">
+                <span className="material-symbols-outlined text-slate-400 text-[32px] opacity-50">
+                  folder_open
+                </span>
+                <p className="text-sm font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  No Investments Found
+                </p>
+              </div>
+            </div>
+          ) : (
+            filteredInvestments.map((req) => {
+              const node = getApprovalNode(req.status);
+              return (
+                <div
+                  key={req.id}
+                  onClick={() => {
+                    if (onSelectInvestment) {
+                      onSelectInvestment(req.id);
+                    } else {
+                      setSelectedInvestment(req);
+                    }
+                  }}
+                  className="p-4 hover:bg-slate-50 dark:hover:bg-slate-800/40 active:bg-slate-100 dark:active:bg-slate-800/60 transition-colors cursor-pointer"
+                >
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                      <img
+                        src={req.applicant.avatar}
+                        className="w-10 h-10 rounded-xl border border-slate-100 dark:border-slate-800"
+                        alt=""
+                      />
+                      <div>
+                        <h4 className="font-black text-slate-900 dark:text-white text-sm uppercase tracking-tight line-clamp-1">{req.applicant.name}</h4>
+                        <span className="text-[10px] font-mono font-bold text-slate-400 block mt-0.5">{req.referenceId}</span>
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-end gap-1">
+                      <span
+                        className={`px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-widest border ${node.color}`}
+                      >
+                        {node.label}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="px-2 py-1 bg-purple-100 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 text-[10px] font-black uppercase rounded-lg border border-purple-200 dark:border-purple-800">
+                      {req.selectedPlan}
+                    </span>
+                    <span className="text-sm font-black text-slate-900 dark:text-white tracking-wide">
+                      {req.amount}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800/50">
+                    <div className="flex items-center gap-1.5 text-slate-500">
+                      <span className="material-symbols-outlined text-[16px]">
+                        person
+                      </span>
+                      <span className="text-[10px] font-bold uppercase tracking-wider">
+                        {req.ownerName || "Unassigned"}
+                      </span>
+                    </div>
+                    <span
+                      className={`inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide ${req.status === 'Approved' ? 'text-emerald-600' :
+                          req.status === 'Declined' ? 'text-rose-600' :
+                            'text-amber-600'
+                        }`}
+                    >
+                      {req.status}
+                    </span>
+                  </div>
+                </div>
+              );
+            })
+          )}
         </div>
       </div>
 

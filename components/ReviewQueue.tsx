@@ -20,19 +20,19 @@ const getApprovalNode = (request: ReviewRequest) => {
     case 'Docs Verification':
       return { label: 'Validation', color: 'text-amber-600 bg-amber-50 dark:bg-amber-900/10 border-amber-100' };
     case 'Internal Audit':
-      return { 
-        label: isLoan ? 'Credit Check' : 'Payment Verification', 
-        color: 'text-indigo-600 bg-indigo-50 dark:bg-indigo-900/10 border-indigo-100' 
+      return {
+        label: isLoan ? 'Credit Check' : 'Payment Verification',
+        color: 'text-indigo-600 bg-indigo-50 dark:bg-indigo-900/10 border-indigo-100'
       };
     case 'Pending Disbursement':
-      return { 
-        label: isLoan ? 'Request For Payment' : 'Payment Verification', 
-        color: 'text-indigo-600 bg-indigo-50 dark:bg-indigo-900/10 border-indigo-100' 
+      return {
+        label: isLoan ? 'Request For Payment' : 'Payment Verification',
+        color: 'text-indigo-600 bg-indigo-50 dark:bg-indigo-900/10 border-indigo-100'
       };
     case 'Approved':
-      return { 
-        label: isLoan ? 'Disbursed' : 'Investment Certificate', 
-        color: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/10 border-emerald-100' 
+      return {
+        label: isLoan ? 'Disbursed' : 'Investment Certificate',
+        color: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/10 border-emerald-100'
       };
     case 'Declined':
       return { label: 'Rejected', color: 'text-rose-600 bg-rose-50 dark:bg-rose-900/10 border-rose-100' };
@@ -75,7 +75,7 @@ const ReviewQueue: React.FC<ReviewQueueProps> = ({ requests, onViewAll, onSelect
           <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Review Queue</h3>
           <p className="text-sm text-slate-500 dark:text-slate-400 font-bold">Incoming loan and investment requests awaiting approval.</p>
         </div>
-        <button 
+        <button
           onClick={onViewAll}
           className="px-6 py-2.5 text-xs font-black uppercase tracking-widest rounded-xl bg-primary text-white hover:bg-blue-600 transition-all shadow-lg shadow-primary/20 flex items-center gap-2 self-start sm:self-auto"
         >
@@ -83,12 +83,13 @@ const ReviewQueue: React.FC<ReviewQueueProps> = ({ requests, onViewAll, onSelect
           <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
         </button>
       </div>
-      <div className="overflow-x-auto">
+      {/* Desktop Table View */}
+      <div className="hidden md:block overflow-x-auto">
         <table className="w-full text-left text-sm whitespace-nowrap">
           <thead className="bg-slate-50 dark:bg-slate-800/30 text-slate-500 dark:text-slate-400 font-black text-[10px] uppercase tracking-[0.15em] border-b border-slate-100 dark:border-slate-800">
             <tr>
               <th className="px-6 py-4 w-10 text-center">
-                <input className="rounded border-slate-300 dark:border-slate-700 text-primary focus:ring-primary dark:bg-slate-800" type="checkbox"/>
+                <input className="rounded border-slate-300 dark:border-slate-700 text-primary focus:ring-primary dark:bg-slate-800" type="checkbox" />
               </th>
               <th className="px-6 py-4">Reference ID</th>
               <th className="px-6 py-4">Applicant</th>
@@ -105,19 +106,19 @@ const ReviewQueue: React.FC<ReviewQueueProps> = ({ requests, onViewAll, onSelect
             {requests.map((request) => {
               const node = getApprovalNode(request);
               return (
-                <tr 
-                  key={request.id} 
+                <tr
+                  key={request.id}
                   onClick={() => onSelectRequest?.(request)}
                   className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors cursor-pointer group"
                 >
                   <td className="px-6 py-4 text-center" onClick={(e) => e.stopPropagation()}>
-                    <input className="rounded border-slate-300 dark:border-slate-700 text-primary focus:ring-primary dark:bg-slate-800" type="checkbox"/>
+                    <input className="rounded border-slate-300 dark:border-slate-700 text-primary focus:ring-primary dark:bg-slate-800" type="checkbox" />
                   </td>
                   <td className="px-6 py-4 text-slate-500 dark:text-slate-400 font-mono text-[11px] font-bold">{request.referenceId}</td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
-                      <img 
-                        src={request.applicant.avatar} 
+                      <img
+                        src={request.applicant.avatar}
                         alt={request.applicant.name}
                         className="w-10 h-10 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm"
                       />
@@ -163,6 +164,61 @@ const ReviewQueue: React.FC<ReviewQueueProps> = ({ requests, onViewAll, onSelect
             })}
           </tbody>
         </table>
+      </div>
+
+      {/* Mobile Card View */}
+      <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
+        {requests.map((request) => {
+          const node = getApprovalNode(request);
+          return (
+            <div
+              key={request.id}
+              onClick={() => onSelectRequest?.(request)}
+              className="p-4 hover:bg-slate-50 dark:hover:bg-slate-800/40 active:bg-slate-100 dark:active:bg-slate-800/60 transition-colors cursor-pointer"
+            >
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <img
+                    src={request.applicant.avatar}
+                    alt={request.applicant.name}
+                    className="w-10 h-10 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm"
+                  />
+                  <div>
+                    <h4 className="font-black text-slate-900 dark:text-white text-sm uppercase tracking-tight line-clamp-1">{request.applicant.name}</h4>
+                    <span className="text-[10px] font-mono font-bold text-slate-400 block mt-0.5">{request.referenceId}</span>
+                  </div>
+                </div>
+                <div className="flex flex-col items-end gap-1">
+                  <span className={`px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-widest border ${node.color}`}>
+                    {node.label}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between mb-3">
+                <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border ${getTypeStyles(request.type)}`}>
+                  {request.type}
+                </span>
+                <span className="text-sm font-black text-slate-900 dark:text-white tracking-wide">
+                  {request.amount}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800/50">
+                <div className="flex items-center gap-1.5 text-slate-500">
+                  <span className="material-symbols-outlined text-[16px]">person</span>
+                  <span className="text-[10px] font-bold uppercase">{request.ownerName || 'Unassigned'}</span>
+                </div>
+                <span className={`inline-flex items-center gap-1.5 text-[10px] font-bold ${request.status === 'Approved' ? 'text-emerald-600' :
+                    request.status === 'Declined' ? 'text-rose-600' :
+                      'text-amber-600'
+                  }`}>
+                  {request.status}
+                </span>
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

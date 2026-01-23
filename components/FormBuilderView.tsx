@@ -566,19 +566,17 @@ const FormBuilderView: React.FC = () => {
                             onClick={() =>
                               setNewFormData({ ...newFormData, visibility })
                             }
-                            className={`p-4 rounded-2xl border-2 transition-all text-left ${
-                              newFormData.visibility === visibility
-                                ? "border-primary bg-primary/5"
-                                : "border-slate-100 dark:border-slate-800 hover:border-slate-200"
-                            }`}
+                            className={`p-4 rounded-2xl border-2 transition-all text-left ${newFormData.visibility === visibility
+                              ? "border-primary bg-primary/5"
+                              : "border-slate-100 dark:border-slate-800 hover:border-slate-200"
+                              }`}
                           >
                             <div className="flex items-center gap-2 mb-2">
                               <span
-                                className={`material-symbols-outlined text-xl ${
-                                  newFormData.visibility === visibility
-                                    ? "text-primary"
-                                    : "text-slate-400"
-                                }`}
+                                className={`material-symbols-outlined text-xl ${newFormData.visibility === visibility
+                                  ? "text-primary"
+                                  : "text-slate-400"
+                                  }`}
                               >
                                 {visibility === "Public"
                                   ? "public"
@@ -696,13 +694,12 @@ const FormBuilderView: React.FC = () => {
                     {form.status}
                   </span>
                   <span
-                    className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
-                      form.visibility === "Public"
-                        ? "bg-blue-100 text-blue-700"
-                        : form.visibility === "Internal"
-                          ? "bg-amber-100 text-amber-700"
-                          : "bg-slate-100 text-slate-500"
-                    }`}
+                    className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${form.visibility === "Public"
+                      ? "bg-blue-100 text-blue-700"
+                      : form.visibility === "Internal"
+                        ? "bg-amber-100 text-amber-700"
+                        : "bg-slate-100 text-slate-500"
+                      }`}
                   >
                     {form.visibility}
                   </span>
@@ -1005,19 +1002,17 @@ const FormBuilderView: React.FC = () => {
                             onClick={() =>
                               setNewFormData({ ...newFormData, visibility })
                             }
-                            className={`p-4 rounded-2xl border-2 transition-all text-left ${
-                              newFormData.visibility === visibility
-                                ? "border-primary bg-primary/5"
-                                : "border-slate-100 dark:border-slate-800 hover:border-slate-200"
-                            }`}
+                            className={`p-4 rounded-2xl border-2 transition-all text-left ${newFormData.visibility === visibility
+                              ? "border-primary bg-primary/5"
+                              : "border-slate-100 dark:border-slate-800 hover:border-slate-200"
+                              }`}
                           >
                             <div className="flex items-center gap-2 mb-2">
                               <span
-                                className={`material-symbols-outlined text-xl ${
-                                  newFormData.visibility === visibility
-                                    ? "text-primary"
-                                    : "text-slate-400"
-                                }`}
+                                className={`material-symbols-outlined text-xl ${newFormData.visibility === visibility
+                                  ? "text-primary"
+                                  : "text-slate-400"
+                                  }`}
                               >
                                 {visibility === "Public"
                                   ? "public"
@@ -1279,11 +1274,10 @@ const FormBuilderView: React.FC = () => {
                           onClick={() =>
                             handleUpdateFormMetadata({ status: status as any })
                           }
-                          className={`flex-1 px-3 py-1.5 rounded-md text-[10px] font-black uppercase tracking-wide transition-all ${
-                            selectedForm.status === status
-                              ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm"
-                              : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
-                          }`}
+                          className={`flex-1 px-3 py-1.5 rounded-md text-[10px] font-black uppercase tracking-wide transition-all ${selectedForm.status === status
+                            ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm"
+                            : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+                            }`}
                         >
                           {status}
                         </button>
@@ -1305,11 +1299,10 @@ const FormBuilderView: React.FC = () => {
                             visibility: visibility as any,
                           })
                         }
-                        className={`flex-1 px-3 py-1.5 rounded-md text-[10px] font-black uppercase tracking-wide transition-all ${
-                          selectedForm.visibility === visibility
-                            ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm"
-                            : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
-                        }`}
+                        className={`flex-1 px-3 py-1.5 rounded-md text-[10px] font-black uppercase tracking-wide transition-all ${selectedForm.visibility === visibility
+                          ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm"
+                          : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+                          }`}
                       >
                         {visibility}
                       </button>
@@ -1344,7 +1337,7 @@ const FormBuilderView: React.FC = () => {
         <div
           className={`${isPreview ? "lg:col-span-12 max-w-2xl mx-auto" : "lg:col-span-7"} space-y-4`}
         >
-          <div className="bg-white dark:bg-surface-dark rounded-[32px] p-8 border border-slate-100 dark:border-slate-800 shadow-sm min-h-[600px]">
+          <div className="bg-white dark:bg-surface-dark rounded-[32px] p-5 md:p-8 border border-slate-100 dark:border-slate-800 shadow-sm min-h-[600px]">
             <div className="mb-10 text-center">
               <h4 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">
                 {selectedForm.name}
@@ -1380,13 +1373,12 @@ const FormBuilderView: React.FC = () => {
                   <div
                     key={field.id}
                     onClick={() => !isPreview && setActiveField(field.id)}
-                    className={`relative p-6 rounded-[24px] border-2 transition-all group ${
-                      isPreview
-                        ? "border-transparent bg-slate-50 dark:bg-surface-darker"
-                        : activeField === field.id
-                          ? "border-primary bg-primary/5"
-                          : "border-slate-50 dark:border-slate-800/50 hover:border-slate-200 cursor-pointer"
-                    }`}
+                    className={`relative p-4 md:p-6 rounded-[24px] border-2 transition-all group ${isPreview
+                      ? "border-transparent bg-slate-50 dark:bg-surface-darker"
+                      : activeField === field.id
+                        ? "border-primary bg-primary/5"
+                        : "border-slate-50 dark:border-slate-800/50 hover:border-slate-200 cursor-pointer"
+                      }`}
                   >
                     <div className="space-y-2">
                       <label className="text-xs font-black text-slate-700 dark:text-slate-200 uppercase tracking-widest flex items-center gap-2">
@@ -1602,15 +1594,13 @@ const FormBuilderView: React.FC = () => {
                                     [field.id]: 0,
                                   }))
                                 }
-                                className={`text-3xl transition-all ${
-                                  star <= displayRating
-                                    ? "text-yellow-400 scale-110"
-                                    : "text-slate-300"
-                                } ${
-                                  isPreview
+                                className={`text-3xl transition-all ${star <= displayRating
+                                  ? "text-yellow-400 scale-110"
+                                  : "text-slate-300"
+                                  } ${isPreview
                                     ? "cursor-pointer hover:scale-125"
                                     : "cursor-not-allowed"
-                                }`}
+                                  }`}
                                 disabled={!isPreview}
                               >
                                 {star <= displayRating ? "⭐" : "☆"}
@@ -1670,11 +1660,10 @@ const FormBuilderView: React.FC = () => {
                               onTouchEnd={() =>
                                 isPreview && stopDrawing(field.id)
                               }
-                              className={`w-full h-48 bg-white dark:bg-background-dark/50 border-2 border-dashed border-slate-100 dark:border-slate-800 rounded-xl transition-colors ${
-                                isPreview
-                                  ? "cursor-crosshair hover:border-primary"
-                                  : "cursor-not-allowed"
-                              }`}
+                              className={`w-full h-48 bg-white dark:bg-background-dark/50 border-2 border-dashed border-slate-100 dark:border-slate-800 rounded-xl transition-colors ${isPreview
+                                ? "cursor-crosshair hover:border-primary"
+                                : "cursor-not-allowed"
+                                }`}
                             />
                             {isPreview && (
                               <button
@@ -1812,7 +1801,7 @@ const FormBuilderView: React.FC = () => {
         {/* Right: Field Properties */}
         {!isPreview && (
           <div className="lg:col-span-5 space-y-6">
-            <div className="bg-white dark:bg-surface-dark rounded-[32px] p-6 border border-slate-100 dark:border-slate-800 shadow-sm sticky top-24">
+            <div className="bg-white dark:bg-surface-dark rounded-[32px] p-4 md:p-6 border border-slate-100 dark:border-slate-800 shadow-sm sticky top-24">
               {currentField ? (
                 <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
                   <div className="flex items-center gap-2 border-b border-slate-50 dark:border-slate-800 pb-4">
@@ -1997,98 +1986,98 @@ const FormBuilderView: React.FC = () => {
                       currentField.field_type === "multiselect" ||
                       currentField.field_type === "radio" ||
                       currentField.field_type === "checkbox_group") && (
-                      <div className="space-y-2 pt-2">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
-                          {currentField.field_type === "select" ||
-                          currentField.field_type === "multiselect"
-                            ? "Dropdown Options"
-                            : currentField.field_type === "radio"
-                              ? "Radio Button Options"
-                              : "Checkbox Options"}
-                        </label>
-                        {(
-                          editingOptions[currentField.id] ||
-                          currentField.options || ["Option 1"]
-                        ).map((opt, oIdx) => (
-                          <div key={oIdx} className="flex gap-2">
-                            <input
-                              value={opt}
-                              onChange={(e) => {
-                                const currentOpts =
-                                  editingOptions[currentField.id] ||
-                                  currentField.options ||
-                                  [];
-                                const opts = [...currentOpts];
-                                opts[oIdx] = e.target.value;
-                                setEditingOptions((prev) => ({
-                                  ...prev,
-                                  [currentField.id]: opts,
-                                }));
-                              }}
-                              onBlur={() => {
-                                const opts = editingOptions[currentField.id];
-                                if (opts) {
-                                  updateField(currentField.id, {
-                                    options: opts,
-                                  });
-                                  setEditingOptions((prev) => {
-                                    const newState = { ...prev };
-                                    delete newState[currentField.id];
-                                    return newState;
-                                  });
-                                }
-                              }}
-                              className="flex-1 bg-slate-50 dark:bg-background-dark/50 border-none rounded-xl px-3 py-2 text-xs font-bold focus:ring-1 focus:ring-primary dark:text-white"
-                            />
-                            {(
-                              editingOptions[currentField.id] ||
-                              currentField.options ||
-                              []
-                            ).length > 1 && (
-                              <button
-                                onClick={() => {
+                        <div className="space-y-2 pt-2">
+                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
+                            {currentField.field_type === "select" ||
+                              currentField.field_type === "multiselect"
+                              ? "Dropdown Options"
+                              : currentField.field_type === "radio"
+                                ? "Radio Button Options"
+                                : "Checkbox Options"}
+                          </label>
+                          {(
+                            editingOptions[currentField.id] ||
+                            currentField.options || ["Option 1"]
+                          ).map((opt, oIdx) => (
+                            <div key={oIdx} className="flex gap-2">
+                              <input
+                                value={opt}
+                                onChange={(e) => {
                                   const currentOpts =
                                     editingOptions[currentField.id] ||
                                     currentField.options ||
                                     [];
                                   const opts = [...currentOpts];
-                                  opts.splice(oIdx, 1);
+                                  opts[oIdx] = e.target.value;
                                   setEditingOptions((prev) => ({
                                     ...prev,
                                     [currentField.id]: opts,
                                   }));
-                                  updateField(currentField.id, {
-                                    options: opts,
-                                  });
                                 }}
-                                className="px-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/20 rounded-lg transition-colors"
-                              >
-                                <span className="material-symbols-outlined text-[16px]">
-                                  close
-                                </span>
-                              </button>
-                            )}
-                          </div>
-                        ))}
-                        <button
-                          onClick={() => {
-                            const currentOpts =
-                              editingOptions[currentField.id] ||
-                              currentField.options ||
-                              [];
-                            const opts = [...currentOpts, "New Option"];
-                            setEditingOptions((prev) => ({
-                              ...prev,
-                              [currentField.id]: opts,
-                            }));
-                            updateField(currentField.id, { options: opts });
-                          }}
-                          className="text-[10px] font-black text-primary uppercase tracking-widest ml-1"
-                        >
-                          + Add Option
-                        </button>
-                      </div>
-                    )}
+                                onBlur={() => {
+                                  const opts = editingOptions[currentField.id];
+                                  if (opts) {
+                                    updateField(currentField.id, {
+                                      options: opts,
+                                    });
+                                    setEditingOptions((prev) => {
+                                      const newState = { ...prev };
+                                      delete newState[currentField.id];
+                                      return newState;
+                                    });
+                                  }
+                                }}
+                                className="flex-1 bg-slate-50 dark:bg-background-dark/50 border-none rounded-xl px-3 py-2 text-xs font-bold focus:ring-1 focus:ring-primary dark:text-white"
+                              />
+                              {(
+                                editingOptions[currentField.id] ||
+                                currentField.options ||
+                                []
+                              ).length > 1 && (
+                                  <button
+                                    onClick={() => {
+                                      const currentOpts =
+                                        editingOptions[currentField.id] ||
+                                        currentField.options ||
+                                        [];
+                                      const opts = [...currentOpts];
+                                      opts.splice(oIdx, 1);
+                                      setEditingOptions((prev) => ({
+                                        ...prev,
+                                        [currentField.id]: opts,
+                                      }));
+                                      updateField(currentField.id, {
+                                        options: opts,
+                                      });
+                                    }}
+                                    className="px-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/20 rounded-lg transition-colors"
+                                  >
+                                    <span className="material-symbols-outlined text-[16px]">
+                                      close
+                                    </span>
+                                  </button>
+                                )}
+                            </div>
+                          ))}
+                          <button
+                            onClick={() => {
+                              const currentOpts =
+                                editingOptions[currentField.id] ||
+                                currentField.options ||
+                                [];
+                              const opts = [...currentOpts, "New Option"];
+                              setEditingOptions((prev) => ({
+                                ...prev,
+                                [currentField.id]: opts,
+                              }));
+                              updateField(currentField.id, { options: opts });
+                            }}
+                            className="text-[10px] font-black text-primary uppercase tracking-widest ml-1"
+                          >
+                            + Add Option
+                          </button>
+                        </div>
+                      )}
                   </div>
                 </div>
               ) : (
@@ -2117,9 +2106,9 @@ const FormBuilderView: React.FC = () => {
       {/* Administrators Modal */}
       {showAdminModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-surface-dark rounded-[32px] shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden animate-in zoom-in-95 duration-200">
-            {/* Modal Header */}
-            <div className="flex items-center justify-between p-8 border-b border-slate-100 dark:border-slate-800">
+          <div className="bg-white dark:bg-surface-dark rounded-[32px] shadow-2xl max-w-2xl w-full max-h-[85vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+            {/* Modal Header - Fixed */}
+            <div className="flex-none flex items-center justify-between p-8 border-b border-slate-100 dark:border-slate-800">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center">
                   <span className="material-symbols-outlined text-primary">
@@ -2143,8 +2132,8 @@ const FormBuilderView: React.FC = () => {
               </button>
             </div>
 
-            {/* Modal Body */}
-            <div className="p-8 space-y-6">
+            {/* Modal Body - Scrollable */}
+            <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 min-h-0">
               {error && (
                 <div className="p-4 bg-rose-50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-900 rounded-2xl">
                   <p className="text-sm font-bold text-rose-700 dark:text-rose-400">
@@ -2154,7 +2143,7 @@ const FormBuilderView: React.FC = () => {
               )}
 
               {/* Search and Filter */}
-              <div className="flex gap-3">
+              <div className="flex flex-col md:flex-row gap-3">
                 <div className="flex-1 relative">
                   <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-xl">
                     search
@@ -2167,14 +2156,14 @@ const FormBuilderView: React.FC = () => {
                       setUserPage(0);
                       loadUsers(e.target.value, "", 0);
                     }}
-                    placeholder="Search Sales Officers by name or email..."
+                    placeholder="Search Sales Officers..."
                     className="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-background-dark/50 border-none rounded-xl text-sm font-bold focus:ring-2 focus:ring-primary dark:text-white placeholder:text-slate-400"
                   />
                 </div>
                 {selectedAdmins.length > 0 && (
                   <button
                     onClick={() => setSelectedAdmins([])}
-                    className="px-4 py-3 bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800 rounded-xl text-sm font-bold hover:bg-rose-100 dark:hover:bg-rose-900/30 transition-colors flex items-center gap-2"
+                    className="px-4 py-3 bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800 rounded-xl text-sm font-bold hover:bg-rose-100 dark:hover:bg-rose-900/30 transition-colors flex items-center justify-center gap-2"
                   >
                     <span className="material-symbols-outlined text-lg">
                       clear_all
@@ -2184,8 +2173,8 @@ const FormBuilderView: React.FC = () => {
                 )}
               </div>
 
-              {/* Users List */}
-              <div className="space-y-2 overflow-y-auto max-h-[40vh]">
+              {/* Users List - Auto height */}
+              <div className="space-y-2">
                 {loadingUsers ? (
                   <div className="text-center py-10">
                     <div className="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin mx-auto mb-3" />
@@ -2214,11 +2203,10 @@ const FormBuilderView: React.FC = () => {
                           setSelectedAdmins([...selectedAdmins, user.id]);
                         }
                       }}
-                      className={`p-4 rounded-2xl border-2 transition-all cursor-pointer ${
-                        selectedAdmins.includes(user.id)
-                          ? "border-primary bg-primary/5"
-                          : "border-slate-100 dark:border-slate-800 hover:border-slate-200 dark:hover:border-slate-700"
-                      }`}
+                      className={`p-4 rounded-2xl border-2 transition-all cursor-pointer ${selectedAdmins.includes(user.id)
+                        ? "border-primary bg-primary/5"
+                        : "border-slate-100 dark:border-slate-800 hover:border-slate-200 dark:hover:border-slate-700"
+                        }`}
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
@@ -2232,17 +2220,17 @@ const FormBuilderView: React.FC = () => {
                               {user.name || user.email}
                             </p>
                             <div className="flex items-center gap-2">
-                              <p className="text-xs text-slate-500 font-bold">
+                              <p className="text-xs text-slate-500 font-bold truncate max-w-[150px] md:max-w-none">
                                 {user.email}
                               </p>
-                              <span className="px-2 py-0.5 bg-primary/10 text-primary rounded-md text-[9px] font-black uppercase">
+                              <span className="px-2 py-0.5 bg-primary/10 text-primary rounded-md text-[9px] font-black uppercase whitespace-nowrap">
                                 {user.role}
                               </span>
                             </div>
                           </div>
                         </div>
                         {selectedAdmins.includes(user.id) && (
-                          <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center">
+                          <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
                             <span className="material-symbols-outlined text-white text-sm">
                               check
                             </span>
@@ -2256,13 +2244,13 @@ const FormBuilderView: React.FC = () => {
 
               {/* Pagination */}
               {userTotal > usersPerPage && (
-                <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-800">
-                  <p className="text-xs text-slate-500 font-bold">
+                <div className="flex flex-col md:flex-row items-center justify-between gap-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+                  <p className="text-xs text-slate-500 font-bold order-2 md:order-1">
                     Showing {userPage * usersPerPage + 1}-
                     {Math.min((userPage + 1) * usersPerPage, userTotal)} of{" "}
                     {userTotal} users
                   </p>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 order-1 md:order-2 w-full md:w-auto justify-between md:justify-end">
                     <button
                       onClick={() => {
                         const newPage = userPage - 1;
@@ -2297,27 +2285,27 @@ const FormBuilderView: React.FC = () => {
               )}
             </div>
 
-            {/* Modal Footer */}
-            <div className="flex items-center justify-between p-8 border-t border-slate-100 dark:border-slate-800">
-              <p className="text-xs text-slate-500 font-bold">
+            {/* Modal Footer - Fixed */}
+            <div className="flex-none flex flex-col md:flex-row items-center justify-between gap-4 p-4 md:p-8 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
+              <p className="text-xs text-slate-500 font-bold order-2 md:order-1">
                 {selectedAdmins.length} administrator
                 {selectedAdmins.length !== 1 ? "s" : ""} selected
               </p>
-              <div className="flex items-center gap-3">
+              <div className="flex flex-col md:flex-row items-center gap-3 w-full md:w-auto order-1 md:order-2">
                 <button
                   onClick={() => {
                     setShowAdminModal(false);
                     setError(null);
                   }}
                   disabled={saving}
-                  className="px-6 py-3 rounded-xl text-xs font-black text-slate-600 dark:text-slate-400 uppercase tracking-widest hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors disabled:opacity-50"
+                  className="w-full md:w-auto px-6 py-3 rounded-xl text-xs font-black text-slate-600 dark:text-slate-400 uppercase tracking-widest hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors disabled:opacity-50"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleSaveAdministrators}
                   disabled={saving}
-                  className="px-8 py-3 bg-primary text-white font-black rounded-xl shadow-lg shadow-primary/20 uppercase text-xs tracking-widest hover:bg-blue-600 transition-all disabled:opacity-50 flex items-center gap-2"
+                  className="w-full md:w-auto px-8 py-3 bg-primary text-white font-black rounded-xl shadow-lg shadow-primary/20 uppercase text-xs tracking-widest hover:bg-blue-600 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {saving && (
                     <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />

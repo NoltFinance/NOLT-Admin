@@ -316,7 +316,7 @@ const PublicFormSubmissionView: React.FC = () => {
       <div
         key={field.id}
         id={`field-${field.id}`}
-        className="p-6 rounded-[24px] border-2 border-transparent bg-slate-50 dark:bg-surface-darker"
+        className="p-4 md:p-6 rounded-[24px] border-2 border-transparent bg-slate-50 dark:bg-surface-darker transition-all"
       >
         <div className="space-y-2">
           <label className="text-xs font-black text-slate-700 dark:text-slate-200 uppercase tracking-widest flex items-center gap-2">
@@ -456,11 +456,10 @@ const PublicFormSubmissionView: React.FC = () => {
                     key={star}
                     type="button"
                     onClick={() => handleInputChange(field.id, star, field)}
-                    className={`text-3xl transition-all ${
-                      star <= displayRating
-                        ? "text-yellow-400 scale-110"
-                        : "text-slate-300"
-                    } cursor-pointer hover:scale-125`}
+                    className={`text-3xl transition-all ${star <= displayRating
+                      ? "text-yellow-400 scale-110"
+                      : "text-slate-300"
+                      } cursor-pointer hover:scale-125`}
                   >
                     {star <= displayRating ? "⭐" : "☆"}
                   </button>
@@ -507,7 +506,7 @@ const PublicFormSubmissionView: React.FC = () => {
               onChange={(e) => {
                 const selected = Array.from(
                   e.target.selectedOptions,
-                  (option) => option.value,
+                  (option: HTMLOptionElement) => option.value,
                 );
                 handleInputChange(field.id, selected, field);
               }}
@@ -568,10 +567,14 @@ const PublicFormSubmissionView: React.FC = () => {
             </div>
           ) : field.field_type === "signature" ? (
             <div className="space-y-3">
-              <div className="relative">
+              <div className="relative w-full overflow-hidden rounded-xl border-2 border-dashed border-slate-100 dark:border-slate-800 hover:border-primary transition-colors">
                 <canvas
                   ref={(el) => {
-                    if (el) signatureCanvasRefs.current[field.id] = el;
+                    if (el) {
+                      signatureCanvasRefs.current[field.id] = el;
+                      // Simple responsive fix: match parent width on mount logic would go here
+                      // For now we rely on CSS scaling or standard size
+                    }
                   }}
                   width={600}
                   height={200}
@@ -582,7 +585,8 @@ const PublicFormSubmissionView: React.FC = () => {
                   onTouchStart={(e) => startDrawing(field.id, e)}
                   onTouchMove={(e) => draw(field.id, e)}
                   onTouchEnd={() => stopDrawing(field.id)}
-                  className="w-full h-48 bg-white dark:bg-background-dark/50 border-2 border-dashed border-slate-100 dark:border-slate-800 rounded-xl cursor-crosshair hover:border-primary transition-colors"
+                  className="w-full h-auto min-h-[150px] bg-white dark:bg-background-dark/50 cursor-crosshair touch-none"
+                  style={{ width: '100%', height: '200px' }}
                 />
                 <button
                   type="button"
@@ -720,7 +724,7 @@ const PublicFormSubmissionView: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-800">
       {/* Header */}
       <header className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 sticky top-0 z-30">
-        <div className="max-w-6xl mx-auto px-6 py-4">
+        <div className="max-w-6xl mx-auto px-4 md:px-6 py-4">
           <div className="flex items-center justify-between">
             <button
               onClick={() => navigate("/forms")}
@@ -743,10 +747,10 @@ const PublicFormSubmissionView: React.FC = () => {
         </div>
       </header>
 
-      {/* Form */}
-      <main className="max-w-6xl mx-auto px-6 py-12">
-        <div className="bg-white dark:bg-surface-dark rounded-[32px] shadow-sm border border-slate-100 dark:border-slate-800">
-          <div className="p-8 border-b border-slate-50 dark:border-slate-800">
+      {/* Form Container */}
+      <main className="max-w-6xl mx-auto px-4 md:px-6 py-6 md:py-12">
+        <div className="bg-white dark:bg-surface-dark rounded-[24px] md:rounded-[32px] shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden">
+          <div className="p-5 md:p-8 border-b border-slate-50 dark:border-slate-800">
             <h4 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">
               {form.name}
             </h4>
@@ -758,7 +762,7 @@ const PublicFormSubmissionView: React.FC = () => {
 
           {/* Stepper - Only show if multi-step form */}
           {form.enable_steps && getTotalSteps() > 1 && (
-            <div className="px-8 pt-8">
+            <div className="px-4 md:px-8 pt-6 md:pt-8 overflow-x-auto">
               <div className="relative flex items-center justify-between max-w-3xl mx-auto">
                 {/* Progress Line Background */}
                 <div className="absolute top-1/2 left-0 w-full h-0.5 bg-slate-200 dark:bg-slate-800 -translate-y-1/2 z-0" />
@@ -784,13 +788,12 @@ const PublicFormSubmissionView: React.FC = () => {
                       className="relative z-10 flex flex-col items-center"
                     >
                       <div
-                        className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-500 border-4 ${
-                          isCompleted
-                            ? "bg-primary text-white border-primary shadow-lg shadow-primary/30"
-                            : isActive
-                              ? "bg-white dark:bg-surface-dark text-primary border-primary shadow-xl scale-110"
-                              : "bg-white dark:bg-surface-dark text-slate-300 dark:text-slate-600 border-slate-200 dark:border-slate-800"
-                        }`}
+                        className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-500 border-4 ${isCompleted
+                          ? "bg-primary text-white border-primary shadow-lg shadow-primary/30"
+                          : isActive
+                            ? "bg-white dark:bg-surface-dark text-primary border-primary shadow-xl scale-110"
+                            : "bg-white dark:bg-surface-dark text-slate-300 dark:text-slate-600 border-slate-200 dark:border-slate-800"
+                          }`}
                       >
                         {isCompleted ? (
                           <span className="material-symbols-outlined text-[22px]">
@@ -806,11 +809,10 @@ const PublicFormSubmissionView: React.FC = () => {
                       </div>
                       <div className="absolute top-14 whitespace-nowrap text-center">
                         <p
-                          className={`text-[10px] font-black uppercase tracking-widest ${
-                            isCompleted || isActive
-                              ? "text-slate-900 dark:text-white"
-                              : "text-slate-400"
-                          }`}
+                          className={`text-[10px] font-black uppercase tracking-widest ${isCompleted || isActive
+                            ? "text-slate-900 dark:text-white"
+                            : "text-slate-400"
+                            }`}
                         >
                           {stepLabel}
                         </p>
@@ -827,14 +829,14 @@ const PublicFormSubmissionView: React.FC = () => {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="p-8">
-            <div className="space-y-6">
+          <form onSubmit={handleSubmit} className="p-4 md:p-8">
+            <div className="space-y-4 md:space-y-6">
               {getCurrentStepFields()
                 .sort((a, b) => a.order_index - b.order_index)
                 .map((field) => renderField(field))}
             </div>
 
-            <div className="flex gap-4 pt-10">
+            <div className="flex flex-col md:flex-row gap-4 pt-6 md:pt-10">
               {form.enable_steps && currentStep > 1 && (
                 <button
                   type="button"

@@ -395,31 +395,31 @@ const App: React.FC = () => {
 
   const renderDashboard = () => (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6 mb-8">
         <div>
-          <div className="flex items-center gap-3 mb-1">
-            <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight leading-tight">
+          <div className="flex items-center gap-3 mb-2">
+            <h2 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight leading-tight">
               Welcome back, {currentUser?.name}
             </h2>
           </div>
-          <p className="text-slate-500 dark:text-slate-400 font-bold">
+          <p className="text-sm md:text-base text-slate-500 dark:text-slate-400 font-bold">
             Overview of financial metrics and system logs for today.
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-2 px-3 py-1.5 bg-primary/10 dark:bg-primary/20 rounded-full border border-primary/20">
-            <span className="material-symbols-outlined text-primary text-[18px]">
+            <span className="material-symbols-outlined text-primary text-[16px] md:text-[18px]">
               verified_user
             </span>
-            <span className="text-sm font-black text-primary uppercase tracking-wider">
+            <span className="text-xs md:text-sm font-black text-primary uppercase tracking-wider">
               {currentUser?.role} View
             </span>
           </div>
           <button className="flex items-center gap-2 px-4 py-2.5 bg-slate-900 dark:bg-slate-700 hover:bg-slate-800 dark:hover:bg-slate-600 text-white rounded-xl transition-all shadow-lg border border-slate-700">
-            <span className="material-symbols-outlined text-[20px]">
+            <span className="material-symbols-outlined text-[18px] md:text-[20px]">
               download
             </span>
-            <span className="text-xs font-black uppercase tracking-[0.1em]">
+            <span className="text-[10px] md:text-xs font-black uppercase tracking-[0.1em]">
               Export Report
             </span>
           </button>
@@ -441,7 +441,7 @@ const App: React.FC = () => {
               {isAnalyzing
                 ? "Generating smart insights from current queue..."
                 : insights ||
-                  "Need a quick analysis? Let AI summarize the current review queue and identify trends."}
+                "Need a quick analysis? Let AI summarize the current review queue and identify trends."}
             </p>
           </div>
           <button
@@ -533,9 +533,8 @@ const App: React.FC = () => {
               )}
 
               <div
-                className={`fixed inset-y-0 left-0 z-50 transform ${
-                  isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-                } md:relative md:translate-x-0 transition-transform duration-300 ease-in-out`}
+                className={`fixed inset-y-0 left-0 z-50 transform ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+                  } md:relative md:translate-x-0 transition-transform duration-300 ease-in-out`}
               >
                 <Sidebar
                   onClose={() => setIsSidebarOpen(false)}
@@ -553,7 +552,7 @@ const App: React.FC = () => {
                   onToggleTheme={() => setIsDarkMode(!isDarkMode)}
                 />
 
-                <div className="p-6 md:p-8 max-w-[1600px] mx-auto w-full flex-1">
+                <div className="p-4 md:p-8 max-w-[1600px] mx-auto w-full flex-1">
                   <Routes>
                     <Route path="/" element={renderDashboard()} />
 
