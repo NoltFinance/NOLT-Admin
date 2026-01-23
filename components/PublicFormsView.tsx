@@ -67,47 +67,50 @@ const PublicFormsView: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-800">
       {/* Header */}
       <header className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 sticky top-0 z-30">
-        <div className="max-w-7xl mx-auto px-6 py-4">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center shadow-lg shadow-primary/20">
-                <span className="material-symbols-outlined text-white text-[24px]">
-                  account_balance_wallet
-                </span>
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center overflow-hidden">
+                <img
+                  src="https://isswlcllytiltgjbysjv.supabase.co/storage/v1/object/public/template-images/logo%20file-02%20(1).png"
+                  alt="NOLT Finance Logo"
+                  className="w-full h-full object-contain"
+                />
               </div>
               <div>
-                <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white uppercase">
+                <h1 className="text-xl md:text-2xl font-black tracking-tight text-slate-900 dark:text-white uppercase">
                   NOLT Finance
                 </h1>
-                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                <p className="text-[10px] md:text-xs text-slate-500 dark:text-slate-400 font-medium">
                   Application Portal
                 </p>
               </div>
             </div>
             <button
               onClick={() => navigate("/login")}
-              className="px-4 py-2 bg-primary text-white rounded-xl font-bold text-sm hover:bg-primary/90 transition-all flex items-center gap-2"
+              className="px-3 md:px-4 py-2 bg-primary text-white rounded-xl font-bold text-xs md:text-sm hover:bg-primary/90 transition-all flex items-center gap-2"
             >
               <span className="material-symbols-outlined text-[18px]">
                 login
               </span>
-              Admin Login
+              <span className="hidden md:inline">Admin Login</span>
+              <span className="md:hidden">Login</span>
             </button>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-6 py-12">
+      <main className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-12">
         {/* Hero Section */}
-        <div className="text-center mb-12">
-          <h2 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white mb-4 tracking-tight">
+        <div className="text-center mb-8 md:mb-12">
+          <h2 className="text-3xl md:text-5xl font-black text-slate-900 dark:text-white mb-4 tracking-tight">
             Apply for{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-blue-600">
               Financial Services
             </span>
           </h2>
-          <p className="text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
+          <p className="text-base md:text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
             Choose from our range of investment and loan products. Fill out the
             application form and we'll get back to you shortly.
           </p>

@@ -197,7 +197,8 @@ const SecurityLogsView: React.FC = () => {
           </div>
         ) : (
           <>
-            <div className="overflow-x-auto">
+            {/* Desktop Table */}
+            <div className="hidden md:block overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-slate-50 dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800">
                   <tr>
@@ -279,6 +280,50 @@ const SecurityLogsView: React.FC = () => {
               </table>
             </div>
 
+            {/* Mobile Card View */}
+            <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
+              {logs.map((log) => (
+                <div key={log.id} className="p-4 bg-white dark:bg-surface-dark flex flex-col gap-3">
+                  <div className="flex items-center justify-between">
+                    <span
+                      className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${getActionColor(log.action)}`}
+                    >
+                      {log.action}
+                    </span>
+                    <span className="text-xs font-mono text-slate-400">
+                      {log.record_id?.substring(0, 8) || "N/A"}
+                    </span>
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-900 dark:text-white">
+                        {log.table_name}
+                      </span>
+                      <span className="text-[10px] font-bold text-slate-500">
+                        {formatTimestamp(log.created_at)}
+                      </span>
+                    </div>
+                    <span className="text-xs text-slate-500 dark:text-slate-400">
+                      {log.user_email || "System"}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-2">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase">
+                      {log.changed_fields?.length ? `${log.changed_fields.length} Changes` : "No Changes"}
+                    </span>
+                    <button
+                      onClick={() => handleViewDetails(log)}
+                      className="text-primary hover:text-blue-600 text-xs font-black uppercase"
+                    >
+                      View Details
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
             {/* Pagination */}
             <div className="flex items-center justify-between px-6 py-4 border-t border-slate-100 dark:border-slate-800">
               <div className="text-sm text-slate-600 dark:text-slate-400 font-bold">
@@ -307,242 +352,241 @@ const SecurityLogsView: React.FC = () => {
       </div>
 
       {/* Details Modal */}
-      {showDetailsModal && selectedLog && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-surface-dark rounded-[32px] shadow-2xl border border-slate-100 dark:border-slate-800 w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
-            <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-slate-800">
-              <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase">
-                Audit Log Details
-              </h3>
-              <button
-                onClick={() => setShowDetailsModal(false)}
-                className="w-8 h-8 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center transition-colors"
-              >
-                <span className="material-symbols-outlined text-slate-400">
-                  close
-                </span>
-              </button>
-            </div>
+      {
+        showDetailsModal && selectedLog && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-white dark:bg-surface-dark rounded-[32px] shadow-2xl border border-slate-100 dark:border-slate-800 w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+              <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-slate-800">
+                <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase">
+                  Audit Log Details
+                </h3>
+                <button
+                  onClick={() => setShowDetailsModal(false)}
+                  className="w-8 h-8 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center transition-colors"
+                >
+                  <span className="material-symbols-outlined text-slate-400">
+                    close
+                  </span>
+                </button>
+              </div>
 
-            <div className="p-6 overflow-y-auto">
-              <div className="space-y-6">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-[10px] font-black text-slate-500 uppercase mb-1">
-                      Action
-                    </label>
-                    <span
-                      className={`inline-block px-3 py-1 rounded-full text-xs font-black uppercase ${getActionColor(selectedLog.action)}`}
-                    >
-                      {selectedLog.action}
-                    </span>
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-black text-slate-500 uppercase mb-1">
-                      Timestamp
-                    </label>
-                    <p className="text-sm font-bold text-slate-900 dark:text-white">
-                      {formatTimestamp(selectedLog.created_at)}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-black text-slate-500 uppercase mb-1">
-                      Table
-                    </label>
-                    <p className="text-sm font-bold text-slate-900 dark:text-white">
-                      {selectedLog.table_name}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-black text-slate-500 uppercase mb-1">
-                      Record ID
-                    </label>
-                    <p className="text-sm font-mono text-slate-600 dark:text-slate-400">
-                      {selectedLog.record_id || "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-black text-slate-500 uppercase mb-1">
-                      User Email
-                    </label>
-                    <p className="text-sm font-bold text-slate-900 dark:text-white">
-                      {selectedLog.user_email || "System"}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-black text-slate-500 uppercase mb-1">
-                      User Role
-                    </label>
-                    <p className="text-sm font-bold text-slate-900 dark:text-white">
-                      {selectedLog.user_role || "N/A"}
-                    </p>
-                  </div>
-                </div>
-
-                {selectedLog.changed_fields &&
-                  selectedLog.changed_fields.length > 0 && (
+              <div className="p-6 overflow-y-auto">
+                <div className="space-y-6">
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-[10px] font-black text-slate-500 uppercase mb-2">
-                        Changed Fields ({selectedLog.changed_fields.length})
+                      <label className="block text-[10px] font-black text-slate-500 uppercase mb-1">
+                        Action
                       </label>
-                      <div className="flex flex-wrap gap-2">
-                        {selectedLog.changed_fields.map((field) => (
-                          <span
-                            key={field}
-                            className="px-3 py-1 bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-400 rounded-lg text-xs font-bold"
-                          >
-                            {field}
-                          </span>
-                        ))}
+                      <span
+                        className={`inline-block px-3 py-1 rounded-full text-xs font-black uppercase ${getActionColor(selectedLog.action)}`}
+                      >
+                        {selectedLog.action}
+                      </span>
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-black text-slate-500 uppercase mb-1">
+                        Timestamp
+                      </label>
+                      <p className="text-sm font-bold text-slate-900 dark:text-white">
+                        {formatTimestamp(selectedLog.created_at)}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-black text-slate-500 uppercase mb-1">
+                        Table
+                      </label>
+                      <p className="text-sm font-bold text-slate-900 dark:text-white">
+                        {selectedLog.table_name}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-black text-slate-500 uppercase mb-1">
+                        Record ID
+                      </label>
+                      <p className="text-sm font-mono text-slate-600 dark:text-slate-400">
+                        {selectedLog.record_id || "N/A"}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-black text-slate-500 uppercase mb-1">
+                        User Email
+                      </label>
+                      <p className="text-sm font-bold text-slate-900 dark:text-white">
+                        {selectedLog.user_email || "System"}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-black text-slate-500 uppercase mb-1">
+                        User Role
+                      </label>
+                      <p className="text-sm font-bold text-slate-900 dark:text-white">
+                        {selectedLog.user_role || "N/A"}
+                      </p>
+                    </div>
+                  </div>
+
+                  {selectedLog.changed_fields &&
+                    selectedLog.changed_fields.length > 0 && (
+                      <div>
+                        <label className="block text-[10px] font-black text-slate-500 uppercase mb-2">
+                          Changed Fields ({selectedLog.changed_fields.length})
+                        </label>
+                        <div className="flex flex-wrap gap-2">
+                          {selectedLog.changed_fields.map((field) => (
+                            <span
+                              key={field}
+                              className="px-3 py-1 bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-400 rounded-lg text-xs font-bold"
+                            >
+                              {field}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                  {/* Field-by-field comparison */}
+                  {(selectedLog.old_data || selectedLog.new_data) && (
+                    <div>
+                      <label className="block text-[10px] font-black text-slate-500 uppercase mb-3">
+                        Changes Overview
+                      </label>
+                      <div className="space-y-2">
+                        {(() => {
+                          const oldData = selectedLog.old_data || {};
+                          const newData = selectedLog.new_data || {};
+                          const allKeys = new Set([
+                            ...Object.keys(oldData),
+                            ...Object.keys(newData),
+                          ]);
+
+                          return Array.from(allKeys).map((key) => {
+                            const oldValue = oldData[key];
+                            const newValue = newData[key];
+                            const hasChanged =
+                              JSON.stringify(oldValue) !== JSON.stringify(newValue);
+
+                            // Skip rendering complex objects/arrays in the comparison view
+                            const isComplexOld = typeof oldValue === "object" && oldValue !== null;
+                            const isComplexNew = typeof newValue === "object" && newValue !== null;
+
+                            if (isComplexOld || isComplexNew) {
+                              return (
+                                <div
+                                  key={key}
+                                  className="p-3 bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-slate-200 dark:border-slate-700"
+                                >
+                                  <div className="text-xs font-black text-slate-700 dark:text-slate-300 mb-2">
+                                    {key}
+                                  </div>
+                                  <div className="text-xs text-slate-500 italic">
+                                    Complex data type - see raw data below
+                                  </div>
+                                </div>
+                              );
+                            }
+
+                            return (
+                              <div
+                                key={key}
+                                className={`grid grid-cols-2 gap-3 p-3 rounded-lg border ${hasChanged
+                                  ? "bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-900"
+                                  : "bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-700"
+                                  }`}
+                              >
+                                <div className="col-span-2 text-xs font-black text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-2">
+                                  {key}
+                                  {hasChanged && (
+                                    <span className="px-2 py-0.5 bg-amber-500 text-white text-[9px] font-black rounded uppercase">
+                                      Modified
+                                    </span>
+                                  )}
+                                </div>
+                                <div>
+                                  <div className="text-[9px] font-bold text-slate-500 uppercase mb-1 flex items-center gap-1">
+                                    <span className="w-2 h-2 rounded-full bg-red-500"></span>
+                                    Before
+                                  </div>
+                                  <div
+                                    className={`text-xs p-2 rounded ${hasChanged
+                                      ? "bg-red-100 dark:bg-red-950/30 text-red-900 dark:text-red-300 font-semibold"
+                                      : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400"
+                                      }`}
+                                  >
+                                    {oldValue !== undefined
+                                      ? String(oldValue)
+                                      : "—"}
+                                  </div>
+                                </div>
+                                <div>
+                                  <div className="text-[9px] font-bold text-slate-500 uppercase mb-1 flex items-center gap-1">
+                                    <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                                    After
+                                  </div>
+                                  <div
+                                    className={`text-xs p-2 rounded ${hasChanged
+                                      ? "bg-green-100 dark:bg-green-950/30 text-green-900 dark:text-green-300 font-semibold"
+                                      : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400"
+                                      }`}
+                                  >
+                                    {newValue !== undefined
+                                      ? String(newValue)
+                                      : "—"}
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          });
+                        })()}
                       </div>
                     </div>
                   )}
 
-                {/* Field-by-field comparison */}
-                {(selectedLog.old_data || selectedLog.new_data) && (
-                  <div>
-                    <label className="block text-[10px] font-black text-slate-500 uppercase mb-3">
-                      Changes Overview
-                    </label>
-                    <div className="space-y-2">
-                      {(() => {
-                        const oldData = selectedLog.old_data || {};
-                        const newData = selectedLog.new_data || {};
-                        const allKeys = new Set([
-                          ...Object.keys(oldData),
-                          ...Object.keys(newData),
-                        ]);
-
-                        return Array.from(allKeys).map((key) => {
-                          const oldValue = oldData[key];
-                          const newValue = newData[key];
-                          const hasChanged =
-                            JSON.stringify(oldValue) !== JSON.stringify(newValue);
-
-                          // Skip rendering complex objects/arrays in the comparison view
-                          const isComplexOld = typeof oldValue === "object" && oldValue !== null;
-                          const isComplexNew = typeof newValue === "object" && newValue !== null;
-
-                          if (isComplexOld || isComplexNew) {
-                            return (
-                              <div
-                                key={key}
-                                className="p-3 bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-slate-200 dark:border-slate-700"
-                              >
-                                <div className="text-xs font-black text-slate-700 dark:text-slate-300 mb-2">
-                                  {key}
-                                </div>
-                                <div className="text-xs text-slate-500 italic">
-                                  Complex data type - see raw data below
-                                </div>
-                              </div>
-                            );
-                          }
-
-                          return (
-                            <div
-                              key={key}
-                              className={`grid grid-cols-2 gap-3 p-3 rounded-lg border ${
-                                hasChanged
-                                  ? "bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-900"
-                                  : "bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-700"
-                              }`}
-                            >
-                              <div className="col-span-2 text-xs font-black text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-2">
-                                {key}
-                                {hasChanged && (
-                                  <span className="px-2 py-0.5 bg-amber-500 text-white text-[9px] font-black rounded uppercase">
-                                    Modified
-                                  </span>
-                                )}
-                              </div>
-                              <div>
-                                <div className="text-[9px] font-bold text-slate-500 uppercase mb-1 flex items-center gap-1">
-                                  <span className="w-2 h-2 rounded-full bg-red-500"></span>
-                                  Before
-                                </div>
-                                <div
-                                  className={`text-xs p-2 rounded ${
-                                    hasChanged
-                                      ? "bg-red-100 dark:bg-red-950/30 text-red-900 dark:text-red-300 font-semibold"
-                                      : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400"
-                                  }`}
-                                >
-                                  {oldValue !== undefined
-                                    ? String(oldValue)
-                                    : "—"}
-                                </div>
-                              </div>
-                              <div>
-                                <div className="text-[9px] font-bold text-slate-500 uppercase mb-1 flex items-center gap-1">
-                                  <span className="w-2 h-2 rounded-full bg-green-500"></span>
-                                  After
-                                </div>
-                                <div
-                                  className={`text-xs p-2 rounded ${
-                                    hasChanged
-                                      ? "bg-green-100 dark:bg-green-950/30 text-green-900 dark:text-green-300 font-semibold"
-                                      : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400"
-                                  }`}
-                                >
-                                  {newValue !== undefined
-                                    ? String(newValue)
-                                    : "—"}
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        });
-                      })()}
-                    </div>
-                  </div>
-                )}
-
-                {/* Raw data for reference (collapsed by default) */}
-                {(selectedLog.old_data || selectedLog.new_data) && (
-                  <details className="group">
-                    <summary className="cursor-pointer list-none">
-                      <div className="flex items-center gap-2 p-3 bg-slate-100 dark:bg-slate-800 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
-                        <span className="material-symbols-outlined text-slate-500 group-open:rotate-90 transition-transform">
-                          chevron_right
-                        </span>
-                        <span className="text-xs font-black text-slate-700 dark:text-slate-300 uppercase">
-                          View Raw JSON Data
-                        </span>
+                  {/* Raw data for reference (collapsed by default) */}
+                  {(selectedLog.old_data || selectedLog.new_data) && (
+                    <details className="group">
+                      <summary className="cursor-pointer list-none">
+                        <div className="flex items-center gap-2 p-3 bg-slate-100 dark:bg-slate-800 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+                          <span className="material-symbols-outlined text-slate-500 group-open:rotate-90 transition-transform">
+                            chevron_right
+                          </span>
+                          <span className="text-xs font-black text-slate-700 dark:text-slate-300 uppercase">
+                            View Raw JSON Data
+                          </span>
+                        </div>
+                      </summary>
+                      <div className="mt-3 space-y-3">
+                        {selectedLog.old_data && (
+                          <div>
+                            <label className="block text-[10px] font-black text-slate-500 uppercase mb-2 flex items-center gap-2">
+                              <span className="w-3 h-3 rounded bg-red-500"></span>
+                              Old Data (Raw JSON)
+                            </label>
+                            <pre className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900 p-4 rounded-xl text-xs font-mono overflow-x-auto text-red-900 dark:text-red-300">
+                              {JSON.stringify(selectedLog.old_data, null, 2)}
+                            </pre>
+                          </div>
+                        )}
+                        {selectedLog.new_data && (
+                          <div>
+                            <label className="block text-[10px] font-black text-slate-500 uppercase mb-2 flex items-center gap-2">
+                              <span className="w-3 h-3 rounded bg-green-500"></span>
+                              New Data (Raw JSON)
+                            </label>
+                            <pre className="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-900 p-4 rounded-xl text-xs font-mono overflow-x-auto text-green-900 dark:text-green-300">
+                              {JSON.stringify(selectedLog.new_data, null, 2)}
+                            </pre>
+                          </div>
+                        )}
                       </div>
-                    </summary>
-                    <div className="mt-3 space-y-3">
-                      {selectedLog.old_data && (
-                        <div>
-                          <label className="block text-[10px] font-black text-slate-500 uppercase mb-2 flex items-center gap-2">
-                            <span className="w-3 h-3 rounded bg-red-500"></span>
-                            Old Data (Raw JSON)
-                          </label>
-                          <pre className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900 p-4 rounded-xl text-xs font-mono overflow-x-auto text-red-900 dark:text-red-300">
-                            {JSON.stringify(selectedLog.old_data, null, 2)}
-                          </pre>
-                        </div>
-                      )}
-                      {selectedLog.new_data && (
-                        <div>
-                          <label className="block text-[10px] font-black text-slate-500 uppercase mb-2 flex items-center gap-2">
-                            <span className="w-3 h-3 rounded bg-green-500"></span>
-                            New Data (Raw JSON)
-                          </label>
-                          <pre className="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-900 p-4 rounded-xl text-xs font-mono overflow-x-auto text-green-900 dark:text-green-300">
-                            {JSON.stringify(selectedLog.new_data, null, 2)}
-                          </pre>
-                        </div>
-                      )}
-                    </div>
-                  </details>
-                )}
+                    </details>
+                  )}
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
-    </div>
+        )
+      }
+    </div >
   );
 };
 

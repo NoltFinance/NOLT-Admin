@@ -46,7 +46,7 @@ const LogoutModal: React.FC<LogoutModalProps> = ({ isOpen, onClose, onConfirm })
         className="bg-white dark:bg-gray-900 w-full max-w-md rounded-[40px] shadow-2xl border border-slate-100 dark:border-slate-800 overflow-hidden transition-all duration-300"
         style={{ animation: 'scaleIn 0.3s ease-in-out' }}
       >
-        <div className="p-10 text-center space-y-6">
+        <div className="p-6 md:p-10 text-center space-y-6">
           <div className="mx-auto w-20 h-20 rounded-[28px] bg-rose-500/10 flex items-center justify-center text-rose-500 mb-2 border border-rose-500/20">
             {isProcessing ? (
               <span className="w-10 h-10 border-4 border-rose-500/30 border-t-rose-500 rounded-full animate-spin" />

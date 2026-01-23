@@ -734,10 +734,12 @@ const PublicFormSubmissionView: React.FC = () => {
               <span className="font-bold text-sm">Back to Forms</span>
             </button>
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center">
-                <span className="material-symbols-outlined text-white text-[20px]">
-                  account_balance_wallet
-                </span>
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden">
+                <img
+                  src="https://isswlcllytiltgjbysjv.supabase.co/storage/v1/object/public/template-images/logo%20file-02%20(1).png"
+                  alt="NOLT Finance Logo"
+                  className="w-full h-full object-contain"
+                />
               </div>
               <span className="text-lg font-black text-slate-900 dark:text-white uppercase">
                 NOLT Finance

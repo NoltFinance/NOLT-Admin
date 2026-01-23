@@ -20,22 +20,22 @@ const getApprovalNode = (request: ReviewRequest) => {
     case 'Docs Verification':
       return { id: 'Validation', label: 'Customer Validation', color: 'text-amber-600 bg-amber-50 dark:bg-amber-900/10 border-amber-100' };
     case 'Internal Audit':
-      return { 
-        id: isLoan ? 'CreditCheck' : 'PaymentVerification', 
-        label: isLoan ? 'Credit Check' : 'Payment Verification', 
-        color: 'text-indigo-600 bg-indigo-50 dark:bg-indigo-900/10 border-indigo-100' 
+      return {
+        id: isLoan ? 'CreditCheck' : 'PaymentVerification',
+        label: isLoan ? 'Credit Check' : 'Payment Verification',
+        color: 'text-indigo-600 bg-indigo-50 dark:bg-indigo-900/10 border-indigo-100'
       };
     case 'Pending Disbursement':
-      return { 
-        id: isLoan ? 'PaymentReq' : 'PaymentVerification', 
-        label: isLoan ? 'Request For Payment' : 'Payment Verification', 
-        color: 'text-indigo-600 bg-indigo-50 dark:bg-indigo-900/10 border-indigo-100' 
+      return {
+        id: isLoan ? 'PaymentReq' : 'PaymentVerification',
+        label: isLoan ? 'Request For Payment' : 'Payment Verification',
+        color: 'text-indigo-600 bg-indigo-50 dark:bg-indigo-900/10 border-indigo-100'
       };
     case 'Approved':
-      return { 
-        id: isLoan ? 'Disbursed' : 'Certificate', 
-        label: isLoan ? 'Disbursed' : 'Investment Certificate', 
-        color: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/10 border-emerald-100' 
+      return {
+        id: isLoan ? 'Disbursed' : 'Certificate',
+        label: isLoan ? 'Disbursed' : 'Investment Certificate',
+        color: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/10 border-emerald-100'
       };
     case 'Declined':
       return { id: 'Rejected', label: 'Rejected', color: 'text-rose-600 bg-rose-50 dark:bg-rose-900/10 border-rose-100' };
@@ -49,10 +49,10 @@ const QueueView: React.FC<QueueViewProps> = ({ requests, onBack, onSelectRequest
   const [nodeFilter, setNodeFilter] = useState('All Nodes');
   const [searchTerm, setSearchTerm] = useState('');
 
-  const filteredRequests = useMemo(() => 
+  const filteredRequests = useMemo(() =>
     requests.filter(req => {
-      const matchesSearch = req.applicant.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                            req.referenceId.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesSearch = req.applicant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        req.referenceId.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesStatus = statusFilter === 'All Status' || req.status === statusFilter;
       const node = getApprovalNode(req);
       const matchesNode = nodeFilter === 'All Nodes' || node.label === nodeFilter;
@@ -105,8 +105,8 @@ const QueueView: React.FC<QueueViewProps> = ({ requests, onBack, onSelectRequest
           <span className="absolute inset-y-0 left-3 flex items-center text-slate-400">
             <span className="material-symbols-outlined text-[20px]">search</span>
           </span>
-          <input 
-            type="text" 
+          <input
+            type="text"
             placeholder="Search by ID or name..."
             className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-background-dark/50 border border-slate-100 dark:border-slate-800 rounded-xl focus:ring-2 focus:ring-primary text-sm font-black transition-all"
             value={searchTerm}
@@ -114,7 +114,7 @@ const QueueView: React.FC<QueueViewProps> = ({ requests, onBack, onSelectRequest
           />
         </div>
         <div className="flex items-center gap-3 w-full md:w-auto">
-          <select 
+          <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
             className="bg-slate-50 dark:bg-background-dark/50 border border-slate-100 dark:border-slate-800 rounded-xl px-4 py-2.5 text-[10px] font-black uppercase tracking-widest focus:ring-2 focus:ring-primary w-full md:w-auto"
@@ -128,7 +128,7 @@ const QueueView: React.FC<QueueViewProps> = ({ requests, onBack, onSelectRequest
             <option>Declined</option>
             <option>Returned</option>
           </select>
-          <select 
+          <select
             value={nodeFilter}
             onChange={(e) => setNodeFilter(e.target.value)}
             className="bg-slate-50 dark:bg-background-dark/50 border border-slate-100 dark:border-slate-800 rounded-xl px-4 py-2.5 text-[10px] font-black uppercase tracking-widest focus:ring-2 focus:ring-primary w-full md:w-auto"
@@ -148,7 +148,8 @@ const QueueView: React.FC<QueueViewProps> = ({ requests, onBack, onSelectRequest
 
       {/* Table & Controls */}
       <div className="bg-white dark:bg-surface-dark rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* Desktop Table */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left text-sm whitespace-nowrap">
             <thead className="bg-slate-50/50 dark:bg-slate-800/30 text-slate-500 dark:text-slate-400 font-black text-[10px] uppercase tracking-[0.15em] border-b border-slate-100 dark:border-slate-800">
               <tr>
@@ -167,8 +168,8 @@ const QueueView: React.FC<QueueViewProps> = ({ requests, onBack, onSelectRequest
               {filteredRequests.map((req) => {
                 const node = getApprovalNode(req);
                 return (
-                  <tr 
-                    key={req.id} 
+                  <tr
+                    key={req.id}
                     onClick={() => onSelectRequest(req)}
                     className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors group cursor-pointer"
                   >
@@ -230,7 +231,87 @@ const QueueView: React.FC<QueueViewProps> = ({ requests, onBack, onSelectRequest
           </table>
         </div>
       </div>
+
+      {/* Mobile Card View */}
+      <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
+        {filteredRequests.map((req) => {
+          const node = getApprovalNode(req);
+          return (
+            <div
+              key={req.id}
+              onClick={() => onSelectRequest(req)}
+              className="p-4 hover:bg-slate-50 dark:hover:bg-slate-800/40 active:bg-slate-100 dark:active:bg-slate-800/60 transition-colors cursor-pointer"
+            >
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <div className="relative">
+                    <img
+                      src={req.applicant.avatar}
+                      alt={req.applicant.name}
+                      className="w-10 h-10 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm"
+                    />
+                    {req.applicant.isPep && (
+                      <div
+                        className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-rose-500 border-2 border-white dark:border-surface-dark rounded-full"
+                        title="PEP Detected"
+                      ></div>
+                    )}
+                  </div>
+                  <div>
+                    <h4 className="font-black text-slate-900 dark:text-white text-sm uppercase tracking-tight line-clamp-1">
+                      {req.applicant.name}
+                    </h4>
+                    <span className="text-[10px] font-mono font-bold text-slate-400 block mt-0.5">
+                      {req.referenceId}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex flex-col items-end gap-1">
+                  <span
+                    className={`px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-widest border ${node.color}`}
+                  >
+                    {node.label}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between mb-3">
+                <span
+                  className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border ${getTypeStyles(req.type)}`}
+                >
+                  {req.type}
+                </span>
+                <span className="text-sm font-black text-slate-900 dark:text-white tracking-wide">
+                  {req.amount}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800/50">
+                <div className="flex items-center gap-1.5 text-slate-500">
+                  <span className="material-symbols-outlined text-[16px]">
+                    person
+                  </span>
+                  <span className="text-[10px] font-bold uppercase">
+                    {req.ownerName || "Unassigned"}
+                  </span>
+                </div>
+                <span
+                  className={`inline-flex items-center gap-1.5 text-[10px] font-bold ${req.status === "Approved"
+                    ? "text-emerald-600"
+                    : req.status === "Declined"
+                      ? "text-rose-600"
+                      : "text-amber-600"
+                    }`}
+                >
+                  {req.status}
+                </span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
+
   );
 };
 
