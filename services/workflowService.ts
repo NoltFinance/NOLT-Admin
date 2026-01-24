@@ -60,7 +60,12 @@ export async function executeWorkflowTransition(
   try {
     // Validate permission
     if (
-      !(await canPerformAction(userRole, currentStatus, applicationType, action))
+      !(await canPerformAction(
+        userRole,
+        currentStatus,
+        applicationType,
+        action,
+      ))
     ) {
       return {
         success: false,
