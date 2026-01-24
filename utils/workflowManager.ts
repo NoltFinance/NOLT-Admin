@@ -1,14 +1,148 @@
 import { UserRole, RequestStatus, RequestType } from "../types";
+import {
+  getApprovalGates,
+  ApprovalGate,
+} from "../services/approvalGatesService";
 
 /**
  * NOLT Finance - Approval Workflow Manager
  *
  * This module implements the sequential approval workflow as defined in the
  * Application Process & Approval Workflow document.
+ *
+ * Workflow gates are now loaded from Supabase database.
  */
 
+// Cache for workflow gates
+let cachedGates: ApprovalGate[] | null = null;
+let cacheTimestamp: number | null = null;
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+/**
+ * Load approval gates from Supabase with caching
+ */
+async function loadApprovalGates(): Promise<ApprovalGate[]> {
+  const now = Date.now();
+
+  // Return cached data if still valid
+  if (cachedGates && cacheTimestamp && now - cacheTimestamp < CACHE_DURATION) {
+    return cachedGates;
+  }
+
+  try {
+    const { data, error } = await getApprovalGates();
+
+    if (error || !data) {
+      console.error("Error loading approval gates:", error);
+      // Return empty array on error, fallback will handle it
+      return cachedGates || [];
+    }
+
+    cachedGates = data;
+    cacheTimestamp = now;
+    return data;
+  } catch (err) {
+    console.error("Unexpected error loading gates:", err);
+    return cachedGates || [];
+  }
+}
+
+/**
+ * Clear the gates cache (useful after updates)
+ */
+export function clearGatesCache(): void {
+  cachedGates = null;
+  cacheTimestamp = null;
+}
+
+/**
+ * Convert ApprovalGate to WorkflowStage format
+ */
+function convertGateToStage(
+  gate: ApprovalGate,
+  workflow: ApprovalGate[],
+): WorkflowStage {
+  // Determine next stages based on order
+  const currentIndex = workflow.findIndex((g) => g.id === gate.id);
+  const nextGate = workflow.find(
+    (g) => g.workflow_type === gate.workflow_type && g.order === gate.order + 1,
+  );
+
+  return {
+    id: gate.id,
+    label: gate.name,
+    status: mapOrderToStatus(gate.order, gate.workflow_type),
+    description: gate.description,
+    gateKeepers: gate.gatekeepers,
+    requiredActions: gate.required_actions,
+    nextStageOn: {
+      approve: nextGate?.id || gate.id,
+      decline: "declined",
+      return:
+        currentIndex > 0
+          ? workflow[currentIndex - 1]?.id || "returned"
+          : "returned",
+    },
+  };
+}
+
+/**
+ * Map gate order to RequestStatus
+ */
+function mapOrderToStatus(order: number, workflowType: string): RequestStatus {
+  if (workflowType === "Loan" || workflowType === "Both") {
+    switch (order) {
+      case 1:
+        return "Pending Review";
+      case 2:
+        return "Docs Verification";
+      case 3:
+        return "Internal Audit";
+      case 4:
+        return "Pending Disbursement";
+      case 5:
+        return "Approved";
+      default:
+        return "Pending Review";
+    }
+  } else {
+    // Investment
+    switch (order) {
+      case 1:
+        return "Pending Review";
+      case 2:
+        return "Docs Verification";
+      case 3:
+        return "Pending Disbursement";
+      case 4:
+        return "Approved";
+      default:
+        return "Pending Review";
+    }
+  }
+}
+
+/**
+ * Get workflow stages for a specific type from database
+ */
+async function getWorkflowFromDatabase(
+  applicationType: RequestType,
+): Promise<WorkflowStage[]> {
+  const gates = await loadApprovalGates();
+
+  // Filter gates by workflow type
+  const relevantGates = gates
+    .filter(
+      (gate) =>
+        gate.workflow_type === applicationType || gate.workflow_type === "Both",
+    )
+    .sort((a, b) => a.order - b.order);
+
+  return relevantGates.map((gate) => convertGateToStage(gate, relevantGates));
+}
+
 // ============================================================================
-// WORKFLOW STAGE DEFINITIONS
+// WORKFLOW STAGE DEFINITIONS (FALLBACK - kept for backward compatibility)
 // ============================================================================
 
 export interface WorkflowStage {
@@ -26,8 +160,7 @@ export interface WorkflowStage {
 }
 
 /**
- * Loan Application Flow (5 Stages)
- * 1. Submission → 2. Customer Validation → 3. Credit Check → 4. Request For Payment → 5. Disbursed
+ * Loan Application Flow (FALLBACK - prefer database)
  */
 export const LOAN_WORKFLOW: WorkflowStage[] = [
   {
@@ -36,7 +169,7 @@ export const LOAN_WORKFLOW: WorkflowStage[] = [
     status: "Pending Review",
     description:
       "Sales Staff gathers requirements. For IPPIS products, IPPIS Number and MDA are mandatory.",
-    gateKeepers: ["Sales Manager", "Super Admin"],
+    gateKeepers: ["Sales Manager", "Sales Officer", "Super Admin"],
     nextStageOn: {
       approve: "customer_validation",
       decline: "declined",
@@ -105,7 +238,7 @@ export const INVESTMENT_WORKFLOW: WorkflowStage[] = [
     label: "Submission",
     status: "Pending Review",
     description: "Lead capture and principal selection.",
-    gateKeepers: ["Sales Manager", "Super Admin"],
+    gateKeepers: ["Sales Manager", "Sales Officer", "Super Admin"],
     nextStageOn: {
       approve: "customer_validation",
       decline: "declined",
@@ -191,17 +324,35 @@ export function canViewApplication(
 }
 
 /**
- * Check if user can perform action at current stage
+ * Get current workflow stage details (from database)
  */
-export function canPerformAction(
+export async function getCurrentStage(
+  status: RequestStatus,
+  applicationType: RequestType,
+): Promise<WorkflowStage | null> {
+  const workflow = await getWorkflowFromDatabase(applicationType);
+  return workflow.find((stage) => stage.status === status) || null;
+}
+
+/**
+ * Get all stages for a workflow type (from database)
+ */
+export async function getWorkflowStages(
+  applicationType: RequestType,
+): Promise<WorkflowStage[]> {
+  return getWorkflowFromDatabase(applicationType);
+}
+
+/**
+ * Check if user can perform action at current stage (from database)
+ */
+export async function canPerformAction(
   userRole: UserRole,
   currentStatus: RequestStatus,
   applicationType: RequestType,
   action: "approve" | "decline" | "return" | "edit",
-): boolean {
-  const workflow =
-    applicationType === "Loan" ? LOAN_WORKFLOW : INVESTMENT_WORKFLOW;
-  const currentStage = workflow.find((stage) => stage.status === currentStatus);
+): Promise<boolean> {
+  const currentStage = await getCurrentStage(currentStatus, applicationType);
 
   if (!currentStage) return false;
 
@@ -235,69 +386,36 @@ export function canPerformAction(
 }
 
 /**
- * Get next status based on action
+ * Get next status based on action (from database)
  */
-export function getNextStatus(
+export async function getNextStatus(
   currentStatus: RequestStatus,
   applicationType: RequestType,
   action: "approve" | "decline" | "return",
-): RequestStatus {
-  const workflow =
-    applicationType === "Loan" ? LOAN_WORKFLOW : INVESTMENT_WORKFLOW;
-  const currentStage = workflow.find((stage) => stage.status === currentStatus);
+): Promise<RequestStatus> {
+  const currentStage = await getCurrentStage(currentStatus, applicationType);
 
   if (!currentStage) return currentStatus;
-
-  const nextStageId = currentStage.nextStageOn[action];
 
   if (action === "decline") return "Declined";
   if (action === "return") return "Returned";
 
+  const nextStageId = currentStage.nextStageOn[action];
+  const workflow = await getWorkflowFromDatabase(applicationType);
   const nextStage = workflow.find((stage) => stage.id === nextStageId);
+
   return nextStage?.status || currentStatus;
 }
 
 /**
- * Get current workflow stage details
+ * Get available actions for user at current stage (from database)
  */
-export function getCurrentStage(
-  status: RequestStatus,
-  applicationType: RequestType,
-): WorkflowStage | null {
-  const workflow =
-    applicationType === "Loan" ? LOAN_WORKFLOW : INVESTMENT_WORKFLOW;
-  return workflow.find((stage) => stage.status === status) || null;
-}
-
-/**
- * Get all stages for a workflow type
- */
-export function getWorkflowStages(
-  applicationType: RequestType,
-): WorkflowStage[] {
-  return applicationType === "Loan" ? LOAN_WORKFLOW : INVESTMENT_WORKFLOW;
-}
-
-/**
- * Validate if Credit Check can proceed (Eligible Amount required)
- */
-export function canProceedFromCreditCheck(eligibleAmount?: string): boolean {
-  return !!(
-    eligibleAmount &&
-    eligibleAmount.trim() !== "" &&
-    parseFloat(eligibleAmount.replace(/[^0-9.]/g, "")) > 0
-  );
-}
-
-/**
- * Get available actions for user at current stage
- */
-export function getAvailableActions(
+export async function getAvailableActions(
   userRole: UserRole,
   currentStatus: RequestStatus,
   applicationType: RequestType,
   eligibleAmount?: string,
-): string[] {
+): Promise<string[]> {
   const actions: string[] = [];
 
   // Check if Credit Check and eligible amount not set
@@ -310,19 +428,27 @@ export function getAvailableActions(
     return ["set_eligible_amount"];
   }
 
-  if (canPerformAction(userRole, currentStatus, applicationType, "approve")) {
+  if (
+    await canPerformAction(userRole, currentStatus, applicationType, "approve")
+  ) {
     actions.push("approve");
   }
 
-  if (canPerformAction(userRole, currentStatus, applicationType, "decline")) {
+  if (
+    await canPerformAction(userRole, currentStatus, applicationType, "decline")
+  ) {
     actions.push("decline");
   }
 
-  if (canPerformAction(userRole, currentStatus, applicationType, "return")) {
+  if (
+    await canPerformAction(userRole, currentStatus, applicationType, "return")
+  ) {
     actions.push("return");
   }
 
-  if (canPerformAction(userRole, currentStatus, applicationType, "edit")) {
+  if (
+    await canPerformAction(userRole, currentStatus, applicationType, "edit")
+  ) {
     actions.push("edit");
   }
 
@@ -335,21 +461,32 @@ export function getAvailableActions(
 }
 
 /**
- * Get approval gate number (for display)
+ * Get approval gate number (for display) (from database)
  */
-export function getApprovalGateNumber(
+export async function getApprovalGateNumber(
   status: RequestStatus,
   applicationType: RequestType,
-): string {
-  const stage = getCurrentStage(status, applicationType);
+): Promise<string> {
+  const stage = await getCurrentStage(status, applicationType);
   if (!stage) return "";
 
-  const workflow = getWorkflowStages(applicationType);
+  const workflow = await getWorkflowStages(applicationType);
   const index = workflow.findIndex((s) => s.id === stage.id);
 
   if (index === -1) return "";
 
   return `Gate ${index + 1}`;
+}
+
+/**
+ * Validate if Credit Check can proceed (Eligible Amount required)
+ */
+export function canProceedFromCreditCheck(eligibleAmount?: string): boolean {
+  return !!(
+    eligibleAmount &&
+    eligibleAmount.trim() !== "" &&
+    parseFloat(eligibleAmount.replace(/[^0-9.]/g, "")) > 0
+  );
 }
 
 /**

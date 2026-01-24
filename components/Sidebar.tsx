@@ -70,16 +70,14 @@ const Sidebar: React.FC<SidebarProps> = ({
       <Link
         to={to}
         onClick={onClose}
-        className={`flex items-center w-full gap-3 px-4 py-3.5 rounded-xl transition-all group ${
-          active
+        className={`flex items-center w-full gap-3 px-4 py-3.5 rounded-xl transition-all group ${active
             ? "bg-primary text-white shadow-xl shadow-primary/20"
             : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark hover:text-slate-900 dark:hover:text-white"
-        }`}
+          }`}
       >
         <span
-          className={`material-symbols-outlined ${
-            active ? "fill-1" : "group-hover:fill-1 transition-all"
-          }`}
+          className={`material-symbols-outlined ${active ? "fill-1" : "group-hover:fill-1 transition-all"
+            }`}
         >
           {icon}
         </span>
@@ -107,13 +105,12 @@ const Sidebar: React.FC<SidebarProps> = ({
     <aside className="flex flex-col w-72 h-full border-r border-slate-100 dark:border-slate-800 bg-white dark:bg-background-dark flex-shrink-0 transition-colors duration-300">
       <div className="p-8 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-3 cursor-pointer">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center shadow-lg shadow-primary/20">
-            <span
-              className="material-symbols-outlined text-white"
-              style={{ fontSize: "24px" }}
-            >
-              account_balance_wallet
-            </span>
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center overflow-hidden">
+            <img
+              src="https://isswlcllytiltgjbysjv.supabase.co/storage/v1/object/public/template-images/logo%20file-02%20(1).png"
+              alt="NOLT Finance Logo"
+              className="w-full h-full object-contain"
+            />
           </div>
           <h1 className="text-xl font-black tracking-tighter text-slate-900 dark:text-white uppercase">
             NOLT Finance

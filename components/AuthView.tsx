@@ -240,10 +240,12 @@ const AuthView: React.FC<AuthViewProps> = ({ onLoginSuccess }) => {
           <div className="p-8 md:p-12">
             {/* Logo & Header */}
             <div className="flex flex-col items-center mb-10 text-center">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center shadow-2xl shadow-primary/40 mb-6">
-                <span className="material-symbols-outlined text-white text-3xl">
-                  account_balance_wallet
-                </span>
+              <div className="w-16 h-16 rounded-2xl flex items-center justify-center overflow-hidden mb-6">
+                <img
+                  src="https://isswlcllytiltgjbysjv.supabase.co/storage/v1/object/public/template-images/logo%20file-02%20(1).png"
+                  alt="NOLT Finance Logo"
+                  className="w-full h-full object-contain"
+                />
               </div>
               <h1 className="text-2xl font-black tracking-tight text-white uppercase">
                 NOLT Finance
@@ -366,11 +368,8 @@ const AuthView: React.FC<AuthViewProps> = ({ onLoginSuccess }) => {
                         2FA Verification
                       </h2>
                       <p className="text-slate-500 text-xs font-bold leading-relaxed">
-                        Open your{" "}
-                        <span className="text-white">
-                          Microsoft Authenticator
-                        </span>{" "}
-                        app and enter the 6-digit code.
+                        Open your <span className="text-white">Email </span> app
+                        and enter the 6-digit code.
                       </p>
                     </div>
 

@@ -25,6 +25,7 @@ import {
 } from "../utils/workflowManager";
 import { AuthUser } from "../utils/authService";
 import supabase from "../utils/supabase";
+import { toast } from "sonner";
 
 interface LoanViewProps {
   requests: ReviewRequest[];
@@ -178,6 +179,8 @@ const LoanView: React.FC<LoanViewProps> = ({
   const [declineMode, setDeclineMode] = useState<"Decline" | "Return">(
     "Decline",
   );
+  const [isDeclining, setIsDeclining] = useState(false);
+  const [isApproving, setIsApproving] = useState(false);
 
   // New Credit state
   const [localEligibleAmount, setLocalEligibleAmount] = useState("");
@@ -201,6 +204,8 @@ const LoanView: React.FC<LoanViewProps> = ({
   );
   const [formConfig, setFormConfig] = useState<CustomForm | null>(null);
   const [isLoadingFormData, setIsLoadingFormData] = useState(false);
+  const [reassignComment, setReassignComment] = useState("");
+  const [availableActions, setAvailableActions] = useState<string[]>([]);
 
   // Fetch loan submissions from database
   useEffect(() => {
@@ -227,6 +232,28 @@ const LoanView: React.FC<LoanViewProps> = ({
 
     fetchLoans();
   }, []); // Remove requests dependency - we fetch directly from database
+
+  // Compute available actions when selection or role changes
+  useEffect(() => {
+    const computeActions = async () => {
+      if (!selectedLoan) {
+        setAvailableActions([]);
+        return;
+      }
+      try {
+        const actions = await getAvailableActions(
+          currentUser.role,
+          selectedLoan.status,
+          "Loan",
+          selectedLoan.eligibleAmount || localEligibleAmount,
+        );
+        setAvailableActions(actions);
+      } catch (e) {
+        setAvailableActions([]);
+      }
+    };
+    computeActions();
+  }, [selectedLoan, currentUser.role, localEligibleAmount]);
 
   // Fetch users for reassignment
   useEffect(() => {
@@ -314,52 +341,54 @@ const LoanView: React.FC<LoanViewProps> = ({
       } else {
         console.log("Audit logs fetched:", auditLogs?.length || 0, "logs");
         // Update selectedLoan with operation logs
-        const operationLogs: OperationLogEntry[] = (auditLogs || []).map((log: any) => {
-          // Determine the action label based on workflow_action
-          let actionLabel = log.action;
-          if (log.new_data?.workflow_action) {
-            const workflowAction = log.new_data.workflow_action;
-            switch (workflowAction) {
-              case "approve":
-                actionLabel = "APPROVED";
-                break;
-              case "decline":
-                actionLabel = "DECLINED";
-                break;
-              case "return":
-                actionLabel = "RETURNED";
-                break;
-              case "reassign":
-                actionLabel = "REASSIGNED";
-                break;
-              case "update_eligible_amount":
-                actionLabel = "UPDATED ELIGIBLE AMOUNT";
-                break;
-              default:
-                actionLabel = workflowAction.toUpperCase().replace("_", " ");
+        const operationLogs: OperationLogEntry[] = (auditLogs || []).map(
+          (log: any) => {
+            // Determine the action label based on workflow_action
+            let actionLabel = log.action;
+            if (log.new_data?.workflow_action) {
+              const workflowAction = log.new_data.workflow_action;
+              switch (workflowAction) {
+                case "approve":
+                  actionLabel = "APPROVED";
+                  break;
+                case "decline":
+                  actionLabel = "DECLINED";
+                  break;
+                case "return":
+                  actionLabel = "RETURNED";
+                  break;
+                case "reassign":
+                  actionLabel = "REASSIGNED";
+                  break;
+                case "update_eligible_amount":
+                  actionLabel = "UPDATED ELIGIBLE AMOUNT";
+                  break;
+                default:
+                  actionLabel = workflowAction.toUpperCase().replace("_", " ");
+              }
             }
-          }
 
-          // Build a detailed comment
-          let detailedComment = log.new_data?.comment || "";
-          if (log.new_data?.fromStatus && log.new_data?.toStatus) {
-            detailedComment = `Status changed from "${log.new_data.fromStatus}" to "${log.new_data.toStatus}". ${detailedComment}`;
-          } else if (log.new_data?.reassignedTo) {
-            detailedComment = `Reassigned to ${log.new_data.reassignedTo}. ${detailedComment}`;
-          } else if (log.new_data?.eligibleAmount) {
-            detailedComment = `Eligible amount set to ${log.new_data.eligibleAmount}. ${detailedComment}`;
-          }
+            // Build a detailed comment
+            let detailedComment = log.new_data?.comment || "";
+            if (log.new_data?.fromStatus && log.new_data?.toStatus) {
+              detailedComment = `Status changed from "${log.new_data.fromStatus}" to "${log.new_data.toStatus}". ${detailedComment}`;
+            } else if (log.new_data?.reassignedTo) {
+              detailedComment = `Reassigned to ${log.new_data.reassignedTo}. ${detailedComment}`;
+            } else if (log.new_data?.eligibleAmount) {
+              detailedComment = `Eligible amount set to ${log.new_data.eligibleAmount}. ${detailedComment}`;
+            }
 
-          return {
-            id: log.id,
-            timestamp: new Date(log.created_at).toLocaleString(),
-            actor: log.user_email || "System",
-            action: actionLabel,
-            comment: detailedComment.trim(),
-            fromStatus: log.new_data?.fromStatus,
-            toStatus: log.new_data?.toStatus,
-          };
-        });
+            return {
+              id: log.id,
+              timestamp: new Date(log.created_at).toLocaleString(),
+              actor: log.user_email || "System",
+              action: actionLabel,
+              comment: detailedComment.trim(),
+              fromStatus: log.new_data?.fromStatus,
+              toStatus: log.new_data?.toStatus,
+            };
+          },
+        );
         setSelectedLoan({
           ...loan,
           operationLogs,
@@ -469,15 +498,17 @@ const LoanView: React.FC<LoanViewProps> = ({
   const handleOpenReassignModal = () => {
     setIsReassignModalOpen(true);
     setSelectedUserId("");
+    setReassignComment("");
   };
 
   const handleSaveReassignment = async () => {
-    if (!selectedLoan || !selectedUserId) return;
+    if (!selectedLoan || !selectedUserId || !reassignComment.trim()) return;
 
     const selectedUser = availableUsers.find((u) => u.id === selectedUserId);
     if (!selectedUser) return;
 
     try {
+      setIsReassigning(true);
       const { reassignApplication } =
         await import("../services/workflowService");
       const result = await reassignApplication(
@@ -485,6 +516,7 @@ const LoanView: React.FC<LoanViewProps> = ({
         selectedUserId,
         currentUser.role,
         currentUser.id,
+        reassignComment,
       );
 
       if (result.success) {
@@ -508,13 +540,15 @@ const LoanView: React.FC<LoanViewProps> = ({
         const { data } = await getSubmissionsByType("Loan");
         if (data) setLoanRequests(data);
 
-        alert(`Application successfully reassigned to ${selectedUser.name}`);
+        toast.success(
+          `Application successfully reassigned to ${selectedUser.name}`,
+        );
       } else {
-        alert(result.error || "Failed to reassign application");
+        toast.error(result.error || "Failed to reassign application");
       }
     } catch (err) {
       console.error("Reassignment error:", err);
-      alert("Failed to reassign application");
+      toast.error("Failed to reassign application");
     } finally {
       setIsReassignModalOpen(false);
       setIsReassigning(false);
@@ -525,6 +559,7 @@ const LoanView: React.FC<LoanViewProps> = ({
     if (!selectedLoan) return;
 
     try {
+      setIsApproving(true);
       const result = await executeWorkflowTransition({
         submissionId: selectedLoan.id,
         currentStatus: selectedLoan.status,
@@ -537,6 +572,7 @@ const LoanView: React.FC<LoanViewProps> = ({
       });
 
       if (result.success) {
+        toast.success(result.message || "Final audit passed");
         // Refetch loans to update UI
         const { data, error } = await getSubmissionsByType("Loan");
         if (!error && data) {
@@ -547,11 +583,13 @@ const LoanView: React.FC<LoanViewProps> = ({
           if (updated) setSelectedLoan(updated);
         }
       } else {
-        alert(result.error || "Failed to complete audit pass");
+        toast.error(result.error || "Failed to complete audit pass");
       }
     } catch (error) {
       console.error("Error passing audit:", error);
-      alert("Failed to complete audit pass. Please try again.");
+      toast.error("Failed to complete audit pass. Please try again.");
+    } finally {
+      setIsApproving(false);
     }
   };
 
@@ -559,6 +597,7 @@ const LoanView: React.FC<LoanViewProps> = ({
     if (!selectedLoan) return;
 
     try {
+      setIsApproving(true);
       const result = await executeWorkflowTransition({
         submissionId: selectedLoan.id,
         currentStatus: selectedLoan.status,
@@ -570,6 +609,7 @@ const LoanView: React.FC<LoanViewProps> = ({
       });
 
       if (result.success) {
+        toast.success(result.message || "Disbursement confirmed");
         // Refetch loans to update UI
         const { data, error } = await getSubmissionsByType("Loan");
         if (!error && data) {
@@ -580,18 +620,20 @@ const LoanView: React.FC<LoanViewProps> = ({
           if (updated) setSelectedLoan(updated);
         }
       } else {
-        alert(result.error || "Failed to confirm disbursement");
+        toast.error(result.error || "Failed to confirm disbursement");
       }
     } catch (error) {
       console.error("Error confirming disbursement:", error);
-      alert("Failed to confirm disbursement. Please try again.");
+      toast.error("Failed to confirm disbursement. Please try again.");
+    } finally {
+      setIsApproving(false);
     }
   };
 
   // Special Credit Approval Logic
   const handleCreditVerify = async () => {
     if (!localEligibleAmount.trim()) {
-      alert(
+      toast.error(
         "Please supply the applicant's eligible amount before completing approval.",
       );
       return;
@@ -609,7 +651,7 @@ const LoanView: React.FC<LoanViewProps> = ({
       );
 
       if (!amountResult.success) {
-        alert(amountResult.error || "Failed to update eligible amount.");
+        toast.error(amountResult.error || "Failed to update eligible amount.");
         return;
       }
 
@@ -626,6 +668,7 @@ const LoanView: React.FC<LoanViewProps> = ({
       });
 
       if (result.success) {
+        toast.success(result.message || "Credit verified and approved");
         // Refetch loans to update UI
         const { data, error } = await getSubmissionsByType("Loan");
         if (!error && data) {
@@ -636,11 +679,11 @@ const LoanView: React.FC<LoanViewProps> = ({
           if (updated) setSelectedLoan(updated);
         }
       } else {
-        alert(result.error || "Failed to complete credit verification");
+        toast.error(result.error || "Failed to complete credit verification");
       }
     } catch (error) {
       console.error("Error verifying credit:", error);
-      alert("Failed to complete credit verification. Please try again.");
+      toast.error("Failed to complete credit verification. Please try again.");
     }
   };
 
@@ -651,6 +694,7 @@ const LoanView: React.FC<LoanViewProps> = ({
     const action = declineMode === "Return" ? "return" : "decline";
 
     try {
+      setIsDeclining(true);
       const result = await executeWorkflowTransition({
         submissionId: selectedLoan.id,
         currentStatus: selectedLoan.status,
@@ -672,14 +716,16 @@ const LoanView: React.FC<LoanViewProps> = ({
           if (updated) setSelectedLoan(updated);
         }
       } else {
-        alert(result.error || "Failed to process action");
+        toast.error(result.error || "Failed to process action");
       }
 
       setIsDeclineModalOpen(false);
       setDeclineComment("");
+      setIsDeclining(false);
     } catch (error) {
       console.error("Error processing decline/return:", error);
-      alert("Failed to process action. Please try again.");
+      toast.error("Failed to process action. Please try again.");
+      setIsDeclining(false);
     }
   };
 
@@ -825,11 +871,6 @@ const LoanView: React.FC<LoanViewProps> = ({
       loan.status === "Approved" || loan.status === "Declined";
 
     // Workflow-based permissions
-    const availableActions = getAvailableActions(
-      currentUser.role,
-      loan.status,
-      "Loan",
-    );
     const canEdit = availableActions.includes("edit");
     const canReassign = availableActions.includes("reassign");
     const canApprove = availableActions.includes("approve");
@@ -916,12 +957,17 @@ const LoanView: React.FC<LoanViewProps> = ({
                     await handleAuditPass();
                   }
                 }}
-                className="px-6 py-2.5 text-[10px] font-black uppercase tracking-widest text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 shadow-xl shadow-indigo-500/30 transition-all flex items-center gap-2"
+                disabled={isApproving}
+                className="px-6 py-2.5 text-[10px] font-black uppercase tracking-widest text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 shadow-xl shadow-indigo-500/30 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {loan.status === "Pending Disbursement" && (
-                  <span className="material-symbols-outlined text-[18px]">
-                    payments
-                  </span>
+                {isApproving ? (
+                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  loan.status === "Pending Disbursement" && (
+                    <span className="material-symbols-outlined text-[18px]">
+                      payments
+                    </span>
+                  )
                 )}
                 {loan.status === "Pending Disbursement"
                   ? "Confirm Fund Disbursement"
@@ -1051,7 +1097,8 @@ const LoanView: React.FC<LoanViewProps> = ({
               </div>
               {loan.operationLogs && loan.operationLogs.length > 0 && (
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                  {loan.operationLogs.length} {loan.operationLogs.length === 1 ? 'event' : 'events'}
+                  {loan.operationLogs.length}{" "}
+                  {loan.operationLogs.length === 1 ? "event" : "events"}
                 </span>
               )}
             </div>
@@ -1064,7 +1111,7 @@ const LoanView: React.FC<LoanViewProps> = ({
                     let iconBg = "bg-slate-400";
                     let iconColor = "text-white";
                     let icon = "circle";
-                    
+
                     if (log.action.includes("APPROVED")) {
                       iconBg = "bg-emerald-500";
                       icon = "check_circle";
@@ -1083,15 +1130,22 @@ const LoanView: React.FC<LoanViewProps> = ({
                     }
 
                     return (
-                      <div key={log.id} className="relative flex gap-3 pb-6 group">
+                      <div
+                        key={log.id}
+                        className="relative flex gap-3 pb-6 group"
+                      >
                         {/* Timeline line */}
                         {index !== loan.operationLogs!.length - 1 && (
                           <div className="absolute left-[15px] top-8 bottom-0 w-[2px] bg-slate-200 dark:bg-slate-700" />
                         )}
-                        
+
                         {/* Icon */}
-                        <div className={`relative z-10 flex-shrink-0 w-8 h-8 rounded-full ${iconBg} flex items-center justify-center shadow-sm`}>
-                          <span className={`material-symbols-outlined text-[16px] ${iconColor}`}>
+                        <div
+                          className={`relative z-10 flex-shrink-0 w-8 h-8 rounded-full ${iconBg} flex items-center justify-center shadow-sm`}
+                        >
+                          <span
+                            className={`material-symbols-outlined text-[16px] ${iconColor}`}
+                          >
                             {icon}
                           </span>
                         </div>
@@ -1104,7 +1158,7 @@ const LoanView: React.FC<LoanViewProps> = ({
                                 {log.actor}
                               </span>
                               <span className="text-sm text-slate-600 dark:text-slate-400 ml-1">
-                                {log.action.toLowerCase().replace(/_/g, ' ')}
+                                {log.action.toLowerCase().replace(/_/g, " ")}
                               </span>
                               {/* Status badges */}
                               {(log.fromStatus || log.toStatus) && (
@@ -1115,9 +1169,7 @@ const LoanView: React.FC<LoanViewProps> = ({
                                     </span>
                                   )}
                                   {log.fromStatus && log.toStatus && (
-                                    <span className="text-slate-400">
-                                      →
-                                    </span>
+                                    <span className="text-slate-400">→</span>
                                   )}
                                   {log.toStatus && (
                                     <span className="px-2 py-0.5 bg-primary/10 text-primary rounded text-[10px] font-bold">
@@ -1131,7 +1183,7 @@ const LoanView: React.FC<LoanViewProps> = ({
                               {log.timestamp}
                             </span>
                           </div>
-                          
+
                           {log.comment && (
                             <div className="mt-2 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
                               <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
@@ -1315,9 +1367,16 @@ const LoanView: React.FC<LoanViewProps> = ({
                 </button>
                 <button
                   onClick={handleDeclineConfirm}
-                  disabled={!declineComment.trim()}
-                  className={`px-8 py-4 text-white text-[10px] font-black rounded-2xl shadow-xl transition-all uppercase tracking-widest disabled:opacity-50 ${declineMode === "Decline" ? "bg-rose-500 shadow-rose-500/20 hover:bg-rose-600" : "bg-amber-500 shadow-amber-500/20 hover:bg-amber-600"}`}
+                  disabled={!declineComment.trim() || isDeclining}
+                  className={`px-8 py-4 text-white text-[10px] font-black rounded-2xl shadow-xl transition-all uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 ${declineMode === "Decline" ? "bg-rose-500 shadow-rose-500/20 hover:bg-rose-600" : "bg-amber-500 shadow-amber-500/20 hover:bg-amber-600"}`}
                 >
+                  {isDeclining ? (
+                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <span className="material-symbols-outlined text-sm">
+                      {declineMode === "Decline" ? "cancel" : "undo"}
+                    </span>
+                  )}
                   Confirm {declineMode}
                 </button>
               </div>
@@ -1368,6 +1427,23 @@ const LoanView: React.FC<LoanViewProps> = ({
                     </p>
                   )}
                 </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                    Reassignment Comment
+                  </label>
+                  <textarea
+                    value={reassignComment}
+                    onChange={(e) => setReassignComment(e.target.value)}
+                    className="w-full bg-slate-50 dark:bg-background-dark/50 border border-slate-100 dark:border-slate-800 rounded-2xl px-5 py-4 text-sm focus:ring-2 focus:ring-primary transition-all dark:text-white placeholder:text-slate-400"
+                    placeholder="Explain why this application is being reassigned..."
+                    rows={4}
+                  />
+                  {!reassignComment.trim() && (
+                    <p className="text-[10px] text-rose-500 font-bold uppercase tracking-widest">
+                      A comment is required to proceed.
+                    </p>
+                  )}
+                </div>
                 <div className="p-4 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 rounded-2xl">
                   <div className="flex items-start gap-3">
                     <span className="material-symbols-outlined text-indigo-600 dark:text-indigo-400 text-[20px]">
@@ -1395,9 +1471,18 @@ const LoanView: React.FC<LoanViewProps> = ({
                 </button>
                 <button
                   onClick={handleSaveReassignment}
-                  disabled={!selectedUserId}
-                  className="px-8 py-4 bg-indigo-600 text-white text-[10px] font-black rounded-2xl shadow-xl shadow-indigo-500/20 hover:bg-indigo-700 transition-all uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={
+                    !selectedUserId || !reassignComment.trim() || isReassigning
+                  }
+                  className="px-8 py-4 bg-indigo-600 text-white text-[10px] font-black rounded-2xl shadow-2xl shadow-indigo-500/20 hover:bg-indigo-700 transition-all uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
+                  {isReassigning ? (
+                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <span className="material-symbols-outlined text-sm">
+                      swap_horiz
+                    </span>
+                  )}
                   Confirm Reassignment
                 </button>
               </div>

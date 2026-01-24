@@ -3,7 +3,9 @@ import {
   useNotifications,
   useAuditNotifications,
   formatAuditNotification,
+  Notification as AppNotification,
 } from "../utils/notificationService";
+import supabase from "../utils/supabase";
 
 interface NotificationPanelProps {
   isOpen: boolean;
@@ -24,8 +26,44 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({
     clearAll,
   } = useNotifications();
 
+  const [prefs, setPrefs] = React.useState({
+    submissions: true,
+    updates: true,
+    system: true,
+  });
+
+  useEffect(() => {
+    const fetchPrefs = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data } = await supabase
+        .from('users')
+        .select('notification_preferences')
+        .eq('id', user.id)
+        .single();
+
+      if (data?.notification_preferences) {
+        setPrefs(data.notification_preferences);
+      }
+    };
+    fetchPrefs();
+  }, []);
+
   // Subscribe to real-time audit logs
   const { isConnected } = useAuditNotifications((auditLog) => {
+    // Determine category
+    let category = "system";
+    if (auditLog.table_name === "form_submissions") {
+      if (auditLog.action === "INSERT") category = "submissions";
+      if (auditLog.action === "UPDATE") category = "updates";
+    }
+
+    // Filter based on preferences
+    if (!prefs[category as keyof typeof prefs]) {
+      return;
+    }
+
     // Convert audit log to notification and add to list
     const notification = formatAuditNotification(auditLog);
     addNotification(notification);
@@ -163,11 +201,10 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({
               notifications.map((notif) => (
                 <div
                   key={notif.id}
-                  className={`p-4 rounded-2xl border transition-all ${
-                    notif.read
+                  className={`p-4 rounded-2xl border transition-all ${notif.read
                       ? "bg-transparent border-slate-100 dark:border-slate-800"
                       : "bg-primary/5 border-primary/20 shadow-sm"
-                  }`}
+                    }`}
                 >
                   <div className="flex gap-4">
                     <div
