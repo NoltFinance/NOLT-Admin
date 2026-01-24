@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { toast } from "sonner";
 import {
   ReviewRequest,
   UserRole,
@@ -26,6 +25,7 @@ import {
 } from "../utils/workflowManager";
 import { AuthUser } from "../utils/authService";
 import supabase from "../utils/supabase";
+import { toast } from "sonner";
 
 interface LoanViewProps {
   requests: ReviewRequest[];
@@ -179,6 +179,8 @@ const LoanView: React.FC<LoanViewProps> = ({
   const [declineMode, setDeclineMode] = useState<"Decline" | "Return">(
     "Decline",
   );
+  const [isDeclining, setIsDeclining] = useState(false);
+  const [isApproving, setIsApproving] = useState(false);
 
   // New Credit state
   const [localEligibleAmount, setLocalEligibleAmount] = useState("");
@@ -202,10 +204,8 @@ const LoanView: React.FC<LoanViewProps> = ({
   );
   const [formConfig, setFormConfig] = useState<CustomForm | null>(null);
   const [isLoadingFormData, setIsLoadingFormData] = useState(false);
-
-  // Workflow actions state
+  const [reassignComment, setReassignComment] = useState("");
   const [availableActions, setAvailableActions] = useState<string[]>([]);
-  const [isLoadingActions, setIsLoadingActions] = useState(false);
 
   // Fetch loan submissions from database
   useEffect(() => {
@@ -232,6 +232,28 @@ const LoanView: React.FC<LoanViewProps> = ({
 
     fetchLoans();
   }, []); // Remove requests dependency - we fetch directly from database
+
+  // Compute available actions when selection or role changes
+  useEffect(() => {
+    const computeActions = async () => {
+      if (!selectedLoan) {
+        setAvailableActions([]);
+        return;
+      }
+      try {
+        const actions = await getAvailableActions(
+          currentUser.role,
+          selectedLoan.status,
+          "Loan",
+          selectedLoan.eligibleAmount || localEligibleAmount,
+        );
+        setAvailableActions(actions);
+      } catch (e) {
+        setAvailableActions([]);
+      }
+    };
+    computeActions();
+  }, [selectedLoan, currentUser.role, localEligibleAmount]);
 
   // Fetch users for reassignment
   useEffect(() => {
@@ -404,37 +426,14 @@ const LoanView: React.FC<LoanViewProps> = ({
         // Fetch form data for selected submission
         console.log("About to fetch form data for ID:", found.id);
         fetchFormData(found.id, found);
-
-        // Load available actions for this loan
-        loadAvailableActions(found);
       }
     } else {
       setSelectedLoan(null);
       setFormFields([]);
       setFormSubmission(null);
       setFormConfig(null);
-      setAvailableActions([]);
     }
   }, [selectedId, loanRequests]);
-
-  // Load available workflow actions
-  const loadAvailableActions = async (loan: ReviewRequest) => {
-    setIsLoadingActions(true);
-    try {
-      const actions = await getAvailableActions(
-        currentUser.role,
-        loan.status,
-        "Loan",
-        loan.eligibleAmount,
-      );
-      setAvailableActions(actions);
-    } catch (err) {
-      console.error("Error loading actions:", err);
-      setAvailableActions([]);
-    } finally {
-      setIsLoadingActions(false);
-    }
-  };
 
   const filteredLoans = useMemo(
     () =>
@@ -447,15 +446,9 @@ const LoanView: React.FC<LoanViewProps> = ({
         const node = getApprovalNode(req.status);
         const matchesNode =
           nodeFilter === "All Nodes" || node.label === nodeFilter;
-
-        // Sales officers should only see their own forms
-        const matchesOwner =
-          currentUser.role !== "Sales Officer" ||
-          req.ownerName === currentUser.name;
-
-        return matchesSearch && matchesStatus && matchesNode && matchesOwner;
+        return matchesSearch && matchesStatus && matchesNode;
       }),
-    [loanRequests, searchTerm, statusFilter, nodeFilter, currentUser],
+    [loanRequests, searchTerm, statusFilter, nodeFilter],
   );
 
   const toggleSelectAll = () => {
@@ -505,15 +498,17 @@ const LoanView: React.FC<LoanViewProps> = ({
   const handleOpenReassignModal = () => {
     setIsReassignModalOpen(true);
     setSelectedUserId("");
+    setReassignComment("");
   };
 
   const handleSaveReassignment = async () => {
-    if (!selectedLoan || !selectedUserId) return;
+    if (!selectedLoan || !selectedUserId || !reassignComment.trim()) return;
 
     const selectedUser = availableUsers.find((u) => u.id === selectedUserId);
     if (!selectedUser) return;
 
     try {
+      setIsReassigning(true);
       const { reassignApplication } =
         await import("../services/workflowService");
       const result = await reassignApplication(
@@ -521,6 +516,7 @@ const LoanView: React.FC<LoanViewProps> = ({
         selectedUserId,
         currentUser.role,
         currentUser.id,
+        reassignComment,
       );
 
       if (result.success) {
@@ -563,6 +559,7 @@ const LoanView: React.FC<LoanViewProps> = ({
     if (!selectedLoan) return;
 
     try {
+      setIsApproving(true);
       const result = await executeWorkflowTransition({
         submissionId: selectedLoan.id,
         currentStatus: selectedLoan.status,
@@ -575,6 +572,7 @@ const LoanView: React.FC<LoanViewProps> = ({
       });
 
       if (result.success) {
+        toast.success(result.message || "Final audit passed");
         // Refetch loans to update UI
         const { data, error } = await getSubmissionsByType("Loan");
         if (!error && data) {
@@ -584,14 +582,14 @@ const LoanView: React.FC<LoanViewProps> = ({
           );
           if (updated) setSelectedLoan(updated);
         }
-
-        toast.success(result.message || "Audit pass completed successfully");
       } else {
         toast.error(result.error || "Failed to complete audit pass");
       }
     } catch (error) {
       console.error("Error passing audit:", error);
       toast.error("Failed to complete audit pass. Please try again.");
+    } finally {
+      setIsApproving(false);
     }
   };
 
@@ -599,6 +597,7 @@ const LoanView: React.FC<LoanViewProps> = ({
     if (!selectedLoan) return;
 
     try {
+      setIsApproving(true);
       const result = await executeWorkflowTransition({
         submissionId: selectedLoan.id,
         currentStatus: selectedLoan.status,
@@ -610,6 +609,7 @@ const LoanView: React.FC<LoanViewProps> = ({
       });
 
       if (result.success) {
+        toast.success(result.message || "Disbursement confirmed");
         // Refetch loans to update UI
         const { data, error } = await getSubmissionsByType("Loan");
         if (!error && data) {
@@ -619,14 +619,14 @@ const LoanView: React.FC<LoanViewProps> = ({
           );
           if (updated) setSelectedLoan(updated);
         }
-
-        toast.success(result.message || "Disbursement passed successfully");
       } else {
         toast.error(result.error || "Failed to confirm disbursement");
       }
     } catch (error) {
       console.error("Error confirming disbursement:", error);
       toast.error("Failed to confirm disbursement. Please try again.");
+    } finally {
+      setIsApproving(false);
     }
   };
 
@@ -668,6 +668,7 @@ const LoanView: React.FC<LoanViewProps> = ({
       });
 
       if (result.success) {
+        toast.success(result.message || "Credit verified and approved");
         // Refetch loans to update UI
         const { data, error } = await getSubmissionsByType("Loan");
         if (!error && data) {
@@ -677,10 +678,6 @@ const LoanView: React.FC<LoanViewProps> = ({
           );
           if (updated) setSelectedLoan(updated);
         }
-
-        toast.success(
-          result.message || "Credit verification completed successfully",
-        );
       } else {
         toast.error(result.error || "Failed to complete credit verification");
       }
@@ -697,6 +694,7 @@ const LoanView: React.FC<LoanViewProps> = ({
     const action = declineMode === "Return" ? "return" : "decline";
 
     try {
+      setIsDeclining(true);
       const result = await executeWorkflowTransition({
         submissionId: selectedLoan.id,
         currentStatus: selectedLoan.status,
@@ -717,17 +715,17 @@ const LoanView: React.FC<LoanViewProps> = ({
           );
           if (updated) setSelectedLoan(updated);
         }
-
-        toast.success(result.message || `Application ${action}ed successfully`);
       } else {
         toast.error(result.error || "Failed to process action");
       }
 
       setIsDeclineModalOpen(false);
       setDeclineComment("");
+      setIsDeclining(false);
     } catch (error) {
       console.error("Error processing decline/return:", error);
       toast.error("Failed to process action. Please try again.");
+      setIsDeclining(false);
     }
   };
 
@@ -919,22 +917,7 @@ const LoanView: React.FC<LoanViewProps> = ({
             )}
             {canEdit && (
               <button
-                onClick={async () => {
-                  if (isEditing) {
-                    // Save changes when in edit mode
-                    try {
-                      // Update the loan in state (you can add Supabase update here if needed)
-                      setIsEditing(false);
-                      toast.success("Changes saved successfully!");
-                    } catch (err) {
-                      toast.error("Failed to save changes");
-                      console.error("Save error:", err);
-                    }
-                  } else {
-                    // Enter edit mode
-                    setIsEditing(true);
-                  }
-                }}
+                onClick={() => setIsEditing(!isEditing)}
                 className={`px-6 py-2.5 text-[10px] font-black uppercase tracking-widest border rounded-xl transition-all ${isEditing ? "bg-emerald-500 text-white border-emerald-500" : "bg-white dark:bg-surface-dark text-primary border-primary/20 hover:bg-primary/5"}`}
               >
                 {isEditing ? "Save Changes" : "Edit Details"}
@@ -974,12 +957,17 @@ const LoanView: React.FC<LoanViewProps> = ({
                     await handleAuditPass();
                   }
                 }}
-                className="px-6 py-2.5 text-[10px] font-black uppercase tracking-widest text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 shadow-xl shadow-indigo-500/30 transition-all flex items-center gap-2"
+                disabled={isApproving}
+                className="px-6 py-2.5 text-[10px] font-black uppercase tracking-widest text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 shadow-xl shadow-indigo-500/30 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {loan.status === "Pending Disbursement" && (
-                  <span className="material-symbols-outlined text-[18px]">
-                    payments
-                  </span>
+                {isApproving ? (
+                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  loan.status === "Pending Disbursement" && (
+                    <span className="material-symbols-outlined text-[18px]">
+                      payments
+                    </span>
+                  )
                 )}
                 {loan.status === "Pending Disbursement"
                   ? "Confirm Fund Disbursement"
@@ -1379,9 +1367,16 @@ const LoanView: React.FC<LoanViewProps> = ({
                 </button>
                 <button
                   onClick={handleDeclineConfirm}
-                  disabled={!declineComment.trim()}
-                  className={`px-8 py-4 text-white text-[10px] font-black rounded-2xl shadow-xl transition-all uppercase tracking-widest disabled:opacity-50 ${declineMode === "Decline" ? "bg-rose-500 shadow-rose-500/20 hover:bg-rose-600" : "bg-amber-500 shadow-amber-500/20 hover:bg-amber-600"}`}
+                  disabled={!declineComment.trim() || isDeclining}
+                  className={`px-8 py-4 text-white text-[10px] font-black rounded-2xl shadow-xl transition-all uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 ${declineMode === "Decline" ? "bg-rose-500 shadow-rose-500/20 hover:bg-rose-600" : "bg-amber-500 shadow-amber-500/20 hover:bg-amber-600"}`}
                 >
+                  {isDeclining ? (
+                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <span className="material-symbols-outlined text-sm">
+                      {declineMode === "Decline" ? "cancel" : "undo"}
+                    </span>
+                  )}
                   Confirm {declineMode}
                 </button>
               </div>
@@ -1432,6 +1427,23 @@ const LoanView: React.FC<LoanViewProps> = ({
                     </p>
                   )}
                 </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                    Reassignment Comment
+                  </label>
+                  <textarea
+                    value={reassignComment}
+                    onChange={(e) => setReassignComment(e.target.value)}
+                    className="w-full bg-slate-50 dark:bg-background-dark/50 border border-slate-100 dark:border-slate-800 rounded-2xl px-5 py-4 text-sm focus:ring-2 focus:ring-primary transition-all dark:text-white placeholder:text-slate-400"
+                    placeholder="Explain why this application is being reassigned..."
+                    rows={4}
+                  />
+                  {!reassignComment.trim() && (
+                    <p className="text-[10px] text-rose-500 font-bold uppercase tracking-widest">
+                      A comment is required to proceed.
+                    </p>
+                  )}
+                </div>
                 <div className="p-4 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 rounded-2xl">
                   <div className="flex items-start gap-3">
                     <span className="material-symbols-outlined text-indigo-600 dark:text-indigo-400 text-[20px]">
@@ -1459,9 +1471,18 @@ const LoanView: React.FC<LoanViewProps> = ({
                 </button>
                 <button
                   onClick={handleSaveReassignment}
-                  disabled={!selectedUserId}
-                  className="px-8 py-4 bg-indigo-600 text-white text-[10px] font-black rounded-2xl shadow-xl shadow-indigo-500/20 hover:bg-indigo-700 transition-all uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={
+                    !selectedUserId || !reassignComment.trim() || isReassigning
+                  }
+                  className="px-8 py-4 bg-indigo-600 text-white text-[10px] font-black rounded-2xl shadow-2xl shadow-indigo-500/20 hover:bg-indigo-700 transition-all uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
+                  {isReassigning ? (
+                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <span className="material-symbols-outlined text-sm">
+                      swap_horiz
+                    </span>
+                  )}
                   Confirm Reassignment
                 </button>
               </div>

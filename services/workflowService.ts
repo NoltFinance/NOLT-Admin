@@ -229,6 +229,7 @@ export async function reassignApplication(
   newOwnerId: string,
   userRole: UserRole,
   currentUserId?: string,
+  comment?: string,
 ): Promise<{ success: boolean; error?: string }> {
   try {
     if (userRole !== "Sales Manager" && userRole !== "Super Admin") {
@@ -277,6 +278,7 @@ export async function reassignApplication(
           workflowAction: "reassign",
           reassignedTo: newOwner?.email || newOwnerId,
           reassignedFrom: currentSubmission?.reviewed_by || "unassigned",
+          comment: comment,
         },
         currentUserId,
         currentUser?.email,
