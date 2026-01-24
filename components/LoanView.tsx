@@ -1107,24 +1107,53 @@ const LoanView: React.FC<LoanViewProps> = ({
               {loan.operationLogs && loan.operationLogs.length > 0 ? (
                 <div className="space-y-0">
                   {loan.operationLogs.map((log, index) => {
+                    // Defensive coercion to strings to avoid rendering objects
+                    const actionStr =
+                      typeof log.action === "string"
+                        ? log.action
+                        : String(log.action);
+                    const fromStatusText =
+                      typeof log.fromStatus === "string"
+                        ? log.fromStatus
+                        : (log as any)?.fromStatus?.status ||
+                          (log as any)?.fromStatus?.label ||
+                          (log as any)?.fromStatus?.toString?.() ||
+                          (log.fromStatus !== undefined
+                            ? String(log.fromStatus)
+                            : "");
+                    const toStatusText =
+                      typeof log.toStatus === "string"
+                        ? log.toStatus
+                        : (log as any)?.toStatus?.status ||
+                          (log as any)?.toStatus?.label ||
+                          (log as any)?.toStatus?.toString?.() ||
+                          (log.toStatus !== undefined
+                            ? String(log.toStatus)
+                            : "");
+                    const commentText =
+                      typeof log.comment === "string"
+                        ? log.comment
+                        : log.comment !== undefined
+                          ? String(log.comment)
+                          : "";
                     // Determine color based on action
                     let iconBg = "bg-slate-400";
                     let iconColor = "text-white";
                     let icon = "circle";
 
-                    if (log.action.includes("APPROVED")) {
+                    if (actionStr.includes("APPROVED")) {
                       iconBg = "bg-emerald-500";
                       icon = "check_circle";
-                    } else if (log.action.includes("DECLINED")) {
+                    } else if (actionStr.includes("DECLINED")) {
                       iconBg = "bg-rose-500";
                       icon = "cancel";
-                    } else if (log.action.includes("RETURNED")) {
+                    } else if (actionStr.includes("RETURNED")) {
                       iconBg = "bg-amber-500";
                       icon = "undo";
-                    } else if (log.action.includes("REASSIGNED")) {
+                    } else if (actionStr.includes("REASSIGNED")) {
                       iconBg = "bg-blue-500";
                       icon = "swap_horiz";
-                    } else if (log.action.includes("ELIGIBLE")) {
+                    } else if (actionStr.includes("ELIGIBLE")) {
                       iconBg = "bg-purple-500";
                       icon = "payments";
                     }
@@ -1158,22 +1187,22 @@ const LoanView: React.FC<LoanViewProps> = ({
                                 {log.actor}
                               </span>
                               <span className="text-sm text-slate-600 dark:text-slate-400 ml-1">
-                                {log.action.toLowerCase().replace(/_/g, " ")}
+                                {actionStr.toLowerCase().replace(/_/g, " ")}
                               </span>
                               {/* Status badges */}
-                              {(log.fromStatus || log.toStatus) && (
+                              {(fromStatusText || toStatusText) && (
                                 <div className="flex items-center gap-2 mt-1">
-                                  {log.fromStatus && (
+                                  {fromStatusText && (
                                     <span className="px-2 py-0.5 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded text-[10px] font-bold">
-                                      {log.fromStatus}
+                                      {fromStatusText}
                                     </span>
                                   )}
-                                  {log.fromStatus && log.toStatus && (
+                                  {fromStatusText && toStatusText && (
                                     <span className="text-slate-400">→</span>
                                   )}
-                                  {log.toStatus && (
+                                  {toStatusText && (
                                     <span className="px-2 py-0.5 bg-primary/10 text-primary rounded text-[10px] font-bold">
-                                      {log.toStatus}
+                                      {toStatusText}
                                     </span>
                                   )}
                                 </div>
@@ -1184,10 +1213,10 @@ const LoanView: React.FC<LoanViewProps> = ({
                             </span>
                           </div>
 
-                          {log.comment && (
+                          {commentText && (
                             <div className="mt-2 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
                               <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
-                                {log.comment}
+                                {commentText}
                               </p>
                             </div>
                           )}
