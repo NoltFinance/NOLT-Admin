@@ -585,7 +585,7 @@ export async function createAdminUser(params: {
           data: {
             name: params.name,
             role: params.role, // Trigger will use this to create profile
-            avatar: `https://picsum.photos/seed/${Date.now()}/100/100`, // Pass avatar to meta for trigger
+            avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(params.name)}&background=random`, // Pass avatar to meta for trigger
           },
           emailRedirectTo: window.location.origin,
         },
@@ -612,7 +612,7 @@ export async function createAdminUser(params: {
       email: params.email,
       name: params.name,
       role: params.role,
-      avatar: `https://picsum.photos/seed/${authData.user.id}/100/100`,
+      avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(params.name)}&background=random`,
     };
 
     // If referral code was provided, we might need to update it manually
@@ -636,6 +636,35 @@ export async function createAdminUser(params: {
     console.error("Create admin user error:", error);
     return {
       user: null,
+      error:
+        error instanceof Error ? error.message : "An unexpected error occurred",
+    };
+  }
+}
+
+/**
+ * Fetch team members for a specific team lead
+ */
+export async function fetchTeamMembers(teamLeadId: string): Promise<{
+  users: User[] | null;
+  error: string | null;
+}> {
+  try {
+    const { data: users, error } = await supabase
+      .from("users")
+      .select("*")
+      .eq("team_lead_id", teamLeadId)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      return { users: null, error: error.message };
+    }
+
+    return { users: users as User[], error: null };
+  } catch (error) {
+    console.error("Fetch team members error:", error);
+    return {
+      users: null,
       error:
         error instanceof Error ? error.message : "An unexpected error occurred",
     };

@@ -191,11 +191,19 @@ const FormBuilderView: React.FC = () => {
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
+
+    // Calculate scaling ratio
     const rect = canvas.getBoundingClientRect();
-    const x =
-      "touches" in e ? e.touches[0].clientX - rect.left : e.clientX - rect.left;
-    const y =
-      "touches" in e ? e.touches[0].clientY - rect.top : e.clientY - rect.top;
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+
+    // Get correct coordinates
+    const clientX = "touches" in e ? e.touches[0].clientX : e.clientX;
+    const clientY = "touches" in e ? e.touches[0].clientY : e.clientY;
+
+    const x = (clientX - rect.left) * scaleX;
+    const y = (clientY - rect.top) * scaleY;
+
     ctx.beginPath();
     ctx.moveTo(x, y);
     setDrawingStates((prev) => ({ ...prev, [fieldId]: true }));
@@ -213,11 +221,19 @@ const FormBuilderView: React.FC = () => {
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
+
+    // Calculate scaling ratio
     const rect = canvas.getBoundingClientRect();
-    const x =
-      "touches" in e ? e.touches[0].clientX - rect.left : e.clientX - rect.left;
-    const y =
-      "touches" in e ? e.touches[0].clientY - rect.top : e.clientY - rect.top;
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+
+    // Get correct coordinates
+    const clientX = "touches" in e ? e.touches[0].clientX : e.clientX;
+    const clientY = "touches" in e ? e.touches[0].clientY : e.clientY;
+
+    const x = (clientX - rect.left) * scaleX;
+    const y = (clientY - rect.top) * scaleY;
+
     ctx.lineTo(x, y);
     ctx.strokeStyle = "#028FF5";
     ctx.lineWidth = 2;

@@ -247,6 +247,7 @@ const InvestmentView: React.FC<InvestmentViewProps> = ({
           .from("users")
           .select("id, name, role")
           .neq("id", currentUser.id)
+          .neq("role", "Customer")
           .order("name");
 
         if (data) {

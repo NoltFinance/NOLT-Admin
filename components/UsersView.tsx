@@ -362,14 +362,16 @@ const UsersView: React.FC = () => {
                           <span className="font-bold text-slate-700 dark:text-slate-200">
                             {user.role}
                           </span>
-                          <button
-                            onClick={() => setEditingUser(user)}
-                            className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-primary transition-all"
-                          >
-                            <span className="material-symbols-outlined text-[18px]">
-                              edit
-                            </span>
-                          </button>
+                          {currentUserId !== user.id && (
+                            <button
+                              onClick={() => setEditingUser(user)}
+                              className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-primary transition-all"
+                            >
+                              <span className="material-symbols-outlined text-[18px]">
+                                edit
+                              </span>
+                            </button>
+                          )}
                         </div>
                       )}
                     </td>
@@ -567,14 +569,16 @@ const UsersView: React.FC = () => {
                         <span className="text-xs font-bold text-slate-700 dark:text-slate-200">
                           {user.role}
                         </span>
-                        <button
-                          onClick={() => setEditingUser(user)}
-                          className="text-slate-300 hover:text-primary transition-all ml-1"
-                        >
-                          <span className="material-symbols-outlined text-[14px]">
-                            edit
-                          </span>
-                        </button>
+                        {currentUserId !== user.id && (
+                          <button
+                            onClick={() => setEditingUser(user)}
+                            className="text-slate-300 hover:text-primary transition-all ml-1"
+                          >
+                            <span className="material-symbols-outlined text-[14px]">
+                              edit
+                            </span>
+                          </button>
+                        )}
                       </div>
                     )}
                   </div>

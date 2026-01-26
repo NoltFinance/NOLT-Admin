@@ -7,14 +7,12 @@ interface SidebarProps {
   onClose?: () => void;
   onLogoutClick: () => void;
   currentUser: { name: string; role: UserRole; avatar: string };
-  onRoleChange: (role: UserRole) => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
   onClose,
   onLogoutClick,
   currentUser,
-  onRoleChange,
 }) => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -71,8 +69,8 @@ const Sidebar: React.FC<SidebarProps> = ({
         to={to}
         onClick={onClose}
         className={`flex items-center w-full gap-3 px-4 py-3.5 rounded-xl transition-all group ${active
-            ? "bg-primary text-white shadow-xl shadow-primary/20"
-            : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark hover:text-slate-900 dark:hover:text-white"
+          ? "bg-primary text-white shadow-xl shadow-primary/20"
+          : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark hover:text-slate-900 dark:hover:text-white"
           }`}
       >
         <span
