@@ -360,7 +360,9 @@ const PublicFormSubmissionView: React.FC = () => {
               <span className="material-symbols-outlined">
                 {formData[field.id + "_uploading"] ? "sync" : "cloud_upload"}
               </span>
-              <span className={`text-[10px] font-black uppercase ${formData[field.id + "_uploading"] ? "animate-pulse" : ""}`}>
+              <span
+                className={`text-[10px] font-black uppercase ${formData[field.id + "_uploading"] ? "animate-pulse" : ""}`}
+              >
                 {formData[field.id + "_uploading"]
                   ? "Compressing & Uploading..."
                   : value
@@ -405,7 +407,9 @@ const PublicFormSubmissionView: React.FC = () => {
                           );
                         } catch (error) {
                           console.error("Compression error:", error);
-                          toast.error("Failed to compress image, uploading original...");
+                          toast.error(
+                            "Failed to compress image, uploading original...",
+                          );
                         }
                       }
 
@@ -420,7 +424,9 @@ const PublicFormSubmissionView: React.FC = () => {
                       }
                     } catch (err) {
                       console.error("File processing error:", err);
-                      toast.error("An error occurred while processing the file");
+                      toast.error(
+                        "An error occurred while processing the file",
+                      );
                     } finally {
                       setFormData((prev) => {
                         const newState = { ...prev };
@@ -543,10 +549,11 @@ const PublicFormSubmissionView: React.FC = () => {
                     key={star}
                     type="button"
                     onClick={() => handleInputChange(field.id, star, field)}
-                    className={`text-3xl transition-all ${star <= displayRating
-                      ? "text-yellow-400 scale-110"
-                      : "text-slate-300"
-                      } cursor-pointer hover:scale-125`}
+                    className={`text-3xl transition-all ${
+                      star <= displayRating
+                        ? "text-yellow-400 scale-110"
+                        : "text-slate-300"
+                    } cursor-pointer hover:scale-125`}
                   >
                     {star <= displayRating ? "⭐" : "☆"}
                   </button>
@@ -673,7 +680,7 @@ const PublicFormSubmissionView: React.FC = () => {
                   onTouchMove={(e) => draw(field.id, e)}
                   onTouchEnd={() => stopDrawing(field.id)}
                   className="w-full h-auto min-h-[150px] bg-white dark:bg-background-dark/50 cursor-crosshair touch-none"
-                  style={{ width: '100%', height: '200px' }}
+                  style={{ width: "100%", height: "200px" }}
                 />
                 <button
                   type="button"
@@ -877,12 +884,13 @@ const PublicFormSubmissionView: React.FC = () => {
                       className="relative z-10 flex flex-col items-center"
                     >
                       <div
-                        className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-500 border-4 ${isCompleted
-                          ? "bg-primary text-white border-primary shadow-lg shadow-primary/30"
-                          : isActive
-                            ? "bg-white dark:bg-surface-dark text-primary border-primary shadow-xl scale-110"
-                            : "bg-white dark:bg-surface-dark text-slate-300 dark:text-slate-600 border-slate-200 dark:border-slate-800"
-                          }`}
+                        className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-500 border-4 ${
+                          isCompleted
+                            ? "bg-primary text-white border-primary shadow-lg shadow-primary/30"
+                            : isActive
+                              ? "bg-white dark:bg-surface-dark text-primary border-primary shadow-xl scale-110"
+                              : "bg-white dark:bg-surface-dark text-slate-300 dark:text-slate-600 border-slate-200 dark:border-slate-800"
+                        }`}
                       >
                         {isCompleted ? (
                           <span className="material-symbols-outlined text-[22px]">
@@ -898,10 +906,11 @@ const PublicFormSubmissionView: React.FC = () => {
                       </div>
                       <div className="absolute top-14 whitespace-nowrap text-center">
                         <p
-                          className={`text-[10px] font-black uppercase tracking-widest ${isCompleted || isActive
-                            ? "text-slate-900 dark:text-white"
-                            : "text-slate-400"
-                            }`}
+                          className={`text-[10px] font-black uppercase tracking-widest ${
+                            isCompleted || isActive
+                              ? "text-slate-900 dark:text-white"
+                              : "text-slate-400"
+                          }`}
                         >
                           {stepLabel}
                         </p>

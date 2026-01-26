@@ -226,7 +226,7 @@ export async function getFormById(
       enable_steps: data.enable_steps,
       step_labels: data.step_labels,
       fields_count: data.form_fields?.length || 0,
-      first_field_step: data.form_fields?.[0]?.step_number
+      first_field_step: data.form_fields?.[0]?.step_number,
     });
 
     const form: CustomForm = {

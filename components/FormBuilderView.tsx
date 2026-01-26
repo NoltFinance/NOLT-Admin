@@ -262,7 +262,13 @@ const FormBuilderView: React.FC = () => {
     console.log("handleSelectForm - Loaded form:", data);
     console.log("handleSelectForm - enable_steps:", data?.enable_steps);
     console.log("handleSelectForm - step_labels:", data?.step_labels);
-    console.log("handleSelectForm - fields with step_numbers:", data?.fields?.map(f => ({ label: f.label, step_number: f.step_number })));
+    console.log(
+      "handleSelectForm - fields with step_numbers:",
+      data?.fields?.map((f) => ({
+        label: f.label,
+        step_number: f.step_number,
+      })),
+    );
     if (!error && data) {
       setSelectedForm(data);
     }
