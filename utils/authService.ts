@@ -905,11 +905,14 @@ export async function deleteUserProfile(userId: string): Promise<{
   try {
     const { error } = await supabase
       .from("users")
-      .update({ status: "Deleted" })
+      .update({
+        status: "Suspended",
+        name: `[Deleted] ${userId.slice(0, 8)}` // Anonymize name or mark as deleted
+      })
       .eq("id", userId);
 
-    // Note: We perform a soft delete to preserve audit logs and historical data.
-    // The user will be unable to login since status is not 'Active'.
+    // Workaround: Use 'Suspended' since 'Deleted' is not in DB constraint.
+    // Renaming ensures we can filter them out in UI.
 
     if (error) {
       return { success: false, error: error.message };

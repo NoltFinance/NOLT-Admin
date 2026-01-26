@@ -69,7 +69,7 @@ const UsersView: React.FC = () => {
   };
 
   const filteredUsers = users
-    .filter((u) => u.status !== "Deleted")
+    .filter((u) => !u.name.startsWith("[Deleted]") && u.status !== "Deleted")
     .filter(
       (u) =>
         u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
