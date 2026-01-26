@@ -29,7 +29,7 @@ export type UserRole =
   | "Internal Control"
   | "Finance";
 
-export type UserStatus = "Active" | "Pending" | "Suspended";
+export type UserStatus = "Active" | "Pending" | "Suspended" | "Deleted";
 
 export interface AppNotification {
   id: string;

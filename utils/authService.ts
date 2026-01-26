@@ -903,7 +903,13 @@ export async function deleteUserProfile(userId: string): Promise<{
   error: string | null;
 }> {
   try {
-    const { error } = await supabase.from("users").delete().eq("id", userId);
+    const { error } = await supabase
+      .from("users")
+      .update({ status: "Deleted" })
+      .eq("id", userId);
+
+    // Note: We perform a soft delete to preserve audit logs and historical data.
+    // The user will be unable to login since status is not 'Active'.
 
     if (error) {
       return { success: false, error: error.message };
