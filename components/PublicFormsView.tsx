@@ -171,48 +171,53 @@ const PublicFormsView: React.FC = () => {
             {filteredForms.map((form) => (
               <div
                 key={form.id}
-                onClick={() => handleFormClick(form.id)}
-                className="bg-white dark:bg-slate-800 rounded-2xl border-2 border-slate-200 dark:border-slate-700 p-6 hover:border-primary hover:shadow-xl transition-all cursor-pointer group"
+                className="bg-white dark:bg-slate-800 rounded-2xl border-2 border-slate-200 dark:border-slate-700 overflow-hidden hover:border-primary hover:shadow-xl transition-all group"
               >
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex-1">
-                    <h3 className="text-lg font-black text-slate-900 dark:text-white mb-2 group-hover:text-primary transition-colors">
-                      {form.name}
-                    </h3>
-                    {form.description && (
-                      <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-2">
-                        {form.description}
-                      </p>
+                <div className="p-6">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex-1">
+                      <h3 className="text-lg font-black text-slate-900 dark:text-white mb-2">
+                        {form.name}
+                      </h3>
+                      {form.description && (
+                        <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-2">
+                          {form.description}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 flex-wrap mb-4">
+                    {form.application_type && (
+                      <span
+                        className={`px-3 py-1 rounded-lg text-xs font-bold ${getTypeColor(form.application_type)}`}
+                      >
+                        {form.application_type}
+                      </span>
+                    )}
+                    {form.category_type && (
+                      <span className="px-3 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300">
+                        {form.category_type}
+                      </span>
                     )}
                   </div>
-                  <span className="material-symbols-outlined text-slate-400 group-hover:text-primary transition-colors">
-                    arrow_forward
-                  </span>
-                </div>
 
-                <div className="flex items-center gap-2 flex-wrap">
-                  {form.application_type && (
-                    <span
-                      className={`px-3 py-1 rounded-lg text-xs font-bold ${getTypeColor(form.application_type)}`}
-                    >
-                      {form.application_type}
-                    </span>
-                  )}
-                  {form.category_type && (
-                    <span className="px-3 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300">
-                      {form.category_type}
-                    </span>
-                  )}
-                </div>
-
-                <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-                  <span className="flex items-center gap-1">
+                  <div className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 mb-4">
                     <span className="material-symbols-outlined text-[16px]">
                       description
                     </span>
                     {form.fields?.length || 0} fields
-                  </span>
-                  <span className="font-bold text-primary">Apply Now →</span>
+                  </div>
+
+                  <button
+                    onClick={() => handleFormClick(form.id)}
+                    className="w-full bg-primary text-white font-bold py-3 rounded-xl hover:bg-primary/90 transition-all flex items-center justify-center gap-2 group-hover:shadow-lg"
+                  >
+                    <span className="material-symbols-outlined text-[20px]">
+                      edit_document
+                    </span>
+                    Start Application
+                  </button>
                 </div>
               </div>
             ))}

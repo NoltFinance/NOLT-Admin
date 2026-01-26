@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { toast } from "sonner";
 import {
   ReviewRequest,
   UserRole,
@@ -24,6 +23,7 @@ import {
 } from "../utils/workflowManager";
 import { AuthUser } from "../utils/authService";
 import supabase from "../utils/supabase";
+import { toast } from "sonner";
 
 interface InvestmentViewProps {
   requests: ReviewRequest[];
@@ -182,6 +182,8 @@ const InvestmentView: React.FC<InvestmentViewProps> = ({
   const [declineMode, setDeclineMode] = useState<"Decline" | "Return">(
     "Decline",
   );
+  const [isApproving, setIsApproving] = useState(false);
+  const [isDeclining, setIsDeclining] = useState(false);
 
   const [localOwnerName, setLocalOwnerName] = useState("");
   const [localSource, setLocalSource] = useState("REFERRED_LINK");
@@ -204,6 +206,8 @@ const InvestmentView: React.FC<InvestmentViewProps> = ({
   );
   const [formConfig, setFormConfig] = useState<CustomForm | null>(null);
   const [isLoadingFormData, setIsLoadingFormData] = useState(false);
+  const [reassignComment, setReassignComment] = useState("");
+  const [availableActions, setAvailableActions] = useState<string[]>([]);
 
   // Fetch investment submissions from database
   useEffect(() => {
@@ -239,6 +243,27 @@ const InvestmentView: React.FC<InvestmentViewProps> = ({
     fetchInvestments();
   }, []); // Remove requests dependency - we fetch directly from database
 
+  // Compute available actions when selection or role changes
+  useEffect(() => {
+    const computeActions = async () => {
+      if (!selectedInvestment) {
+        setAvailableActions([]);
+        return;
+      }
+      try {
+        const actions = await getAvailableActions(
+          currentUser.role,
+          selectedInvestment.status,
+          "Investment",
+        );
+        setAvailableActions(actions);
+      } catch (e) {
+        setAvailableActions([]);
+      }
+    };
+    computeActions();
+  }, [selectedInvestment, currentUser.role]);
+
   // Fetch users for reassignment
   useEffect(() => {
     const fetchUsers = async () => {
@@ -262,7 +287,10 @@ const InvestmentView: React.FC<InvestmentViewProps> = ({
   }, [currentUser.id]);
 
   // Fetch form configuration, fields, and submission data
-  const fetchFormData = async (submissionId: string, investment: ReviewRequest) => {
+  const fetchFormData = async (
+    submissionId: string,
+    investment: ReviewRequest,
+  ) => {
     setIsLoadingFormData(true);
     console.log("Fetching form data for submission ID:", submissionId);
     try {
@@ -326,52 +354,54 @@ const InvestmentView: React.FC<InvestmentViewProps> = ({
       } else {
         console.log("Audit logs fetched:", auditLogs?.length || 0, "logs");
         // Update selectedInvestment with operation logs
-        const operationLogs: OperationLogEntry[] = (auditLogs || []).map((log: any) => {
-          // Determine the action label based on workflow_action
-          let actionLabel = log.action;
-          if (log.new_data?.workflow_action) {
-            const workflowAction = log.new_data.workflow_action;
-            switch (workflowAction) {
-              case "approve":
-                actionLabel = "APPROVED";
-                break;
-              case "decline":
-                actionLabel = "DECLINED";
-                break;
-              case "return":
-                actionLabel = "RETURNED";
-                break;
-              case "reassign":
-                actionLabel = "REASSIGNED";
-                break;
-              case "update_eligible_amount":
-                actionLabel = "UPDATED ELIGIBLE AMOUNT";
-                break;
-              default:
-                actionLabel = workflowAction.toUpperCase().replace("_", " ");
+        const operationLogs: OperationLogEntry[] = (auditLogs || []).map(
+          (log: any) => {
+            // Determine the action label based on workflow_action
+            let actionLabel = log.action;
+            if (log.new_data?.workflow_action) {
+              const workflowAction = log.new_data.workflow_action;
+              switch (workflowAction) {
+                case "approve":
+                  actionLabel = "APPROVED";
+                  break;
+                case "decline":
+                  actionLabel = "DECLINED";
+                  break;
+                case "return":
+                  actionLabel = "RETURNED";
+                  break;
+                case "reassign":
+                  actionLabel = "REASSIGNED";
+                  break;
+                case "update_eligible_amount":
+                  actionLabel = "UPDATED ELIGIBLE AMOUNT";
+                  break;
+                default:
+                  actionLabel = workflowAction.toUpperCase().replace("_", " ");
+              }
             }
-          }
 
-          // Build a detailed comment
-          let detailedComment = log.new_data?.comment || "";
-          if (log.new_data?.fromStatus && log.new_data?.toStatus) {
-            detailedComment = `Status changed from "${log.new_data.fromStatus}" to "${log.new_data.toStatus}". ${detailedComment}`;
-          } else if (log.new_data?.reassignedTo) {
-            detailedComment = `Reassigned to ${log.new_data.reassignedTo}. ${detailedComment}`;
-          } else if (log.new_data?.eligibleAmount) {
-            detailedComment = `Eligible amount set to ${log.new_data.eligibleAmount}. ${detailedComment}`;
-          }
+            // Build a detailed comment
+            let detailedComment = log.new_data?.comment || "";
+            if (log.new_data?.fromStatus && log.new_data?.toStatus) {
+              detailedComment = `Status changed from "${log.new_data.fromStatus}" to "${log.new_data.toStatus}". ${detailedComment}`;
+            } else if (log.new_data?.reassignedTo) {
+              detailedComment = `Reassigned to ${log.new_data.reassignedTo}. ${detailedComment}`;
+            } else if (log.new_data?.eligibleAmount) {
+              detailedComment = `Eligible amount set to ${log.new_data.eligibleAmount}. ${detailedComment}`;
+            }
 
-          return {
-            id: log.id,
-            timestamp: new Date(log.created_at).toLocaleString(),
-            actor: log.user_email || "System",
-            action: actionLabel,
-            comment: detailedComment.trim(),
-            fromStatus: log.new_data?.fromStatus,
-            toStatus: log.new_data?.toStatus,
-          };
-        });
+            return {
+              id: log.id,
+              timestamp: new Date(log.created_at).toLocaleString(),
+              actor: log.user_email || "System",
+              action: actionLabel,
+              comment: detailedComment.trim(),
+              fromStatus: log.new_data?.fromStatus,
+              toStatus: log.new_data?.toStatus,
+            };
+          },
+        );
         setSelectedInvestment({
           ...investment,
           operationLogs,
@@ -481,15 +511,18 @@ const InvestmentView: React.FC<InvestmentViewProps> = ({
   const handleOpenReassignModal = () => {
     setIsReassignModalOpen(true);
     setSelectedUserId("");
+    setReassignComment("");
   };
 
   const handleSaveReassignment = async () => {
-    if (!selectedInvestment || !selectedUserId) return;
+    if (!selectedInvestment || !selectedUserId || !reassignComment.trim())
+      return;
 
     const selectedUser = availableUsers.find((u) => u.id === selectedUserId);
     if (!selectedUser) return;
 
     try {
+      setIsReassigning(true);
       const { reassignApplication } =
         await import("../services/workflowService");
       const result = await reassignApplication(
@@ -497,6 +530,7 @@ const InvestmentView: React.FC<InvestmentViewProps> = ({
         selectedUserId,
         currentUser.role,
         currentUser.id,
+        reassignComment,
       );
 
       if (result.success) {
@@ -520,13 +554,13 @@ const InvestmentView: React.FC<InvestmentViewProps> = ({
         const { data } = await getSubmissionsByType("Investment");
         if (data) setInvestmentRequests(data);
 
-        toast.success(`Application successfully reassigned to ${selectedUser.name}`);
+        alert(`Application successfully reassigned to ${selectedUser.name}`);
       } else {
-        toast.error(result.error || "Failed to reassign application");
+        alert(result.error || "Failed to reassign application");
       }
     } catch (err) {
       console.error("Reassignment error:", err);
-      toast.error("Failed to reassign application");
+      alert("Failed to reassign application");
     } finally {
       setIsReassignModalOpen(false);
       setIsReassigning(false);
@@ -535,7 +569,7 @@ const InvestmentView: React.FC<InvestmentViewProps> = ({
 
   const handleAuditPass = async () => {
     if (!selectedInvestment) return;
-
+    setIsApproving(true);
     const result = await executeWorkflowTransition({
       submissionId: selectedInvestment.id,
       currentStatus: selectedInvestment.status,
@@ -547,6 +581,7 @@ const InvestmentView: React.FC<InvestmentViewProps> = ({
     });
 
     if (result.success && result.newStatus) {
+      toast.success(result.message || "Final audit passed");
       const log: OperationLogEntry = {
         id: Math.random().toString(36).substring(7),
         timestamp: new Date().toLocaleString(),
@@ -564,15 +599,15 @@ const InvestmentView: React.FC<InvestmentViewProps> = ({
 
       const { data } = await getSubmissionsByType("Investment");
       if (data) setInvestmentRequests(data);
-      toast.success(result.message || "Audit passed successfully");
     } else {
       toast.error(result.error || "Failed to pass audit");
     }
+    setIsApproving(false);
   };
 
   const handleConfirmDisbursement = async () => {
     if (!selectedInvestment) return;
-
+    setIsApproving(true);
     const result = await executeWorkflowTransition({
       submissionId: selectedInvestment.id,
       currentStatus: selectedInvestment.status,
@@ -584,6 +619,7 @@ const InvestmentView: React.FC<InvestmentViewProps> = ({
     });
 
     if (result.success && result.newStatus) {
+      toast.success(result.message || "Payment verified");
       const log: OperationLogEntry = {
         id: Math.random().toString(36).substring(7),
         timestamp: new Date().toLocaleString(),
@@ -600,10 +636,10 @@ const InvestmentView: React.FC<InvestmentViewProps> = ({
 
       const { data } = await getSubmissionsByType("Investment");
       if (data) setInvestmentRequests(data);
-      toast.success(result.message || "Disbursement confirmed successfully");
     } else {
       toast.error(result.error || "Failed to confirm disbursement");
     }
+    setIsApproving(false);
   };
 
   const handleDeclineConfirm = async () => {
@@ -612,7 +648,7 @@ const InvestmentView: React.FC<InvestmentViewProps> = ({
 
     const isReturn = declineMode === "Return";
     const action = isReturn ? "return" : "decline";
-
+    setIsDeclining(true);
     const result = await executeWorkflowTransition({
       submissionId: selectedInvestment.id,
       currentStatus: selectedInvestment.status,
@@ -640,13 +676,13 @@ const InvestmentView: React.FC<InvestmentViewProps> = ({
 
       const { data } = await getSubmissionsByType("Investment");
       if (data) setInvestmentRequests(data);
-      toast.success(result.message || `Application ${action}ed successfully`);
     } else {
       toast.error(result.error || `Failed to ${action} application`);
     }
 
     setIsDeclineModalOpen(false);
     setDeclineComment("");
+    setIsDeclining(false);
   };
 
   const handleDeclineTrigger = (mode: "Decline" | "Return") => {
@@ -790,12 +826,7 @@ const InvestmentView: React.FC<InvestmentViewProps> = ({
       inv.status === "Declined";
     const isFinalized = inv.status === "Approved" || inv.status === "Declined";
 
-    // Use workflow-based action checks
-    const availableActions = getAvailableActions(
-      currentUser.role,
-      inv.status,
-      "Investment",
-    );
+    // Use workflow-based action checks (from state)
 
     const canEdit = availableActions.includes("edit");
     const canReassign = availableActions.includes("reassign");
@@ -883,13 +914,16 @@ const InvestmentView: React.FC<InvestmentViewProps> = ({
                     await handleAuditPass();
                   }
                 }}
-                className="px-6 py-2.5 text-[10px] font-black uppercase tracking-widest text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 shadow-xl shadow-indigo-500/30 transition-all flex items-center gap-2"
+                disabled={isApproving}
+                className="px-6 py-2.5 text-[10px] font-black uppercase tracking-widest text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 shadow-xl shadow-indigo-500/30 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {inv.status === "Pending Disbursement" && (
+                {isApproving ? (
+                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : inv.status === "Pending Disbursement" ? (
                   <span className="material-symbols-outlined text-[18px]">
                     payments
                   </span>
-                )}
+                ) : null}
                 {inv.status === "Pending Disbursement"
                   ? "Confirm Payment Verification"
                   : inv.status === "Internal Audit"
@@ -976,7 +1010,8 @@ const InvestmentView: React.FC<InvestmentViewProps> = ({
               </div>
               {inv.operationLogs && inv.operationLogs.length > 0 && (
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                  {inv.operationLogs.length} {inv.operationLogs.length === 1 ? 'event' : 'events'}
+                  {inv.operationLogs.length}{" "}
+                  {inv.operationLogs.length === 1 ? "event" : "events"}
                 </span>
               )}
             </div>
@@ -1007,15 +1042,22 @@ const InvestmentView: React.FC<InvestmentViewProps> = ({
                     }
 
                     return (
-                      <div key={log.id} className="relative flex gap-3 pb-6 group">
+                      <div
+                        key={log.id}
+                        className="relative flex gap-3 pb-6 group"
+                      >
                         {/* Timeline line */}
                         {index !== inv.operationLogs!.length - 1 && (
                           <div className="absolute left-[15px] top-8 bottom-0 w-[2px] bg-slate-200 dark:bg-slate-700" />
                         )}
 
                         {/* Icon */}
-                        <div className={`relative z-10 flex-shrink-0 w-8 h-8 rounded-full ${iconBg} flex items-center justify-center shadow-sm`}>
-                          <span className={`material-symbols-outlined text-[16px] ${iconColor}`}>
+                        <div
+                          className={`relative z-10 flex-shrink-0 w-8 h-8 rounded-full ${iconBg} flex items-center justify-center shadow-sm`}
+                        >
+                          <span
+                            className={`material-symbols-outlined text-[16px] ${iconColor}`}
+                          >
                             {icon}
                           </span>
                         </div>
@@ -1028,7 +1070,7 @@ const InvestmentView: React.FC<InvestmentViewProps> = ({
                                 {log.actor}
                               </span>
                               <span className="text-sm text-slate-600 dark:text-slate-400 ml-1">
-                                {log.action.toLowerCase().replace(/_/g, ' ')}
+                                {log.action.toLowerCase().replace(/_/g, " ")}
                               </span>
                               {/* Status badges */}
                               {(log.fromStatus || log.toStatus) && (
@@ -1039,9 +1081,7 @@ const InvestmentView: React.FC<InvestmentViewProps> = ({
                                     </span>
                                   )}
                                   {log.fromStatus && log.toStatus && (
-                                    <span className="text-slate-400">
-                                      →
-                                    </span>
+                                    <span className="text-slate-400">→</span>
                                   )}
                                   {log.toStatus && (
                                     <span className="px-2 py-0.5 bg-primary/10 text-primary rounded text-[10px] font-bold">
@@ -1220,9 +1260,16 @@ const InvestmentView: React.FC<InvestmentViewProps> = ({
                 </button>
                 <button
                   onClick={handleDeclineConfirm}
-                  disabled={!declineComment.trim()}
-                  className={`px-8 py-4 text-white text-[10px] font-black rounded-2xl shadow-xl transition-all uppercase tracking-widest disabled:opacity-50 ${declineMode === "Decline" ? "bg-rose-500 shadow-rose-500/20 hover:bg-rose-600" : "bg-amber-500 shadow-amber-500/20 hover:bg-amber-600"}`}
+                  disabled={!declineComment.trim() || isDeclining}
+                  className={`px-8 py-4 text-white text-[10px] font-black rounded-2xl shadow-xl transition-all uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 ${declineMode === "Decline" ? "bg-rose-500 shadow-rose-500/20 hover:bg-rose-600" : "bg-amber-500 shadow-amber-500/20 hover:bg-amber-600"}`}
                 >
+                  {isDeclining ? (
+                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <span className="material-symbols-outlined text-sm">
+                      {declineMode === "Decline" ? "cancel" : "undo"}
+                    </span>
+                  )}
                   Confirm {declineMode}
                 </button>
               </div>
@@ -1273,6 +1320,23 @@ const InvestmentView: React.FC<InvestmentViewProps> = ({
                     </p>
                   )}
                 </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                    Reassignment Comment
+                  </label>
+                  <textarea
+                    value={reassignComment}
+                    onChange={(e) => setReassignComment(e.target.value)}
+                    className="w-full bg-slate-50 dark:bg-background-dark/50 border border-slate-100 dark:border-slate-800 rounded-2xl px-5 py-4 text-sm focus:ring-2 focus:ring-primary transition-all dark:text-white placeholder:text-slate-400"
+                    placeholder="Explain why this application is being reassigned..."
+                    rows={4}
+                  />
+                  {!reassignComment.trim() && (
+                    <p className="text-[10px] text-rose-500 font-bold uppercase tracking-widest">
+                      A comment is required to proceed.
+                    </p>
+                  )}
+                </div>
                 <div className="p-4 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 rounded-2xl">
                   <div className="flex items-start gap-3">
                     <span className="material-symbols-outlined text-indigo-600 dark:text-indigo-400 text-[20px]">
@@ -1300,9 +1364,18 @@ const InvestmentView: React.FC<InvestmentViewProps> = ({
                 </button>
                 <button
                   onClick={handleSaveReassignment}
-                  disabled={!selectedUserId}
-                  className="px-8 py-4 bg-indigo-600 text-white text-[10px] font-black rounded-2xl shadow-xl shadow-indigo-500/20 hover:bg-indigo-700 transition-all uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={
+                    !selectedUserId || !reassignComment.trim() || isReassigning
+                  }
+                  className="px-8 py-4 bg-indigo-600 text-white text-[10px] font-black rounded-2xl shadow-2xl shadow-indigo-500/20 hover:bg-indigo-700 transition-all uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
+                  {isReassigning ? (
+                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <span className="material-symbols-outlined text-sm">
+                      swap_horiz
+                    </span>
+                  )}
                   Confirm Reassignment
                 </button>
               </div>
@@ -1386,8 +1459,7 @@ const InvestmentView: React.FC<InvestmentViewProps> = ({
       </div>
 
       <div className="bg-white dark:bg-surface-dark rounded-[24px] border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden">
-        {/* Desktop Table */}
-        <div className="hidden md:block overflow-x-auto">
+        <div className="overflow-x-auto">
           <table className="w-full text-left text-sm whitespace-nowrap">
             <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 font-black text-[10px] uppercase tracking-[0.15em] border-b border-slate-100 dark:border-slate-800">
               <tr>
@@ -1538,97 +1610,6 @@ const InvestmentView: React.FC<InvestmentViewProps> = ({
               )}
             </tbody>
           </table>
-        </div>
-
-        {/* Mobile Card View */}
-        <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
-          {isLoadingInvestments ? (
-            <div className="px-6 py-20 text-center">
-              <div className="flex flex-col items-center justify-center gap-4">
-                <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-                <p className="text-sm font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                  Loading Investments...
-                </p>
-              </div>
-            </div>
-          ) : filteredInvestments.length === 0 ? (
-            <div className="px-6 py-20 text-center">
-              <div className="flex flex-col items-center justify-center gap-4">
-                <span className="material-symbols-outlined text-slate-400 text-[32px] opacity-50">
-                  folder_open
-                </span>
-                <p className="text-sm font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                  No Investments Found
-                </p>
-              </div>
-            </div>
-          ) : (
-            filteredInvestments.map((req) => {
-              const node = getApprovalNode(req.status);
-              return (
-                <div
-                  key={req.id}
-                  onClick={() => {
-                    if (onSelectInvestment) {
-                      onSelectInvestment(req.id);
-                    } else {
-                      setSelectedInvestment(req);
-                    }
-                  }}
-                  className="p-4 hover:bg-slate-50 dark:hover:bg-slate-800/40 active:bg-slate-100 dark:active:bg-slate-800/60 transition-colors cursor-pointer"
-                >
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-center gap-3">
-                      <img
-                        src={req.applicant.avatar}
-                        className="w-10 h-10 rounded-xl border border-slate-100 dark:border-slate-800"
-                        alt=""
-                      />
-                      <div>
-                        <h4 className="font-black text-slate-900 dark:text-white text-sm uppercase tracking-tight line-clamp-1">{req.applicant.name}</h4>
-                        <span className="text-[10px] font-mono font-bold text-slate-400 block mt-0.5">{req.referenceId}</span>
-                      </div>
-                    </div>
-                    <div className="flex flex-col items-end gap-1">
-                      <span
-                        className={`px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-widest border ${node.color}`}
-                      >
-                        {node.label}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="px-2 py-1 bg-purple-100 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 text-[10px] font-black uppercase rounded-lg border border-purple-200 dark:border-purple-800">
-                      {req.selectedPlan}
-                    </span>
-                    <span className="text-sm font-black text-slate-900 dark:text-white tracking-wide">
-                      {req.amount}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800/50">
-                    <div className="flex items-center gap-1.5 text-slate-500">
-                      <span className="material-symbols-outlined text-[16px]">
-                        person
-                      </span>
-                      <span className="text-[10px] font-bold uppercase tracking-wider">
-                        {req.ownerName || "Unassigned"}
-                      </span>
-                    </div>
-                    <span
-                      className={`inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide ${req.status === 'Approved' ? 'text-emerald-600' :
-                        req.status === 'Declined' ? 'text-rose-600' :
-                          'text-amber-600'
-                        }`}
-                    >
-                      {req.status}
-                    </span>
-                  </div>
-                </div>
-              );
-            })
-          )}
         </div>
       </div>
 

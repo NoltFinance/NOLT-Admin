@@ -782,8 +782,21 @@ const FormBuilderView: React.FC = () => {
                 )}
               </div>
 
+              {/* Quick Actions */}
+              <div className="mt-4 flex gap-2">
+                <button
+                  onClick={() => window.open(`/apply/${form.id}`, "_blank")}
+                  className="flex-1 px-4 py-2.5 bg-primary text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
+                >
+                  <span className="material-symbols-outlined text-base">
+                    visibility
+                  </span>
+                  View Form
+                </button>
+              </div>
+
               {/* Action Menu */}
-              <div className="mt-4 relative">
+              <div className="mt-2 relative">
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
@@ -792,7 +805,7 @@ const FormBuilderView: React.FC = () => {
                   className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors flex items-center justify-between"
                 >
                   <span className="text-slate-600 dark:text-slate-300">
-                    Actions
+                    More Actions
                   </span>
                   <span className="material-symbols-outlined text-slate-400">
                     {openMenuId === form.id ? "expand_less" : "expand_more"}

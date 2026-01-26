@@ -59,7 +59,14 @@ export async function executeWorkflowTransition(
 
   try {
     // Validate permission
-    if (!canPerformAction(userRole, currentStatus, applicationType, action)) {
+    if (
+      !(await canPerformAction(
+        userRole,
+        currentStatus,
+        applicationType,
+        action,
+      ))
+    ) {
       return {
         success: false,
         error: `Your role (${userRole}) cannot perform ${action} at stage: ${currentStatus}`,
@@ -83,7 +90,11 @@ export async function executeWorkflowTransition(
     }
 
     // Get next status
-    const newStatus = getNextStatus(currentStatus, applicationType, action);
+    const newStatus = await getNextStatus(
+      currentStatus,
+      applicationType,
+      action,
+    );
 
     // Build update object
     const updateData: any = {
@@ -141,7 +152,7 @@ export async function executeWorkflowTransition(
       comment,
     });
 
-    const stage = getCurrentStage(newStatus, applicationType);
+    const stage = await getCurrentStage(newStatus, applicationType);
     return {
       success: true,
       newStatus,
@@ -229,6 +240,7 @@ export async function reassignApplication(
   newOwnerId: string,
   userRole: UserRole,
   currentUserId?: string,
+  comment?: string,
 ): Promise<{ success: boolean; error?: string }> {
   try {
     if (userRole !== "Sales Manager" && userRole !== "Super Admin") {
@@ -277,6 +289,7 @@ export async function reassignApplication(
           workflowAction: "reassign",
           reassignedTo: newOwner?.email || newOwnerId,
           reassignedFrom: currentSubmission?.reviewed_by || "unassigned",
+          comment: comment,
         },
         currentUserId,
         currentUser?.email,
@@ -335,7 +348,7 @@ export async function getWorkflowContext(
     }
 
     // Get available actions
-    const actions = getAvailableActions(
+    const actions = await getAvailableActions(
       userRole,
       currentStatus,
       applicationType,
@@ -343,7 +356,7 @@ export async function getWorkflowContext(
     );
 
     // Get current stage
-    const currentStage = getCurrentStage(currentStatus, applicationType);
+    const currentStage = await getCurrentStage(currentStatus, applicationType);
 
     return {
       success: true,

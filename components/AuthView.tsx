@@ -347,13 +347,13 @@ const AuthView: React.FC<AuthViewProps> = ({ onLoginSuccess }) => {
                         <span className="text-primary">Request Access</span>
                       </button>
                       <span className="text-slate-700 mx-2">•</span>
-                      <button
-                        type="button"
-                        onClick={() => (window.location.href = "/forms")}
+                      <a
+                        target="_blank"
+                        href={import.meta.env.VITE_CLIENT_APP || ""}
                         className="text-[10px] font-black text-slate-500 hover:text-primary uppercase tracking-widest transition-colors"
                       >
                         <span className="text-primary">Apply for Services</span>
-                      </button>
+                      </a>
                     </div>
                   </form>
                 ) : (
@@ -368,11 +368,8 @@ const AuthView: React.FC<AuthViewProps> = ({ onLoginSuccess }) => {
                         2FA Verification
                       </h2>
                       <p className="text-slate-500 text-xs font-bold leading-relaxed">
-                        Open your{" "}
-                        <span className="text-white">
-                          Microsoft Authenticator
-                        </span>{" "}
-                        app and enter the 6-digit code.
+                        Open your <span className="text-white">Email </span> app
+                        and enter the 6-digit code.
                       </p>
                     </div>
 
