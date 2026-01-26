@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { CustomForm, FormField } from "../types";
-import { getForms, submitForm } from "../services/formsService";
+import { getPublicForms, submitForm } from "../services/formsService";
 import imageCompression from "browser-image-compression";
 import { uploadFile } from "../services/storageService";
 
@@ -33,8 +33,8 @@ const PublicFormSubmissionView: React.FC = () => {
   const loadForm = async () => {
     setLoading(true);
     try {
-      // Fetch all forms first
-      const { data, error } = await getForms();
+      // Fetch public forms
+      const { data, error } = await getPublicForms();
 
       if (error) {
         console.error("Error loading form:", error);

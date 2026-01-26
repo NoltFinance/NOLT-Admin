@@ -64,6 +64,8 @@ export async function getForms(filters?: {
       updated_at: form.updated_at,
       published_at: form.published_at,
       version: form.version,
+      enable_steps: form.enable_steps,
+      step_labels: form.step_labels,
       fields: (form.form_fields || [])
         .sort((a: any, b: any) => a.order_index - b.order_index)
         .map((field: any) => ({
@@ -76,6 +78,7 @@ export async function getForms(filters?: {
           options: field.options,
           validation_rules: field.validation_rules,
           order_index: field.order_index,
+          step_number: field.step_number,
           created_at: field.created_at,
           updated_at: field.updated_at,
         })),
@@ -116,6 +119,8 @@ export async function getPublicForms(): Promise<{
         description,
         created_at,
         updated_at,
+        enable_steps,
+        step_labels,
         form_fields (
           id,
           form_id,
@@ -124,7 +129,8 @@ export async function getPublicForms(): Promise<{
           placeholder,
           required,
           options,
-          order_index
+          order_index,
+          step_number
         )
       `,
       )
@@ -160,6 +166,8 @@ export async function getPublicForms(): Promise<{
       updated_at: form.updated_at,
       published_at: form.published_at,
       version: 1,
+      enable_steps: form.enable_steps,
+      step_labels: form.step_labels,
       fields: (form.form_fields || [])
         .sort((a: any, b: any) => a.order_index - b.order_index)
         .map((field: any) => ({
@@ -172,6 +180,7 @@ export async function getPublicForms(): Promise<{
           options: field.options,
           validation_rules: {},
           order_index: field.order_index,
+          step_number: field.step_number,
           created_at: field.created_at || "",
           updated_at: field.updated_at || "",
         })),
@@ -211,6 +220,15 @@ export async function getFormById(
       return { data: null, error: "Form not found" };
     }
 
+    console.log("getFormById - Raw data from database:", {
+      id: data.id,
+      name: data.name,
+      enable_steps: data.enable_steps,
+      step_labels: data.step_labels,
+      fields_count: data.form_fields?.length || 0,
+      first_field_step: data.form_fields?.[0]?.step_number
+    });
+
     const form: CustomForm = {
       id: data.id,
       name: data.name,
@@ -225,6 +243,8 @@ export async function getFormById(
       updated_at: data.updated_at,
       published_at: data.published_at,
       version: data.version,
+      enable_steps: data.enable_steps,
+      step_labels: data.step_labels,
       fields: (data.form_fields || [])
         .sort((a: any, b: any) => a.order_index - b.order_index)
         .map((field: any) => ({
@@ -237,6 +257,7 @@ export async function getFormById(
           options: field.options,
           validation_rules: field.validation_rules,
           order_index: field.order_index,
+          step_number: field.step_number,
           created_at: field.created_at,
           updated_at: field.updated_at,
         })),
@@ -275,14 +296,20 @@ export async function createForm(
         description: formData.description,
         administrators: formData.administrators || [],
         created_by: user.user.id,
+        enable_steps: formData.enable_steps || false,
+        step_labels: formData.step_labels || [],
       })
-      .select()
+      .select("*")
       .single();
 
     if (error) {
       console.error("Error creating form:", error);
       return { data: null, error: error.message };
     }
+
+    console.log("createForm - Created form data:", data);
+    console.log("createForm - enable_steps:", data?.enable_steps);
+    console.log("createForm - step_labels:", data?.step_labels);
 
     return {
       data: {
@@ -321,6 +348,10 @@ export async function updateForm(
       updateData.description = updates.description;
     if (updates.administrators !== undefined)
       updateData.administrators = updates.administrators;
+    if (updates.enable_steps !== undefined)
+      updateData.enable_steps = updates.enable_steps;
+    if (updates.step_labels !== undefined)
+      updateData.step_labels = updates.step_labels;
 
     // Set published_at when status changes to Published
     if (updates.status === "Published" && !updates.published_at) {
@@ -331,7 +362,7 @@ export async function updateForm(
       .from("forms")
       .update(updateData)
       .eq("id", formId)
-      .select()
+      .select("*")
       .single();
 
     if (error) {
@@ -392,6 +423,7 @@ export async function createFormField(
         options: fieldData.options,
         validation_rules: fieldData.validation_rules,
         order_index: fieldData.order_index || 0,
+        step_number: fieldData.step_number || 1,
       })
       .select()
       .single();
@@ -432,6 +464,8 @@ export async function updateFormField(
       updateData.validation_rules = updates.validation_rules;
     if (updates.order_index !== undefined)
       updateData.order_index = updates.order_index;
+    if (updates.step_number !== undefined)
+      updateData.step_number = updates.step_number;
 
     const { data, error } = await supabase
       .from("form_fields")
