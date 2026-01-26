@@ -68,13 +68,15 @@ const UsersView: React.FC = () => {
     setLoading(false);
   };
 
-  const filteredUsers = users.filter(
-    (u) =>
-      u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      u.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (u.referralCode &&
-        u.referralCode.toLowerCase().includes(searchTerm.toLowerCase())),
-  );
+  const filteredUsers = users
+    .filter((u) => !u.name.startsWith("[Deleted]") && u.status !== "Deleted")
+    .filter(
+      (u) =>
+        u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        u.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (u.referralCode &&
+          u.referralCode.toLowerCase().includes(searchTerm.toLowerCase())),
+    );
 
   const teamLeads = users.filter((u) => u.role === "Sales Team Lead");
 
@@ -362,14 +364,16 @@ const UsersView: React.FC = () => {
                           <span className="font-bold text-slate-700 dark:text-slate-200">
                             {user.role}
                           </span>
-                          <button
-                            onClick={() => setEditingUser(user)}
-                            className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-primary transition-all"
-                          >
-                            <span className="material-symbols-outlined text-[18px]">
-                              edit
-                            </span>
-                          </button>
+                          {currentUserId !== user.id && (
+                            <button
+                              onClick={() => setEditingUser(user)}
+                              className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-primary transition-all"
+                            >
+                              <span className="material-symbols-outlined text-[18px]">
+                                edit
+                              </span>
+                            </button>
+                          )}
                         </div>
                       )}
                     </td>
@@ -485,16 +489,18 @@ const UsersView: React.FC = () => {
                           </button>
                         )}
 
-                        {/* Delete Button */}
-                        <button
-                          onClick={() => handleDeleteUser(user)}
-                          title="Delete User"
-                          className="flex items-center justify-center w-8 h-8 rounded-full text-slate-400 bg-slate-100 dark:bg-slate-800 hover:bg-rose-500 hover:text-white transition-all ml-2"
-                        >
-                          <span className="material-symbols-outlined text-[18px]">
-                            delete
-                          </span>
-                        </button>
+                        {/* Delete Button - Super Admin Only */}
+                        {currentUser?.role === "Super Admin" && (
+                          <button
+                            onClick={() => handleDeleteUser(user)}
+                            title="Delete User"
+                            className="flex items-center justify-center w-8 h-8 rounded-full text-slate-400 bg-slate-100 dark:bg-slate-800 hover:bg-rose-500 hover:text-white transition-all ml-2"
+                          >
+                            <span className="material-symbols-outlined text-[18px]">
+                              delete
+                            </span>
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -567,14 +573,16 @@ const UsersView: React.FC = () => {
                         <span className="text-xs font-bold text-slate-700 dark:text-slate-200">
                           {user.role}
                         </span>
-                        <button
-                          onClick={() => setEditingUser(user)}
-                          className="text-slate-300 hover:text-primary transition-all ml-1"
-                        >
-                          <span className="material-symbols-outlined text-[14px]">
-                            edit
-                          </span>
-                        </button>
+                        {currentUserId !== user.id && (
+                          <button
+                            onClick={() => setEditingUser(user)}
+                            className="text-slate-300 hover:text-primary transition-all ml-1"
+                          >
+                            <span className="material-symbols-outlined text-[14px]">
+                              edit
+                            </span>
+                          </button>
+                        )}
                       </div>
                     )}
                   </div>
@@ -661,15 +669,17 @@ const UsersView: React.FC = () => {
                         </span>
                       </button>
                     )}
-                    <button
-                      onClick={() => handleDeleteUser(user)}
-                      className="w-8 h-8 rounded-full bg-slate-50 text-slate-400 flex items-center justify-center hover:bg-rose-50 hover:text-rose-500 transition-colors"
-                      title="Delete"
-                    >
-                      <span className="material-symbols-outlined text-[18px]">
-                        delete
-                      </span>
-                    </button>
+                    {currentUser?.role === "Super Admin" && (
+                      <button
+                        onClick={() => handleDeleteUser(user)}
+                        className="w-8 h-8 rounded-full bg-slate-50 text-slate-400 flex items-center justify-center hover:bg-rose-50 hover:text-rose-500 transition-colors"
+                        title="Delete"
+                      >
+                        <span className="material-symbols-outlined text-[18px]">
+                          delete
+                        </span>
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>

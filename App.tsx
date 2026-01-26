@@ -29,7 +29,7 @@ import ResetPasswordView from "./components/ResetPasswordView";
 import AssignedFormsView from "./components/AssignedFormsView";
 import ApprovalGatesView from "./components/ApprovalGatesView";
 import { getDashboardInsights } from "./services/geminiService";
-import { getCurrentUser, signOut, AuthUser } from "./utils/authService";
+import { getCurrentUser, signOut, AuthUser, fetchTeamMembers } from "./utils/authService";
 import { canAccessView } from "./utils/rbac";
 import {
   getAllSubmissionsAsRequests,
@@ -41,85 +41,8 @@ import { Toaster, toast } from "sonner";
 // Real data will be fetched from the database
 // Initial requests are now empty and will be populated on component mount
 
-const USERS: User[] = [
-  {
-    id: "u1",
-    name: "Alex Morgan",
-    email: "alex.m@nolt.finance",
-    role: "Super Admin",
-    status: "Active",
-    lastActive: "2 mins ago",
-    avatar: "https://picsum.photos/seed/admin/100/100",
-  },
-  {
-    id: "u3",
-    name: "Michael Scott",
-    role: "Sales Team Lead",
-    email: "scott@nolt.finance",
-    status: "Active",
-    lastActive: "1 hr ago",
-    avatar: "https://picsum.photos/seed/scott/100/100",
-  },
-  {
-    id: "u5",
-    name: "Chidi Okoro",
-    role: "Sales Officer",
-    email: "chidi@nolt.finance",
-    status: "Active",
-    lastActive: "10 mins ago",
-    avatar: "https://picsum.photos/seed/chidi/100/100",
-    teamLeadId: "u3",
-  },
-];
-
-const INITIAL_NOTIFICATIONS: AppNotification[] = [
-  {
-    id: "n1",
-    type: "loan",
-    title: "New Loan Request",
-    message:
-      "Sarah Miller submitted a Salary Advance application for ₦450,000.",
-    timestamp: "2 mins ago",
-    isRead: false,
-    referenceId: "#LON-8822",
-  },
-];
-
-const STATS: StatMetric[] = [
-  {
-    label: "Investment Applications",
-    value: "142 Applications",
-    subValue: "₦45,200,000.00",
-    change: "+12.5%",
-    isPositive: true,
-    icon: "trending_up",
-    color: "bg-blue-500 text-blue-500",
-  },
-  {
-    label: "Loan Requests",
-    value: "1,204 Applications",
-    subValue: "₦12,840,000.00",
-    change: "+5.0%",
-    isPositive: true,
-    icon: "payments",
-    color: "bg-indigo-500 text-indigo-500",
-  },
-  {
-    label: "Active Users",
-    value: "842 Users",
-    change: "+8.4%",
-    isPositive: true,
-    icon: "group",
-    color: "bg-purple-500 text-purple-500",
-  },
-  {
-    label: "Ongoing Applications",
-    value: "56 Pending",
-    badgeText: "High Priority",
-    icon: "pending_actions",
-    color: "bg-amber-500 text-amber-500",
-  },
-];
+// Real data will be fetched from the database
+// Initial requests are now empty and will be populated on component mount
 
 const App: React.FC = () => {
   const navigate = useNavigate();
@@ -132,9 +55,8 @@ const App: React.FC = () => {
   const [requests, setRequests] = useState<ReviewRequest[]>([]);
   const [stats, setStats] = useState<StatMetric[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
-  const [notifications, setNotifications] = useState<AppNotification[]>(
-    INITIAL_NOTIFICATIONS,
-  );
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const [teamMembers, setTeamMembers] = useState<User[]>([]);
   const [selectedRequestId, setSelectedRequestId] = useState<string | null>(
     null,
   );
@@ -246,6 +168,21 @@ const App: React.FC = () => {
     fetchData();
   }, [isAuthenticated]);
 
+  // Fetch team members if user is a Team Lead
+  useEffect(() => {
+    const loadTeam = async () => {
+      if (currentUser?.role === "Sales Team Lead") {
+        const { users } = await fetchTeamMembers(currentUser.id);
+        if (users) {
+          setTeamMembers(users);
+        }
+      }
+    };
+    if (currentUser) {
+      loadTeam();
+    }
+  }, [currentUser]);
+
   useEffect(() => {
     if (isDarkMode) {
       document.documentElement.classList.add("dark");
@@ -299,69 +236,6 @@ const App: React.FC = () => {
     setNotifications([]);
   };
 
-  const handleRoleChange = (role: UserRole) => {
-    const roleProfiles: Record<UserRole, any> = {
-      "Super Admin": {
-        id: "u1",
-        email: "alex.m@nolt.finance",
-        name: "Alex Morgan",
-        role: "Super Admin",
-        avatar: "https://picsum.photos/seed/admin/100/100",
-      },
-      "Sales Manager": {
-        id: "u_sm",
-        email: "sarah.j@nolt.finance",
-        name: "Sarah Jenkins",
-        role: "Sales Manager",
-        avatar: "https://picsum.photos/seed/sarahj/100/100",
-      },
-      "Sales Team Lead": {
-        id: "u3",
-        email: "scott@nolt.finance",
-        name: "Michael Scott",
-        role: "Sales Team Lead",
-        avatar: "https://picsum.photos/seed/scott/100/100",
-      },
-      "Sales Officer": {
-        id: "u5",
-        email: "chidi@nolt.finance",
-        name: "Chidi Okoro",
-        role: "Sales Officer",
-        avatar: "https://picsum.photos/seed/chidi/100/100",
-      },
-      "Customer Experience": {
-        id: "u_cx",
-        email: "jessica.w@nolt.finance",
-        name: "Jessica Wu",
-        role: "Customer Experience",
-        avatar: "https://picsum.photos/seed/jess/100/100",
-      },
-      Credit: {
-        id: "u_cm",
-        email: "tunde.b@nolt.finance",
-        name: "Tunde Bakare",
-        role: "Credit",
-        avatar: "https://picsum.photos/seed/tunde/100/100",
-      },
-      "Internal Control": {
-        id: "u_ic",
-        email: "femi.a@nolt.finance",
-        name: "Femi Adekunle",
-        role: "Internal Control",
-        avatar: "https://picsum.photos/seed/femi/100/100",
-      },
-      Finance: {
-        id: "u_fin",
-        email: "hassan.b@nolt.finance",
-        name: "Hassan Bello",
-        role: "Finance",
-        avatar: "https://picsum.photos/seed/hassan/100/100",
-      },
-    };
-    const profile = roleProfiles[role];
-    setCurrentUser(profile);
-  };
-
   // Filter queue based on role rules
   const getVisibleQueue = () => {
     if (!currentUser) return [];
@@ -394,9 +268,7 @@ const App: React.FC = () => {
     }
 
     if (currentUser.role === "Sales Team Lead") {
-      const subordinateIds = USERS.filter(
-        (u) => u.teamLeadId === currentUser.id,
-      ).map((u) => u.id);
+      const subordinateIds = teamMembers.map((u) => u.id);
       return requests.filter(
         (r) => r.ownerId && subordinateIds.includes(r.ownerId),
       );
@@ -558,7 +430,6 @@ const App: React.FC = () => {
                     onClose={() => setIsSidebarOpen(false)}
                     onLogoutClick={() => setIsLogoutModalOpen(true)}
                     currentUser={currentUser!}
-                    onRoleChange={handleRoleChange}
                   />
                 </div>
 

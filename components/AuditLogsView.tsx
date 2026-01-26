@@ -279,6 +279,55 @@ const SecurityLogsView: React.FC = () => {
               </table>
             </div>
 
+            {/* Mobile Card View */}
+            <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
+              {logs.map((log) => (
+                <div
+                  key={log.id}
+                  className="p-4 bg-white dark:bg-surface-dark flex flex-col gap-3"
+                >
+                  <div className="flex items-center justify-between">
+                    <span
+                      className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${getActionColor(log.action)}`}
+                    >
+                      {log.action}
+                    </span>
+                    <span className="text-xs font-mono text-slate-400">
+                      {log.record_id?.substring(0, 8) || "N/A"}
+                    </span>
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-900 dark:text-white">
+                        {log.table_name}
+                      </span>
+                      <span className="text-[10px] font-bold text-slate-500">
+                        {formatTimestamp(log.created_at)}
+                      </span>
+                    </div>
+                    <span className="text-xs text-slate-500 dark:text-slate-400">
+                      {log.user_email || "System"}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-2">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase">
+                      {log.changed_fields?.length
+                        ? `${log.changed_fields.length} Changes`
+                        : "No Changes"}
+                    </span>
+                    <button
+                      onClick={() => handleViewDetails(log)}
+                      className="text-primary hover:text-blue-600 text-xs font-black uppercase"
+                    >
+                      View Details
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
             {/* Pagination */}
             <div className="flex items-center justify-between px-6 py-4 border-t border-slate-100 dark:border-slate-800">
               <div className="text-sm text-slate-600 dark:text-slate-400 font-bold">
@@ -417,11 +466,14 @@ const SecurityLogsView: React.FC = () => {
                           const oldValue = oldData[key];
                           const newValue = newData[key];
                           const hasChanged =
-                            JSON.stringify(oldValue) !== JSON.stringify(newValue);
+                            JSON.stringify(oldValue) !==
+                            JSON.stringify(newValue);
 
                           // Skip rendering complex objects/arrays in the comparison view
-                          const isComplexOld = typeof oldValue === "object" && oldValue !== null;
-                          const isComplexNew = typeof newValue === "object" && newValue !== null;
+                          const isComplexOld =
+                            typeof oldValue === "object" && oldValue !== null;
+                          const isComplexNew =
+                            typeof newValue === "object" && newValue !== null;
 
                           if (isComplexOld || isComplexNew) {
                             return (

@@ -263,6 +263,7 @@ const LoanView: React.FC<LoanViewProps> = ({
           .from("users")
           .select("id, name, role")
           .neq("id", currentUser.id)
+          .neq("role", "Customer")
           .order("name");
 
         if (data) {
@@ -678,6 +679,10 @@ const LoanView: React.FC<LoanViewProps> = ({
           );
           if (updated) setSelectedLoan(updated);
         }
+
+        toast.success(
+          result.message || "Credit verification completed successfully",
+        );
       } else {
         toast.error(result.error || "Failed to complete credit verification");
       }
@@ -1163,12 +1168,10 @@ const LoanView: React.FC<LoanViewProps> = ({
                         key={log.id}
                         className="relative flex gap-3 pb-6 group"
                       >
-                        {/* Timeline line */}
                         {index !== loan.operationLogs!.length - 1 && (
                           <div className="absolute left-[15px] top-8 bottom-0 w-[2px] bg-slate-200 dark:bg-slate-700" />
                         )}
 
-                        {/* Icon */}
                         <div
                           className={`relative z-10 flex-shrink-0 w-8 h-8 rounded-full ${iconBg} flex items-center justify-center shadow-sm`}
                         >
@@ -1179,7 +1182,6 @@ const LoanView: React.FC<LoanViewProps> = ({
                           </span>
                         </div>
 
-                        {/* Content */}
                         <div className="flex-1 pt-0.5">
                           <div className="flex items-start justify-between gap-2 mb-1">
                             <div className="flex-1">
@@ -1187,7 +1189,7 @@ const LoanView: React.FC<LoanViewProps> = ({
                                 {log.actor}
                               </span>
                               <span className="text-sm text-slate-600 dark:text-slate-400 ml-1">
-                                {actionStr.toLowerCase().replace(/_/g, " ")}
+                                {log.action.toLowerCase().replace(/_/g, " ")}
                               </span>
                               {/* Status badges */}
                               {(fromStatusText || toStatusText) && (
@@ -1197,7 +1199,7 @@ const LoanView: React.FC<LoanViewProps> = ({
                                       {fromStatusText}
                                     </span>
                                   )}
-                                  {fromStatusText && toStatusText && (
+                                  {log.fromStatus && log.toStatus && (
                                     <span className="text-slate-400">→</span>
                                   )}
                                   {toStatusText && (

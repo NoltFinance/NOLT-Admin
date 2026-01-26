@@ -26,6 +26,8 @@ interface Form {
   created_at: string;
   updated_at: string;
   submissions_count?: number;
+  enable_steps?: boolean;
+  step_labels?: string[];
 }
 
 interface FormField {
@@ -38,6 +40,7 @@ interface FormField {
   options: any;
   validation_rules: any;
   order_index: number;
+  step_number?: number;
 }
 
 interface FormSubmission {
@@ -78,6 +81,7 @@ const AssignedFormsView: React.FC<AssignedFormsViewProps> = ({
   const [reviewNotes, setReviewNotes] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [formFields, setFormFields] = useState<FormField[]>([]);
+  const [currentStep, setCurrentStep] = useState(1);
 
   // Workflow states
   const [availableUsers, setAvailableUsers] = useState<
@@ -233,6 +237,7 @@ const AssignedFormsView: React.FC<AssignedFormsViewProps> = ({
     setSelectedSubmission(submission);
     setReviewNotes(submission.review_notes || "");
     setViewMode("detail");
+    setCurrentStep(1);
   };
 
   const handleBackToForms = () => {
@@ -582,57 +587,108 @@ const AssignedFormsView: React.FC<AssignedFormsViewProps> = ({
                 </span>
                 Form Responses
               </h2>
+
+              {/* Step Tabs */}
+              {selectedForm?.enable_steps &&
+                selectedForm?.step_labels &&
+                selectedForm.step_labels.length > 0 && (
+                  <div className="mb-6 flex gap-2 p-1 bg-slate-100 dark:bg-slate-900 rounded-xl overflow-x-auto">
+                    {selectedForm.step_labels.map((label, idx) => {
+                      const stepNumber = idx + 1;
+                      const fieldsInStep = formFields.filter(
+                        (f) => (f.step_number || 1) === stepNumber,
+                      ).length;
+                      return (
+                        <button
+                          key={idx}
+                          onClick={() => setCurrentStep(stepNumber)}
+                          className={`flex-1 min-w-[120px] px-4 py-2.5 rounded-lg text-xs font-black uppercase tracking-tight transition-all ${
+                            currentStep === stepNumber
+                              ? "bg-white dark:bg-slate-800 text-purple-600 shadow-sm"
+                              : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+                          }`}
+                        >
+                          <div className="flex items-center justify-center gap-2">
+                            <div
+                              className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${
+                                currentStep === stepNumber
+                                  ? "bg-purple-500 text-white"
+                                  : "bg-slate-300 dark:bg-slate-700 text-slate-600 dark:text-slate-400"
+                              }`}
+                            >
+                              {stepNumber}
+                            </div>
+                            <span>{label}</span>
+                          </div>
+                          {fieldsInStep > 0 && (
+                            <div className="text-[9px] font-bold text-slate-400 mt-1">
+                              {fieldsInStep} field
+                              {fieldsInStep !== 1 ? "s" : ""}
+                            </div>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+
               <div className="space-y-4">
                 {formFields.length > 0 ? (
-                  formFields.map((field) => {
-                    const value = selectedSubmission.field_responses[field.id];
-                    return (
-                      <div
-                        key={field.id}
-                        className="pb-4 border-b border-slate-100 dark:border-slate-800 last:border-0"
-                      >
-                        <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
-                          {field.label}
-                          {field.required && (
-                            <span className="text-rose-500 ml-1">*</span>
-                          )}
-                        </p>
-                        <p className="text-sm text-slate-900 dark:text-white">
-                          {field.field_type === "file" && value ? (
-                            <a
-                              href={value}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-primary hover:underline flex items-center gap-1"
-                            >
-                              <span className="material-symbols-outlined text-sm">
-                                attach_file
-                              </span>
-                              View File
-                            </a>
-                          ) : field.field_type === "signature" && value ? (
-                            <div className="mt-2">
-                              <img
-                                src={value}
-                                alt="Signature"
-                                className="max-w-xs border border-slate-200 dark:border-slate-700 rounded-lg bg-white p-2"
-                              />
-                            </div>
-                          ) : typeof value === "object" ? (
-                            <pre className="bg-slate-50 dark:bg-surface-darker p-3 rounded-lg text-xs overflow-auto">
-                              {JSON.stringify(value, null, 2)}
-                            </pre>
-                          ) : (
-                            value?.toString() || (
-                              <span className="text-slate-400 italic">
-                                Not provided
-                              </span>
-                            )
-                          )}
-                        </p>
-                      </div>
-                    );
-                  })
+                  formFields
+                    .filter((field) => {
+                      if (!selectedForm?.enable_steps) return true;
+                      return (field.step_number || 1) === currentStep;
+                    })
+                    .map((field) => {
+                      const value =
+                        selectedSubmission.field_responses[field.id];
+                      return (
+                        <div
+                          key={field.id}
+                          className="pb-4 border-b border-slate-100 dark:border-slate-800 last:border-0"
+                        >
+                          <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
+                            {field.label}
+                            {field.required && (
+                              <span className="text-rose-500 ml-1">*</span>
+                            )}
+                          </p>
+                          <p className="text-sm text-slate-900 dark:text-white">
+                            {field.field_type === "file" && value ? (
+                              <a
+                                href={value}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-primary hover:underline flex items-center gap-1"
+                              >
+                                <span className="material-symbols-outlined text-sm">
+                                  attach_file
+                                </span>
+                                View File
+                              </a>
+                            ) : field.field_type === "signature" && value ? (
+                              <div className="mt-2">
+                                <img
+                                  src={value}
+                                  alt="Signature"
+                                  className="max-w-xs border border-slate-200 dark:border-slate-700 rounded-lg bg-white p-2"
+                                />
+                              </div>
+                            ) : typeof value === "object" ? (
+                              <pre className="bg-slate-50 dark:bg-surface-darker p-3 rounded-lg text-xs overflow-auto">
+                                {JSON.stringify(value, null, 2)}
+                              </pre>
+                            ) : (
+                              value?.toString() || (
+                                <span className="text-slate-400 italic">
+                                  Not provided
+                                </span>
+                              )
+                            )}
+                          </p>
+                        </div>
+                      );
+                    })
                 ) : (
                   <div className="text-center py-4 text-slate-400">
                     <p className="text-sm">Loading form fields...</p>
