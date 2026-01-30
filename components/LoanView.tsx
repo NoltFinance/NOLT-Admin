@@ -181,6 +181,7 @@ const LoanView: React.FC<LoanViewProps> = ({
   );
   const [isDeclining, setIsDeclining] = useState(false);
   const [isApproving, setIsApproving] = useState(false);
+  const [isTimelineExpanded, setIsTimelineExpanded] = useState(false);
 
   // New Credit state
   const [localEligibleAmount, setLocalEligibleAmount] = useState("");
@@ -1006,11 +1007,10 @@ const LoanView: React.FC<LoanViewProps> = ({
                     <button
                       onClick={handleCreditVerify}
                       disabled={!canProceedWithCredit}
-                      className={`px-6 py-2.5 text-[10px] font-black uppercase tracking-widest text-white rounded-xl transition-all ${
-                        canProceedWithCredit
-                          ? "bg-primary hover:bg-blue-600 shadow-xl shadow-primary/30"
-                          : "bg-slate-400 cursor-not-allowed"
-                      }`}
+                      className={`px-6 py-2.5 text-[10px] font-black uppercase tracking-widest text-white rounded-xl transition-all ${canProceedWithCredit
+                        ? "bg-primary hover:bg-blue-600 shadow-xl shadow-primary/30"
+                        : "bg-slate-400 cursor-not-allowed"
+                        }`}
                     >
                       Verify & Approve
                     </button>
@@ -1057,7 +1057,7 @@ const LoanView: React.FC<LoanViewProps> = ({
                 Principal Requested
               </p>
               <p className="text-3xl font-black text-primary tracking-tight">
-                {loan.amount}
+                {loan.amount || "₦0.00"}
               </p>
             </div>
             {loan.eligibleAmount && (
@@ -1090,8 +1090,12 @@ const LoanView: React.FC<LoanViewProps> = ({
           </Section>
 
           {/* Operation Log Section - GitHub Style Timeline */}
-          <div className="bg-white dark:bg-surface-dark rounded-[24px] p-6 border border-slate-100 dark:border-slate-800 shadow-sm">
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3 mb-4">
+          <div className="bg-white dark:bg-surface-dark rounded-[24px] p-6 border border-slate-100 dark:border-slate-800 shadow-sm transition-all duration-300">
+            <button
+              onClick={() => setIsTimelineExpanded(!isTimelineExpanded)}
+              className="w-full flex items-center justify-between border-b 
+            border-slate-100 dark:border-slate-800 pb-3 mb-0 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-lg p-2 transition-colors"
+            >
               <div className="flex items-center gap-2">
                 <span className="material-symbols-outlined text-primary text-[20px] font-black">
                   history
@@ -1100,14 +1104,20 @@ const LoanView: React.FC<LoanViewProps> = ({
                   Activity Timeline
                 </h5>
               </div>
-              {loan.operationLogs && loan.operationLogs.length > 0 && (
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                  {loan.operationLogs.length}{" "}
-                  {loan.operationLogs.length === 1 ? "event" : "events"}
+              <div className="flex items-center gap-3">
+                {loan.operationLogs && loan.operationLogs.length > 0 && (
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                    {loan.operationLogs.length}{" "}
+                    {loan.operationLogs.length === 1 ? "event" : "events"}
+                  </span>
+                )}
+                <span className={`material-symbols-outlined text-slate-400 transition-transform duration-300 ${isTimelineExpanded ? 'rotate-180' : ''}`}>
+                  expand_more
                 </span>
-              )}
-            </div>
-            <div className="relative">
+              </div>
+            </button>
+
+            <div className={`relative overflow-hidden transition-all duration-500 ease-in-out ${isTimelineExpanded ? 'max-h-[1000px] opacity-100 mt-4' : 'max-h-0 opacity-0'}`}>
               {/* Corrected: replaced 'inv' with 'loan' to fix the error */}
               {loan.operationLogs && loan.operationLogs.length > 0 ? (
                 <div className="space-y-0">
@@ -1121,20 +1131,20 @@ const LoanView: React.FC<LoanViewProps> = ({
                       typeof log.fromStatus === "string"
                         ? log.fromStatus
                         : (log as any)?.fromStatus?.status ||
-                          (log as any)?.fromStatus?.label ||
-                          (log as any)?.fromStatus?.toString?.() ||
-                          (log.fromStatus !== undefined
-                            ? String(log.fromStatus)
-                            : "");
+                        (log as any)?.fromStatus?.label ||
+                        (log as any)?.fromStatus?.toString?.() ||
+                        (log.fromStatus !== undefined
+                          ? String(log.fromStatus)
+                          : "");
                     const toStatusText =
                       typeof log.toStatus === "string"
                         ? log.toStatus
                         : (log as any)?.toStatus?.status ||
-                          (log as any)?.toStatus?.label ||
-                          (log as any)?.toStatus?.toString?.() ||
-                          (log.toStatus !== undefined
-                            ? String(log.toStatus)
-                            : "");
+                        (log as any)?.toStatus?.label ||
+                        (log as any)?.toStatus?.toString?.() ||
+                        (log.toStatus !== undefined
+                          ? String(log.toStatus)
+                          : "");
                     const commentText =
                       typeof log.comment === "string"
                         ? log.comment
@@ -1239,290 +1249,294 @@ const LoanView: React.FC<LoanViewProps> = ({
               )}
             </div>
           </div>
+        </div>
 
-          {/* Eligible Amount Display (if exists) */}
-          {loan.eligibleAmount && (
-            <div className="bg-white dark:bg-surface-dark rounded-[24px] p-6 border border-slate-100 dark:border-slate-800 shadow-sm">
-              <div className="bg-emerald-50 dark:bg-emerald-900/10 p-4 rounded-xl border border-emerald-100 dark:border-emerald-800 flex items-center justify-between">
-                <div className="space-y-1">
-                  <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">
-                    Eligible Principal Amount
-                  </p>
-                  <p className="text-xl font-black text-emerald-700 dark:text-emerald-300 uppercase tracking-tight">
-                    {loan.eligibleAmount}
-                  </p>
-                </div>
-                <span className="material-symbols-outlined text-emerald-500 text-3xl">
-                  verified
-                </span>
+        {/* Eligible Amount Display (if exists) */}
+        {loan.eligibleAmount && (
+          <div className="bg-white dark:bg-surface-dark rounded-[24px] p-6 border border-slate-100 dark:border-slate-800 shadow-sm">
+            <div className="bg-emerald-50 dark:bg-emerald-900/10 p-4 rounded-xl border border-emerald-100 dark:border-emerald-800 flex items-center justify-between">
+              <div className="space-y-1">
+                <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">
+                  Eligible Principal Amount
+                </p>
+                <p className="text-xl font-black text-emerald-700 dark:text-emerald-300 uppercase tracking-tight">
+                  {loan.eligibleAmount}
+                </p>
               </div>
+              <span className="material-symbols-outlined text-emerald-500 text-3xl">
+                verified
+              </span>
             </div>
-          )}
+          </div>
+        )}
 
-          {/* Dynamic Form Fields */}
-          <div className="bg-white dark:bg-surface-dark rounded-[24px] p-6 border border-slate-100 dark:border-slate-800 shadow-sm space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-              <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-primary text-[20px] font-black">
-                  description
-                </span>
-                <h5 className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-widest">
-                  Application Details
-                </h5>
-              </div>
+        {/* Dynamic Form Fields */}
+        <div className="bg-white dark:bg-surface-dark rounded-[24px] p-6 border border-slate-100 dark:border-slate-800 shadow-sm space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+            <div className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-primary text-[20px] font-black">
+                description
+              </span>
+              <h5 className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-widest">
+                Application Details
+              </h5>
             </div>
-            <div className="space-y-4">
-              {isLoadingFormData ? (
-                <div className="text-center py-6 text-slate-400">
-                  <span className="material-symbols-outlined text-4xl opacity-20 animate-spin">
-                    progress_activity
-                  </span>
-                  <p className="text-[10px] font-black uppercase tracking-widest mt-2">
-                    Loading form details...
-                  </p>
-                </div>
-              ) : formFields.length > 0 && formSubmission ? (
-                formFields.map((field) => {
-                  const value = formSubmission.field_responses[field.id];
-                  return (
-                    <div
-                      key={field.id}
-                      className="pb-4 border-b border-slate-100 dark:border-slate-800 last:border-0"
-                    >
-                      <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
-                        {field.label}
-                        {field.required && (
-                          <span className="text-rose-500 ml-1">*</span>
-                        )}
-                      </p>
-                      <div className="text-sm text-slate-900 dark:text-white">
-                        {field.field_type === "file" && value ? (
-                          <div className="space-y-2">
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                              {field.label}
-                            </p>
-                            <div className="max-w-md aspect-[3/4] bg-slate-100 dark:bg-slate-800 rounded-xl flex items-center justify-center overflow-hidden border border-slate-200 dark:border-slate-700">
-                              <img
-                                src={value}
-                                alt={field.label}
-                                className="w-full h-full object-cover"
-                              />
-                            </div>
-                          </div>
-                        ) : field.field_type === "signature" && value ? (
-                          <div className="mt-2">
+          </div>
+          <div className="space-y-4">
+            {isLoadingFormData ? (
+              <div className="text-center py-6 text-slate-400">
+                <span className="material-symbols-outlined text-4xl opacity-20 animate-spin">
+                  progress_activity
+                </span>
+                <p className="text-[10px] font-black uppercase tracking-widest mt-2">
+                  Loading form details...
+                </p>
+              </div>
+            ) : formFields.length > 0 && formSubmission ? (
+              formFields.map((field) => {
+                const value = formSubmission.field_responses[field.id];
+                return (
+                  <div
+                    key={field.id}
+                    className="pb-4 border-b border-slate-100 dark:border-slate-800 last:border-0"
+                  >
+                    <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
+                      {field.label}
+                      {field.required && (
+                        <span className="text-rose-500 ml-1">*</span>
+                      )}
+                    </p>
+                    <div className="text-sm text-slate-900 dark:text-white">
+                      {field.field_type === "file" && value ? (
+                        <div className="space-y-2">
+                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                            {field.label}
+                          </p>
+                          <div className="max-w-md aspect-[3/4] bg-slate-100 dark:bg-slate-800 rounded-xl flex items-center justify-center overflow-hidden border border-slate-200 dark:border-slate-700">
                             <img
                               src={value}
-                              alt="Signature"
-                              className="max-w-xs border border-slate-200 dark:border-slate-700 rounded-lg bg-white p-2"
+                              alt={field.label}
+                              className="w-full h-full object-cover"
                             />
                           </div>
-                        ) : typeof value === "object" ? (
-                          <pre className="bg-slate-50 dark:bg-surface-darker p-3 rounded-lg text-xs overflow-auto">
-                            {JSON.stringify(value, null, 2)}
-                          </pre>
-                        ) : (
-                          value?.toString() || (
-                            <span className="text-slate-400 italic">
-                              Not provided
-                            </span>
-                          )
-                        )}
-                      </div>
+                        </div>
+                      ) : field.field_type === "signature" && value ? (
+                        <div className="mt-2">
+                          <img
+                            src={value}
+                            alt="Signature"
+                            className="max-w-xs border border-slate-200 dark:border-slate-700 rounded-lg bg-white p-2"
+                          />
+                        </div>
+                      ) : typeof value === "object" ? (
+                        <pre className="bg-slate-50 dark:bg-surface-darker p-3 rounded-lg text-xs overflow-auto">
+                          {JSON.stringify(value, null, 2)}
+                        </pre>
+                      ) : (
+                        value?.toString() || (
+                          <span className="text-slate-400 italic">
+                            Not provided
+                          </span>
+                        )
+                      )}
                     </div>
-                  );
-                })
-              ) : (
-                <div className="text-center py-6 text-slate-400">
-                  <span className="material-symbols-outlined text-4xl opacity-20">
-                    error
-                  </span>
-                  <p className="text-[10px] font-black uppercase tracking-widest mt-2">
-                    No form data available
-                  </p>
-                </div>
-              )}
-            </div>
+                  </div>
+                );
+              })
+            ) : (
+              <div className="text-center py-6 text-slate-400">
+                <span className="material-symbols-outlined text-4xl opacity-20">
+                  error
+                </span>
+                <p className="text-[10px] font-black uppercase tracking-widest mt-2">
+                  No form data available
+                </p>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Action Modal */}
-        {isDeclineModalOpen && (
-          <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in">
-            <div className="bg-white dark:bg-surface-dark w-full max-w-lg rounded-[32px] shadow-2xl border border-slate-100 dark:border-slate-800 overflow-hidden animate-in zoom-in-95 duration-300">
-              <div className="p-8 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                <div>
-                  <h3 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight">
-                    {declineMode === "Decline"
-                      ? "Reject Application"
-                      : "Return to Previous Node"}
-                  </h3>
-                  <p className="text-sm text-slate-500 mt-1 font-bold">
-                    {declineMode === "Decline"
-                      ? "Provide a reason for rejecting this loan request."
-                      : "State what needs to be corrected by the previous team."}
-                  </p>
-                </div>
-                <button
-                  onClick={() => setIsDeclineModalOpen(false)}
-                  className="w-10 h-10 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-rose-500 transition-colors"
-                >
-                  <span className="material-symbols-outlined">close</span>
-                </button>
-              </div>
-              <div className="p-8 space-y-4">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                    Decision Comment
-                  </label>
-                  <textarea
-                    value={declineComment}
-                    onChange={(e) => setDeclineComment(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-background-dark/50 border border-slate-100 dark:border-slate-800 rounded-2xl px-5 py-4 text-sm focus:ring-2 focus:ring-primary transition-all dark:text-white placeholder:text-slate-400"
-                    placeholder="E.g. Insufficient income, negative credit history, incomplete documents..."
-                    rows={4}
-                  />
-                  {!declineComment.trim() && (
-                    <p className="text-[10px] text-rose-500 font-bold uppercase tracking-widest">
-                      A comment is required to proceed.
+
+        {
+          isDeclineModalOpen && (
+            <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in">
+              <div className="bg-white dark:bg-surface-dark w-full max-w-lg rounded-[32px] shadow-2xl border border-slate-100 dark:border-slate-800 overflow-hidden animate-in zoom-in-95 duration-300">
+                <div className="p-8 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                  <div>
+                    <h3 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight">
+                      {declineMode === "Decline"
+                        ? "Reject Application"
+                        : "Return to Previous Node"}
+                    </h3>
+                    <p className="text-sm text-slate-500 mt-1 font-bold">
+                      {declineMode === "Decline"
+                        ? "Provide a reason for rejecting this loan request."
+                        : "State what needs to be corrected by the previous team."}
                     </p>
-                  )}
+                  </div>
+                  <button
+                    onClick={() => setIsDeclineModalOpen(false)}
+                    className="w-10 h-10 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-rose-500 transition-colors"
+                  >
+                    <span className="material-symbols-outlined">close</span>
+                  </button>
                 </div>
-              </div>
-              <div className="p-8 bg-slate-50 dark:bg-background-dark/30 flex items-center justify-end gap-4 border-t border-slate-100 dark:border-slate-800">
-                <button
-                  onClick={() => setIsDeclineModalOpen(false)}
-                  className="px-6 py-2 text-[10px] font-black text-slate-500 hover:text-slate-800 uppercase tracking-widest"
-                >
-                  Discard
-                </button>
-                <button
-                  onClick={handleDeclineConfirm}
-                  disabled={!declineComment.trim() || isDeclining}
-                  className={`px-8 py-4 text-white text-[10px] font-black rounded-2xl shadow-xl transition-all uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 ${declineMode === "Decline" ? "bg-rose-500 shadow-rose-500/20 hover:bg-rose-600" : "bg-amber-500 shadow-amber-500/20 hover:bg-amber-600"}`}
-                >
-                  {isDeclining ? (
-                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  ) : (
-                    <span className="material-symbols-outlined text-sm">
-                      {declineMode === "Decline" ? "cancel" : "undo"}
-                    </span>
-                  )}
-                  Confirm {declineMode}
-                </button>
+                <div className="p-8 space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                      Decision Comment
+                    </label>
+                    <textarea
+                      value={declineComment}
+                      onChange={(e) => setDeclineComment(e.target.value)}
+                      className="w-full bg-slate-50 dark:bg-background-dark/50 border border-slate-100 dark:border-slate-800 rounded-2xl px-5 py-4 text-sm focus:ring-2 focus:ring-primary transition-all dark:text-white placeholder:text-slate-400"
+                      placeholder="E.g. Insufficient income, negative credit history, incomplete documents..."
+                      rows={4}
+                    />
+                    {!declineComment.trim() && (
+                      <p className="text-[10px] text-rose-500 font-bold uppercase tracking-widest">
+                        A comment is required to proceed.
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <div className="p-8 bg-slate-50 dark:bg-background-dark/30 flex items-center justify-end gap-4 border-t border-slate-100 dark:border-slate-800">
+                  <button
+                    onClick={() => setIsDeclineModalOpen(false)}
+                    className="px-6 py-2 text-[10px] font-black text-slate-500 hover:text-slate-800 uppercase tracking-widest"
+                  >
+                    Discard
+                  </button>
+                  <button
+                    onClick={handleDeclineConfirm}
+                    disabled={!declineComment.trim() || isDeclining}
+                    className={`px-8 py-4 text-white text-[10px] font-black rounded-2xl shadow-xl transition-all uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 ${declineMode === "Decline" ? "bg-rose-500 shadow-rose-500/20 hover:bg-rose-600" : "bg-amber-500 shadow-amber-500/20 hover:bg-amber-600"}`}
+                  >
+                    {isDeclining ? (
+                      <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <span className="material-symbols-outlined text-sm">
+                        {declineMode === "Decline" ? "cancel" : "undo"}
+                      </span>
+                    )}
+                    Confirm {declineMode}
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )
+        }
 
         {/* Reassignment Modal */}
-        {isReassignModalOpen && (
-          <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in">
-            <div className="bg-white dark:bg-surface-dark w-full max-w-lg rounded-[32px] shadow-2xl border border-slate-100 dark:border-slate-800 overflow-hidden animate-in zoom-in-95 duration-300">
-              <div className="p-8 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                <div>
-                  <h3 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight">
-                    Reassign Application
-                  </h3>
-                  <p className="text-sm text-slate-500 mt-1 font-bold">
-                    Transfer ownership to another team member
-                  </p>
-                </div>
-                <button
-                  onClick={() => setIsReassignModalOpen(false)}
-                  className="w-10 h-10 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-primary transition-colors"
-                >
-                  <span className="material-symbols-outlined">close</span>
-                </button>
-              </div>
-              <div className="p-8 space-y-4">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                    Select New Owner
-                  </label>
-                  <select
-                    value={selectedUserId}
-                    onChange={(e) => setSelectedUserId(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-background-dark/50 border border-slate-100 dark:border-slate-800 rounded-2xl px-5 py-4 text-sm focus:ring-2 focus:ring-primary transition-all dark:text-white font-bold"
+        {
+          isReassignModalOpen && (
+            <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in">
+              <div className="bg-white dark:bg-surface-dark w-full max-w-lg rounded-[32px] shadow-2xl border border-slate-100 dark:border-slate-800 overflow-hidden animate-in zoom-in-95 duration-300">
+                <div className="p-8 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                  <div>
+                    <h3 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight">
+                      Reassign Application
+                    </h3>
+                    <p className="text-sm text-slate-500 mt-1 font-bold">
+                      Transfer ownership to another team member
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setIsReassignModalOpen(false)}
+                    className="w-10 h-10 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-primary transition-colors"
                   >
-                    <option value="">-- Select User --</option>
-                    {availableUsers.map((user) => (
-                      <option key={user.id} value={user.id}>
-                        {user.name} ({user.role})
-                      </option>
-                    ))}
-                  </select>
-                  {!selectedUserId && (
-                    <p className="text-[10px] text-amber-500 font-bold uppercase tracking-widest">
-                      Please select a user to proceed
-                    </p>
-                  )}
+                    <span className="material-symbols-outlined">close</span>
+                  </button>
                 </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                    Reassignment Comment
-                  </label>
-                  <textarea
-                    value={reassignComment}
-                    onChange={(e) => setReassignComment(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-background-dark/50 border border-slate-100 dark:border-slate-800 rounded-2xl px-5 py-4 text-sm focus:ring-2 focus:ring-primary transition-all dark:text-white placeholder:text-slate-400"
-                    placeholder="Explain why this application is being reassigned..."
-                    rows={4}
-                  />
-                  {!reassignComment.trim() && (
-                    <p className="text-[10px] text-rose-500 font-bold uppercase tracking-widest">
-                      A comment is required to proceed.
-                    </p>
-                  )}
-                </div>
-                <div className="p-4 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 rounded-2xl">
-                  <div className="flex items-start gap-3">
-                    <span className="material-symbols-outlined text-indigo-600 dark:text-indigo-400 text-[20px]">
-                      info
-                    </span>
-                    <div>
-                      <p className="text-xs font-black text-indigo-900 dark:text-indigo-100 uppercase tracking-wide mb-1">
-                        Reassignment Notice
+                <div className="p-8 space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                      Select New Owner
+                    </label>
+                    <select
+                      value={selectedUserId}
+                      onChange={(e) => setSelectedUserId(e.target.value)}
+                      className="w-full bg-slate-50 dark:bg-background-dark/50 border border-slate-100 dark:border-slate-800 rounded-2xl px-5 py-4 text-sm focus:ring-2 focus:ring-primary transition-all dark:text-white font-bold"
+                    >
+                      <option value="">-- Select User --</option>
+                      {availableUsers.map((user) => (
+                        <option key={user.id} value={user.id}>
+                          {user.name} ({user.role})
+                        </option>
+                      ))}
+                    </select>
+                    {!selectedUserId && (
+                      <p className="text-[10px] text-amber-500 font-bold uppercase tracking-widest">
+                        Please select a user to proceed
                       </p>
-                      <p className="text-[11px] text-indigo-700 dark:text-indigo-300 leading-relaxed">
-                        The selected user will become the new owner and will be
-                        notified of this change. This action will be logged in
-                        the operation history.
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                      Reassignment Comment
+                    </label>
+                    <textarea
+                      value={reassignComment}
+                      onChange={(e) => setReassignComment(e.target.value)}
+                      className="w-full bg-slate-50 dark:bg-background-dark/50 border border-slate-100 dark:border-slate-800 rounded-2xl px-5 py-4 text-sm focus:ring-2 focus:ring-primary transition-all dark:text-white placeholder:text-slate-400"
+                      placeholder="Explain why this application is being reassigned..."
+                      rows={4}
+                    />
+                    {!reassignComment.trim() && (
+                      <p className="text-[10px] text-rose-500 font-bold uppercase tracking-widest">
+                        A comment is required to proceed.
                       </p>
+                    )}
+                  </div>
+                  <div className="p-4 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 rounded-2xl">
+                    <div className="flex items-start gap-3">
+                      <span className="material-symbols-outlined text-indigo-600 dark:text-indigo-400 text-[20px]">
+                        info
+                      </span>
+                      <div>
+                        <p className="text-xs font-black text-indigo-900 dark:text-indigo-100 uppercase tracking-wide mb-1">
+                          Reassignment Notice
+                        </p>
+                        <p className="text-[11px] text-indigo-700 dark:text-indigo-300 leading-relaxed">
+                          The selected user will become the new owner and will be
+                          notified of this change. This action will be logged in
+                          the operation history.
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-              <div className="p-8 bg-slate-50 dark:bg-background-dark/30 flex items-center justify-end gap-4 border-t border-slate-100 dark:border-slate-800">
-                <button
-                  onClick={() => setIsReassignModalOpen(false)}
-                  className="px-6 py-2 text-[10px] font-black text-slate-500 hover:text-slate-800 uppercase tracking-widest"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleSaveReassignment}
-                  disabled={
-                    !selectedUserId || !reassignComment.trim() || isReassigning
-                  }
-                  className="px-8 py-4 bg-indigo-600 text-white text-[10px] font-black rounded-2xl shadow-2xl shadow-indigo-500/20 hover:bg-indigo-700 transition-all uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                >
-                  {isReassigning ? (
-                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  ) : (
-                    <span className="material-symbols-outlined text-sm">
-                      swap_horiz
-                    </span>
-                  )}
-                  Confirm Reassignment
-                </button>
+                <div className="p-8 bg-slate-50 dark:bg-background-dark/30 flex items-center justify-end gap-4 border-t border-slate-100 dark:border-slate-800">
+                  <button
+                    onClick={() => setIsReassignModalOpen(false)}
+                    className="px-6 py-2 text-[10px] font-black text-slate-500 hover:text-slate-800 uppercase tracking-widest"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleSaveReassignment}
+                    disabled={
+                      !selectedUserId || !reassignComment.trim() || isReassigning
+                    }
+                    className="px-8 py-4 bg-indigo-600 text-white text-[10px] font-black rounded-2xl shadow-2xl shadow-indigo-500/20 hover:bg-indigo-700 transition-all uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  >
+                    {isReassigning ? (
+                      <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <span className="material-symbols-outlined text-sm">
+                        swap_horiz
+                      </span>
+                    )}
+                    Confirm Reassignment
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
       </div>
     );
   }
+
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -1755,6 +1769,6 @@ const LoanView: React.FC<LoanViewProps> = ({
       />
     </div>
   );
-};
 
+};
 export default LoanView;

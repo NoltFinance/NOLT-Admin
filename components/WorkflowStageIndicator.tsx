@@ -156,13 +156,12 @@ const WorkflowStageIndicator: React.FC<WorkflowStageIndicatorProps> = ({
               </div>
               <div className="mt-2 text-center max-w-[80px]">
                 <p
-                  className={`text-[10px] font-black uppercase leading-tight ${
-                    index === currentIndex
-                      ? "text-primary"
-                      : index < currentIndex
-                        ? "text-emerald-600 dark:text-emerald-400"
-                        : "text-slate-500 dark:text-slate-400"
-                  }`}
+                  className={`text-[10px] font-black uppercase leading-tight ${index === currentIndex
+                    ? "text-primary"
+                    : index < currentIndex
+                      ? "text-emerald-600 dark:text-emerald-400"
+                      : "text-slate-500 dark:text-slate-400"
+                    }`}
                 >
                   {stage.label}
                 </p>
@@ -188,54 +187,35 @@ const WorkflowStageIndicator: React.FC<WorkflowStageIndicatorProps> = ({
       </div>
 
       {/* Current Stage Details */}
-      {currentStageData && (
-        <div className="mt-6 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
-          <h4 className="text-xs font-black text-slate-700 dark:text-slate-300 uppercase mb-2">
-            Current Stage Details
-          </h4>
-          <p className="text-xs text-slate-600 dark:text-slate-400 font-bold mb-3">
-            {currentStageData.description}
-          </p>
-
-          {currentStageData.gateKeepers &&
-            currentStageData.gateKeepers.length > 0 && (
-              <div className="flex items-center gap-2 text-xs">
-                <span className="material-symbols-outlined text-sm text-slate-500">
-                  admin_panel_settings
+      {/* Current Stage Details - Removed description and gatekeepers, kept actions */}
+      {currentStageData &&
+        currentStageData.requiredActions &&
+        currentStageData.requiredActions.length > 0 && (
+          <div className="mt-6 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
+            <div className="mt-0 p-3 bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 rounded-lg">
+              <div className="flex items-start gap-2">
+                <span className="material-symbols-outlined text-sm text-amber-600 dark:text-amber-400 mt-0.5">
+                  warning
                 </span>
-                <span className="font-bold text-slate-600 dark:text-slate-400">
-                  Gatekeepers: {currentStageData.gateKeepers.join(", ")}
-                </span>
-              </div>
-            )}
-
-          {currentStageData.requiredActions &&
-            currentStageData.requiredActions.length > 0 && (
-              <div className="mt-3 p-3 bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 rounded-lg">
-                <div className="flex items-start gap-2">
-                  <span className="material-symbols-outlined text-sm text-amber-600 dark:text-amber-400 mt-0.5">
-                    warning
-                  </span>
-                  <div>
-                    <p className="text-xs font-black text-amber-900 dark:text-amber-100 uppercase mb-1">
-                      Required Actions
-                    </p>
-                    <ul className="space-y-1">
-                      {currentStageData.requiredActions.map((action, idx) => (
-                        <li
-                          key={idx}
-                          className="text-xs text-amber-700 dark:text-amber-300 font-bold"
-                        >
-                          • {action}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
+                <div>
+                  <p className="text-xs font-black text-amber-900 dark:text-amber-100 uppercase mb-1">
+                    Required Actions
+                  </p>
+                  <ul className="space-y-1">
+                    {currentStageData.requiredActions.map((action, idx) => (
+                      <li
+                        key={idx}
+                        className="text-xs text-amber-700 dark:text-amber-300 font-bold"
+                      >
+                        • {action}
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               </div>
-            )}
-        </div>
-      )}
+            </div>
+          </div>
+        )}
     </div>
   );
 };
