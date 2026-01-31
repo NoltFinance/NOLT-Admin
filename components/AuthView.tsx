@@ -90,6 +90,7 @@ const AuthView: React.FC<AuthViewProps> = ({ onLoginSuccess }) => {
       console.error("OTP verification error:", err);
     } finally {
       setLoading(false);
+      setOtpCode("");
     }
   };
 
