@@ -605,19 +605,17 @@ const FormBuilderView: React.FC = () => {
                             onClick={() =>
                               setNewFormData({ ...newFormData, visibility })
                             }
-                            className={`p-4 rounded-2xl border-2 transition-all text-left ${
-                              newFormData.visibility === visibility
-                                ? "border-primary bg-primary/5"
-                                : "border-slate-100 dark:border-slate-800 hover:border-slate-200"
-                            }`}
+                            className={`p-4 rounded-2xl border-2 transition-all text-left ${newFormData.visibility === visibility
+                              ? "border-primary bg-primary/5"
+                              : "border-slate-100 dark:border-slate-800 hover:border-slate-200"
+                              }`}
                           >
                             <div className="flex items-center gap-2 mb-2">
                               <span
-                                className={`material-symbols-outlined text-xl ${
-                                  newFormData.visibility === visibility
-                                    ? "text-primary"
-                                    : "text-slate-400"
-                                }`}
+                                className={`material-symbols-outlined text-xl ${newFormData.visibility === visibility
+                                  ? "text-primary"
+                                  : "text-slate-400"
+                                  }`}
                               >
                                 {visibility === "Public"
                                   ? "public"
@@ -735,13 +733,12 @@ const FormBuilderView: React.FC = () => {
                     {form.status}
                   </span>
                   <span
-                    className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
-                      form.visibility === "Public"
-                        ? "bg-blue-100 text-blue-700"
-                        : form.visibility === "Internal"
-                          ? "bg-amber-100 text-amber-700"
-                          : "bg-slate-100 text-slate-500"
-                    }`}
+                    className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${form.visibility === "Public"
+                      ? "bg-blue-100 text-blue-700"
+                      : form.visibility === "Internal"
+                        ? "bg-amber-100 text-amber-700"
+                        : "bg-slate-100 text-slate-500"
+                      }`}
                   >
                     {form.visibility}
                   </span>
@@ -1057,19 +1054,17 @@ const FormBuilderView: React.FC = () => {
                             onClick={() =>
                               setNewFormData({ ...newFormData, visibility })
                             }
-                            className={`p-4 rounded-2xl border-2 transition-all text-left ${
-                              newFormData.visibility === visibility
-                                ? "border-primary bg-primary/5"
-                                : "border-slate-100 dark:border-slate-800 hover:border-slate-200"
-                            }`}
+                            className={`p-4 rounded-2xl border-2 transition-all text-left ${newFormData.visibility === visibility
+                              ? "border-primary bg-primary/5"
+                              : "border-slate-100 dark:border-slate-800 hover:border-slate-200"
+                              }`}
                           >
                             <div className="flex items-center gap-2 mb-2">
                               <span
-                                className={`material-symbols-outlined text-xl ${
-                                  newFormData.visibility === visibility
-                                    ? "text-primary"
-                                    : "text-slate-400"
-                                }`}
+                                className={`material-symbols-outlined text-xl ${newFormData.visibility === visibility
+                                  ? "text-primary"
+                                  : "text-slate-400"
+                                  }`}
                               >
                                 {visibility === "Public"
                                   ? "public"
@@ -1120,10 +1115,10 @@ const FormBuilderView: React.FC = () => {
                             enable_steps: !newFormData.enable_steps,
                             step_labels: !newFormData.enable_steps
                               ? [
-                                  "Personal Info",
-                                  "Application Details",
-                                  "Review",
-                                ]
+                                "Personal Info",
+                                "Application Details",
+                                "Review",
+                              ]
                               : [],
                           })
                         }
@@ -1466,11 +1461,10 @@ const FormBuilderView: React.FC = () => {
                                 status: status as any,
                               })
                             }
-                            className={`flex-1 px-3 py-1.5 rounded-md text-[10px] font-black uppercase tracking-wide transition-all ${
-                              selectedForm.status === status
-                                ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm"
-                                : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
-                            }`}
+                            className={`flex-1 px-3 py-1.5 rounded-md text-[10px] font-black uppercase tracking-wide transition-all ${selectedForm.status === status
+                              ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm"
+                              : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+                              }`}
                           >
                             {status}
                           </button>
@@ -1496,10 +1490,10 @@ const FormBuilderView: React.FC = () => {
                             enable_steps: !selectedForm.enable_steps,
                             step_labels: !selectedForm.enable_steps
                               ? [
-                                  "Personal Info",
-                                  "Application Details",
-                                  "Review",
-                                ]
+                                "Personal Info",
+                                "Application Details",
+                                "Review",
+                              ]
                               : [],
                           });
                           if (!selectedForm.enable_steps) {
@@ -1593,11 +1587,10 @@ const FormBuilderView: React.FC = () => {
                               visibility: visibility as any,
                             })
                           }
-                          className={`flex-1 px-3 py-1.5 rounded-md text-[10px] font-black uppercase tracking-wide transition-all ${
-                            selectedForm.visibility === visibility
-                              ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm"
-                              : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
-                          }`}
+                          className={`flex-1 px-3 py-1.5 rounded-md text-[10px] font-black uppercase tracking-wide transition-all ${selectedForm.visibility === visibility
+                            ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm"
+                            : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+                            }`}
                         >
                           {visibility}
                         </button>
@@ -1649,19 +1642,17 @@ const FormBuilderView: React.FC = () => {
                         <button
                           key={idx}
                           onClick={() => setCurrentStep(stepNumber)}
-                          className={`flex-1 min-w-[120px] px-4 py-3 rounded-xl text-xs font-black uppercase tracking-tight transition-all ${
-                            currentStep === stepNumber
-                              ? "bg-white dark:bg-slate-800 text-purple-600 shadow-sm"
-                              : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
-                          }`}
+                          className={`flex-1 min-w-[120px] px-4 py-3 rounded-xl text-xs font-black uppercase tracking-tight transition-all ${currentStep === stepNumber
+                            ? "bg-white dark:bg-slate-800 text-purple-600 shadow-sm"
+                            : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+                            }`}
                         >
                           <div className="flex items-center justify-center gap-2">
                             <div
-                              className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${
-                                currentStep === stepNumber
-                                  ? "bg-purple-500 text-white"
-                                  : "bg-slate-300 dark:bg-slate-700 text-slate-600 dark:text-slate-400"
-                              }`}
+                              className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${currentStep === stepNumber
+                                ? "bg-purple-500 text-white"
+                                : "bg-slate-300 dark:bg-slate-700 text-slate-600 dark:text-slate-400"
+                                }`}
                             >
                               {stepNumber}
                             </div>
@@ -1706,8 +1697,8 @@ const FormBuilderView: React.FC = () => {
                 {(() => {
                   const fieldsToShow = selectedForm.enable_steps
                     ? selectedForm.fields?.filter(
-                        (f) => (f.step_number || 1) === currentStep,
-                      ) || []
+                      (f) => (f.step_number || 1) === currentStep,
+                    ) || []
                     : selectedForm.fields || [];
 
                   if (fieldsToShow.length === 0 && !isPreview) {
@@ -1736,13 +1727,12 @@ const FormBuilderView: React.FC = () => {
                     <div
                       key={field.id}
                       onClick={() => !isPreview && setActiveField(field.id)}
-                      className={`relative p-4 md:p-6 rounded-[24px] border-2 transition-all group ${
-                        isPreview
-                          ? "border-transparent bg-slate-50 dark:bg-surface-darker"
-                          : activeField === field.id
-                            ? "border-primary bg-primary/5"
-                            : "border-slate-50 dark:border-slate-800/50 hover:border-slate-200 cursor-pointer"
-                      }`}
+                      className={`relative p-4 md:p-6 rounded-[24px] border-2 transition-all group ${isPreview
+                        ? "border-transparent bg-slate-50 dark:bg-surface-darker"
+                        : activeField === field.id
+                          ? "border-primary bg-primary/5"
+                          : "border-slate-50 dark:border-slate-800/50 hover:border-slate-200 cursor-pointer"
+                        }`}
                     >
                       <div className="space-y-2">
                         <label className="text-xs font-black text-slate-700 dark:text-slate-200 uppercase tracking-widest flex items-center gap-2">
@@ -1967,15 +1957,13 @@ const FormBuilderView: React.FC = () => {
                                       [field.id]: 0,
                                     }))
                                   }
-                                  className={`text-3xl transition-all ${
-                                    star <= displayRating
-                                      ? "text-yellow-400 scale-110"
-                                      : "text-slate-300"
-                                  } ${
-                                    isPreview
+                                  className={`text-3xl transition-all ${star <= displayRating
+                                    ? "text-yellow-400 scale-110"
+                                    : "text-slate-300"
+                                    } ${isPreview
                                       ? "cursor-pointer hover:scale-125"
                                       : "cursor-not-allowed"
-                                  }`}
+                                    }`}
                                   disabled={!isPreview}
                                 >
                                   {star <= displayRating ? "⭐" : "☆"}
@@ -2035,11 +2023,10 @@ const FormBuilderView: React.FC = () => {
                                 onTouchEnd={() =>
                                   isPreview && stopDrawing(field.id)
                                 }
-                                className={`w-full h-48 bg-white dark:bg-background-dark/50 border-2 border-dashed border-slate-100 dark:border-slate-800 rounded-xl transition-colors ${
-                                  isPreview
-                                    ? "cursor-crosshair hover:border-primary"
-                                    : "cursor-not-allowed"
-                                }`}
+                                className={`w-full h-48 bg-white dark:bg-background-dark/50 border-2 border-dashed border-slate-100 dark:border-slate-800 rounded-xl transition-colors ${isPreview
+                                  ? "cursor-crosshair hover:border-primary"
+                                  : "cursor-not-allowed"
+                                  }`}
                               />
                               {isPreview && (
                                 <button
@@ -2092,6 +2079,12 @@ const FormBuilderView: React.FC = () => {
                                 Use Current Location
                               </button>
                             )}
+                          </div>
+                        ) : field.field_type === "static_text" ? (
+                          <div className="p-4 bg-slate-50 dark:bg-background-dark/50 rounded-xl border border-slate-100 dark:border-slate-800">
+                            <p className="text-sm text-slate-600 dark:text-slate-300 whitespace-pre-wrap">
+                              {field.label || "Enter your information text here..."}
+                            </p>
                           </div>
                         ) : (
                           <input
@@ -2164,8 +2157,8 @@ const FormBuilderView: React.FC = () => {
                 {isPreview && (
                   <div className="pt-10">
                     {selectedForm.enable_steps &&
-                    selectedForm.step_labels &&
-                    selectedForm.step_labels.length > 0 ? (
+                      selectedForm.step_labels &&
+                      selectedForm.step_labels.length > 0 ? (
                       <div className="space-y-4">
                         {/* Step Navigation Buttons */}
                         <div className="flex items-center justify-between gap-4">
@@ -2212,11 +2205,10 @@ const FormBuilderView: React.FC = () => {
                           {selectedForm.step_labels.map((_, idx) => (
                             <div
                               key={idx}
-                              className={`flex-1 h-2 rounded-full transition-all ${
-                                idx + 1 <= currentStep
-                                  ? "bg-purple-500"
-                                  : "bg-slate-200 dark:bg-slate-700"
-                              }`}
+                              className={`flex-1 h-2 rounded-full transition-all ${idx + 1 <= currentStep
+                                ? "bg-purple-500"
+                                : "bg-slate-200 dark:bg-slate-700"
+                                }`}
                             />
                           ))}
                         </div>
@@ -2254,46 +2246,88 @@ const FormBuilderView: React.FC = () => {
                     <div className="space-y-4">
                       <div className="space-y-1.5">
                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
-                          Input Label
+                          {currentField.field_type === 'static_text' ? 'Content Text' : 'Input Label'}
                         </label>
-                        <input
-                          value={
-                            editingFields[currentField.id]?.label ??
-                            currentField.label
-                          }
-                          onChange={(e) =>
-                            setEditingFields((prev) => ({
-                              ...prev,
-                              [currentField.id]: {
-                                ...prev[currentField.id],
-                                label: e.target.value,
-                              },
-                            }))
-                          }
-                          onBlur={() => {
-                            const value = editingFields[currentField.id]?.label;
-                            if (
-                              value !== undefined &&
-                              value !== currentField.label
-                            ) {
-                              updateField(currentField.id, { label: value });
+                        {currentField.field_type === 'static_text' ? (
+                          <textarea
+                            value={
+                              editingFields[currentField.id]?.label ??
+                              currentField.label
                             }
-                            setEditingFields((prev) => {
-                              const newState = { ...prev };
-                              if (newState[currentField.id]) {
-                                delete newState[currentField.id].label;
-                                if (
-                                  Object.keys(newState[currentField.id])
-                                    .length === 0
-                                ) {
-                                  delete newState[currentField.id];
-                                }
+                            onChange={(e) =>
+                              setEditingFields((prev) => ({
+                                ...prev,
+                                [currentField.id]: {
+                                  ...prev[currentField.id],
+                                  label: e.target.value,
+                                },
+                              }))
+                            }
+                            onBlur={() => {
+                              const value = editingFields[currentField.id]?.label;
+                              if (
+                                value !== undefined &&
+                                value !== currentField.label
+                              ) {
+                                updateField(currentField.id, { label: value });
                               }
-                              return newState;
-                            });
-                          }}
-                          className="w-full bg-slate-50 dark:bg-background-dark/50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-primary dark:text-white"
-                        />
+                              setEditingFields((prev) => {
+                                const newState = { ...prev };
+                                if (newState[currentField.id]) {
+                                  delete newState[currentField.id].label;
+                                  if (
+                                    Object.keys(newState[currentField.id])
+                                      .length === 0
+                                  ) {
+                                    delete newState[currentField.id];
+                                  }
+                                }
+                                return newState;
+                              });
+                            }}
+                            rows={4}
+                            className="w-full bg-slate-50 dark:bg-background-dark/50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-primary dark:text-white resize-none"
+                          />
+                        ) : (
+                          <input
+                            value={
+                              editingFields[currentField.id]?.label ??
+                              currentField.label
+                            }
+                            onChange={(e) =>
+                              setEditingFields((prev) => ({
+                                ...prev,
+                                [currentField.id]: {
+                                  ...prev[currentField.id],
+                                  label: e.target.value,
+                                },
+                              }))
+                            }
+                            onBlur={() => {
+                              const value = editingFields[currentField.id]?.label;
+                              if (
+                                value !== undefined &&
+                                value !== currentField.label
+                              ) {
+                                updateField(currentField.id, { label: value });
+                              }
+                              setEditingFields((prev) => {
+                                const newState = { ...prev };
+                                if (newState[currentField.id]) {
+                                  delete newState[currentField.id].label;
+                                  if (
+                                    Object.keys(newState[currentField.id])
+                                      .length === 0
+                                  ) {
+                                    delete newState[currentField.id];
+                                  }
+                                }
+                                return newState;
+                              });
+                            }}
+                            className="w-full bg-slate-50 dark:bg-background-dark/50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-primary dark:text-white"
+                          />
+                        )}
                       </div>
 
                       <div className="space-y-1.5">
@@ -2312,6 +2346,7 @@ const FormBuilderView: React.FC = () => {
                           <optgroup label="Text Inputs">
                             <option value="text">Short Text</option>
                             <option value="textarea">Paragraph</option>
+                            <option value="static_text">Static Text Block</option>
                             <option value="email">Email Address</option>
                             <option value="phone">Phone Number</option>
                             <option value="url">Website URL</option>
@@ -2349,7 +2384,8 @@ const FormBuilderView: React.FC = () => {
 
                       {currentField.field_type !== "file" &&
                         currentField.field_type !== "date" &&
-                        currentField.field_type !== "checkbox" && (
+                        currentField.field_type !== "checkbox" &&
+                        currentField.field_type !== "static_text" && (
                           <div className="space-y-1.5">
                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
                               Placeholder Hint
@@ -2423,28 +2459,25 @@ const FormBuilderView: React.FC = () => {
                                       });
                                       setCurrentStep(stepNumber);
                                     }}
-                                    className={`p-3 rounded-xl border-2 transition-all text-left ${
-                                      isSelected
-                                        ? "border-purple-500 bg-purple-50 dark:bg-purple-950/20"
-                                        : "border-slate-200 dark:border-slate-700 hover:border-slate-300"
-                                    }`}
+                                    className={`p-3 rounded-xl border-2 transition-all text-left ${isSelected
+                                      ? "border-purple-500 bg-purple-50 dark:bg-purple-950/20"
+                                      : "border-slate-200 dark:border-slate-700 hover:border-slate-300"
+                                      }`}
                                   >
                                     <div className="flex items-center gap-2">
                                       <div
-                                        className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black ${
-                                          isSelected
-                                            ? "bg-purple-500 text-white"
-                                            : "bg-slate-200 dark:bg-slate-700 text-slate-500"
-                                        }`}
+                                        className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black ${isSelected
+                                          ? "bg-purple-500 text-white"
+                                          : "bg-slate-200 dark:bg-slate-700 text-slate-500"
+                                          }`}
                                       >
                                         {stepNumber}
                                       </div>
                                       <span
-                                        className={`text-xs font-bold ${
-                                          isSelected
-                                            ? "text-purple-700 dark:text-purple-300"
-                                            : "text-slate-600 dark:text-slate-400"
-                                        }`}
+                                        className={`text-xs font-bold ${isSelected
+                                          ? "text-purple-700 dark:text-purple-300"
+                                          : "text-slate-600 dark:text-slate-400"
+                                          }`}
                                       >
                                         {label}
                                       </span>
@@ -2483,98 +2516,98 @@ const FormBuilderView: React.FC = () => {
                         currentField.field_type === "multiselect" ||
                         currentField.field_type === "radio" ||
                         currentField.field_type === "checkbox_group") && (
-                        <div className="space-y-2 pt-2">
-                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
-                            {currentField.field_type === "select" ||
-                            currentField.field_type === "multiselect"
-                              ? "Dropdown Options"
-                              : currentField.field_type === "radio"
-                                ? "Radio Button Options"
-                                : "Checkbox Options"}
-                          </label>
-                          {(
-                            editingOptions[currentField.id] ||
-                            currentField.options || ["Option 1"]
-                          ).map((opt, oIdx) => (
-                            <div key={oIdx} className="flex gap-2">
-                              <input
-                                value={opt}
-                                onChange={(e) => {
-                                  const currentOpts =
-                                    editingOptions[currentField.id] ||
-                                    currentField.options ||
-                                    [];
-                                  const opts = [...currentOpts];
-                                  opts[oIdx] = e.target.value;
-                                  setEditingOptions((prev) => ({
-                                    ...prev,
-                                    [currentField.id]: opts,
-                                  }));
-                                }}
-                                onBlur={() => {
-                                  const opts = editingOptions[currentField.id];
-                                  if (opts) {
-                                    updateField(currentField.id, {
-                                      options: opts,
-                                    });
-                                    setEditingOptions((prev) => {
-                                      const newState = { ...prev };
-                                      delete newState[currentField.id];
-                                      return newState;
-                                    });
-                                  }
-                                }}
-                                className="flex-1 bg-slate-50 dark:bg-background-dark/50 border-none rounded-xl px-3 py-2 text-xs font-bold focus:ring-1 focus:ring-primary dark:text-white"
-                              />
-                              {(
-                                editingOptions[currentField.id] ||
-                                currentField.options ||
-                                []
-                              ).length > 1 && (
-                                <button
-                                  onClick={() => {
+                          <div className="space-y-2 pt-2">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
+                              {currentField.field_type === "select" ||
+                                currentField.field_type === "multiselect"
+                                ? "Dropdown Options"
+                                : currentField.field_type === "radio"
+                                  ? "Radio Button Options"
+                                  : "Checkbox Options"}
+                            </label>
+                            {(
+                              editingOptions[currentField.id] ||
+                              currentField.options || ["Option 1"]
+                            ).map((opt, oIdx) => (
+                              <div key={oIdx} className="flex gap-2">
+                                <input
+                                  value={opt}
+                                  onChange={(e) => {
                                     const currentOpts =
                                       editingOptions[currentField.id] ||
                                       currentField.options ||
                                       [];
                                     const opts = [...currentOpts];
-                                    opts.splice(oIdx, 1);
+                                    opts[oIdx] = e.target.value;
                                     setEditingOptions((prev) => ({
                                       ...prev,
                                       [currentField.id]: opts,
                                     }));
-                                    updateField(currentField.id, {
-                                      options: opts,
-                                    });
                                   }}
-                                  className="px-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/20 rounded-lg transition-colors"
-                                >
-                                  <span className="material-symbols-outlined text-[16px]">
-                                    close
-                                  </span>
-                                </button>
-                              )}
-                            </div>
-                          ))}
-                          <button
-                            onClick={() => {
-                              const currentOpts =
-                                editingOptions[currentField.id] ||
-                                currentField.options ||
-                                [];
-                              const opts = [...currentOpts, "New Option"];
-                              setEditingOptions((prev) => ({
-                                ...prev,
-                                [currentField.id]: opts,
-                              }));
-                              updateField(currentField.id, { options: opts });
-                            }}
-                            className="text-[10px] font-black text-primary uppercase tracking-widest ml-1"
-                          >
-                            + Add Option
-                          </button>
-                        </div>
-                      )}
+                                  onBlur={() => {
+                                    const opts = editingOptions[currentField.id];
+                                    if (opts) {
+                                      updateField(currentField.id, {
+                                        options: opts,
+                                      });
+                                      setEditingOptions((prev) => {
+                                        const newState = { ...prev };
+                                        delete newState[currentField.id];
+                                        return newState;
+                                      });
+                                    }
+                                  }}
+                                  className="flex-1 bg-slate-50 dark:bg-background-dark/50 border-none rounded-xl px-3 py-2 text-xs font-bold focus:ring-1 focus:ring-primary dark:text-white"
+                                />
+                                {(
+                                  editingOptions[currentField.id] ||
+                                  currentField.options ||
+                                  []
+                                ).length > 1 && (
+                                    <button
+                                      onClick={() => {
+                                        const currentOpts =
+                                          editingOptions[currentField.id] ||
+                                          currentField.options ||
+                                          [];
+                                        const opts = [...currentOpts];
+                                        opts.splice(oIdx, 1);
+                                        setEditingOptions((prev) => ({
+                                          ...prev,
+                                          [currentField.id]: opts,
+                                        }));
+                                        updateField(currentField.id, {
+                                          options: opts,
+                                        });
+                                      }}
+                                      className="px-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/20 rounded-lg transition-colors"
+                                    >
+                                      <span className="material-symbols-outlined text-[16px]">
+                                        close
+                                      </span>
+                                    </button>
+                                  )}
+                              </div>
+                            ))}
+                            <button
+                              onClick={() => {
+                                const currentOpts =
+                                  editingOptions[currentField.id] ||
+                                  currentField.options ||
+                                  [];
+                                const opts = [...currentOpts, "New Option"];
+                                setEditingOptions((prev) => ({
+                                  ...prev,
+                                  [currentField.id]: opts,
+                                }));
+                                updateField(currentField.id, { options: opts });
+                              }}
+                              className="text-[10px] font-black text-primary uppercase tracking-widest ml-1"
+                            >
+                              + Add Option
+                            </button>
+                          </div>
+                        )}
                     </div>
                   </div>
                 ) : (
@@ -2700,11 +2733,10 @@ const FormBuilderView: React.FC = () => {
                             setSelectedAdmins([...selectedAdmins, user.id]);
                           }
                         }}
-                        className={`p-4 rounded-2xl border-2 transition-all cursor-pointer ${
-                          selectedAdmins.includes(user.id)
-                            ? "border-primary bg-primary/5"
-                            : "border-slate-100 dark:border-slate-800 hover:border-slate-200 dark:hover:border-slate-700"
-                        }`}
+                        className={`p-4 rounded-2xl border-2 transition-all cursor-pointer ${selectedAdmins.includes(user.id)
+                          ? "border-primary bg-primary/5"
+                          : "border-slate-100 dark:border-slate-800 hover:border-slate-200 dark:hover:border-slate-700"
+                          }`}
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">

@@ -186,7 +186,8 @@ export type FormFieldType =
   | "slider"
   | "color"
   | "signature"
-  | "location";
+  | "location"
+  | "static_text";
 export type FormStatus = "Draft" | "Published" | "Archived";
 export type FormVisibility = "Public" | "Internal" | "Private";
 

@@ -561,6 +561,12 @@ const PublicFormSubmissionView: React.FC = () => {
               }
               className="w-full h-12 bg-white dark:bg-background-dark/50 border border-slate-100 dark:border-slate-800 rounded-xl px-4 text-sm font-bold focus:ring-2 focus:ring-primary dark:text-white cursor-pointer"
             />
+          ) : field.field_type === "static_text" ? (
+            <div className="p-4 bg-white dark:bg-background-dark/50 border border-slate-100 dark:border-slate-800 rounded-xl">
+              <p className="text-sm text-slate-600 dark:text-slate-300 whitespace-pre-wrap leading-relaxed">
+                {field.label}
+              </p>
+            </div>
           ) : field.field_type === "rating" ? (
             <div className="flex items-center gap-2">
               {[1, 2, 3, 4, 5].map((star) => {
