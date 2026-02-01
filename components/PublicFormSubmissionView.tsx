@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { CustomForm, FormField } from "../types";
-import { getPublicForms, submitForm } from "../services/formsService";
+import { getPublicForms, submitForm, getFormById } from "../services/formsService";
+import { getCurrentUser } from "../utils/authService";
 import imageCompression from "browser-image-compression";
 import { uploadFile } from "../services/storageService";
 
@@ -17,6 +18,8 @@ const PublicFormSubmissionView: React.FC = () => {
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [currentStep, setCurrentStep] = useState(1);
+  const [referralCode, setReferralCode] = useState("");
+  const [isReferralLocked, setIsReferralLocked] = useState(false);
   const signatureCanvasRefs = useRef<Record<string, HTMLCanvasElement | null>>(
     {},
   );
@@ -33,21 +36,33 @@ const PublicFormSubmissionView: React.FC = () => {
   const loadForm = async () => {
     setLoading(true);
     try {
-      // Fetch public forms
-      const { data, error } = await getPublicForms();
+      // Check if user is authenticated (Admin previewing)
+      const user = await getCurrentUser();
+      let selectedForm: CustomForm | null = null;
 
-      if (error) {
-        console.error("Error loading form:", error);
-        return;
+      if (user) {
+        // Admin: Fetch directly by ID (allows previewing Drafts/Internal)
+        const { data, error } = await getFormById(formId!);
+        if (!error && data) {
+          selectedForm = data;
+        }
+      } else {
+        // Public: Use strict public forms fetch
+        const { data, error } = await getPublicForms();
+        if (!error && data) {
+          selectedForm = data.find((f) => f.id === formId) || null;
+          // Double check visibility for public users
+          if (
+            selectedForm &&
+            (selectedForm.status !== "Published" ||
+              selectedForm.visibility !== "Public")
+          ) {
+            selectedForm = null;
+          }
+        }
       }
 
-      // Find the form and check if it's published and public
-      const selectedForm = data?.find((f) => f.id === formId);
-      if (
-        selectedForm &&
-        selectedForm.status === "Published" &&
-        selectedForm.visibility === "Public"
-      ) {
+      if (selectedForm) {
         setForm(selectedForm);
         // Initialize form data with default values
         const initialData: Record<string, any> = {};
@@ -63,8 +78,15 @@ const PublicFormSubmissionView: React.FC = () => {
           }
         });
         setFormData(initialData);
+
+        // Handle Referral Code
+        const refParam = searchParams.get("ref");
+        if (refParam) {
+          setReferralCode(refParam);
+          setIsReferralLocked(true);
+        }
       } else {
-        console.log("Form not found or not public:", selectedForm);
+        console.log("Form not found or access denied");
         setForm(null);
       }
     } catch (error) {
@@ -312,9 +334,8 @@ const PublicFormSubmissionView: React.FC = () => {
         formId!,
         submitterEmail,
         submitterName,
-
         formData,
-        searchParams.get("ref") || undefined,
+        referralCode || undefined,
       );
 
       if (error) {
@@ -540,6 +561,12 @@ const PublicFormSubmissionView: React.FC = () => {
               }
               className="w-full h-12 bg-white dark:bg-background-dark/50 border border-slate-100 dark:border-slate-800 rounded-xl px-4 text-sm font-bold focus:ring-2 focus:ring-primary dark:text-white cursor-pointer"
             />
+          ) : field.field_type === "static_text" ? (
+            <div className="p-4 bg-white dark:bg-background-dark/50 border border-slate-100 dark:border-slate-800 rounded-xl">
+              <p className="text-sm text-slate-600 dark:text-slate-300 whitespace-pre-wrap leading-relaxed">
+                {field.label}
+              </p>
+            </div>
           ) : field.field_type === "rating" ? (
             <div className="flex items-center gap-2">
               {[1, 2, 3, 4, 5].map((star) => {
@@ -549,11 +576,10 @@ const PublicFormSubmissionView: React.FC = () => {
                     key={star}
                     type="button"
                     onClick={() => handleInputChange(field.id, star, field)}
-                    className={`text-3xl transition-all ${
-                      star <= displayRating
-                        ? "text-yellow-400 scale-110"
-                        : "text-slate-300"
-                    } cursor-pointer hover:scale-125`}
+                    className={`text-3xl transition-all ${star <= displayRating
+                      ? "text-yellow-400 scale-110"
+                      : "text-slate-300"
+                      } cursor-pointer hover:scale-125`}
                   >
                     {star <= displayRating ? "⭐" : "☆"}
                   </button>
@@ -854,6 +880,41 @@ const PublicFormSubmissionView: React.FC = () => {
               {form.description ||
                 `Please provide the following information to proceed with your ${form.type} application.`}
             </p>
+
+            {/* Referral Code Section */}
+            <div className="mt-4 pt-4 border-t border-slate-50 dark:border-slate-800/50">
+              <label className="text-xs font-black text-slate-400 uppercase tracking-widest block mb-2">
+                Referral Code (Optional)
+              </label>
+              <div className="relative max-w-md">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <span className="material-symbols-outlined text-slate-400 text-[18px]">
+                    confirmation_number
+                  </span>
+                </div>
+                <input
+                  type="text"
+                  value={referralCode}
+                  onChange={(e) => !isReferralLocked && setReferralCode(e.target.value)}
+                  readOnly={isReferralLocked}
+                  placeholder="Enter referral code"
+                  className={`w-full bg-slate-50 dark:bg-background-dark border border-slate-200 dark:border-slate-800 rounded-xl py-2.5 pl-10 pr-4 text-sm font-mono font-bold text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-primary ${isReferralLocked ? 'opacity-70 cursor-not-allowed' : ''}`}
+                />
+                {isReferralLocked && (
+                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                    <span className="material-symbols-outlined text-emerald-500 text-[18px]">
+                      lock
+                    </span>
+                  </div>
+                )}
+              </div>
+              {isReferralLocked && (
+                <p className="text-[10px] font-bold text-emerald-500 mt-1 flex items-center gap-1">
+                  <span className="material-symbols-outlined text-[12px]">check_circle</span>
+                  Referral code applied from link
+                </p>
+              )}
+            </div>
           </div>
 
           {/* Stepper - Only show if multi-step form */}
@@ -884,13 +945,12 @@ const PublicFormSubmissionView: React.FC = () => {
                       className="relative z-10 flex flex-col items-center"
                     >
                       <div
-                        className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-500 border-4 ${
-                          isCompleted
-                            ? "bg-primary text-white border-primary shadow-lg shadow-primary/30"
-                            : isActive
-                              ? "bg-white dark:bg-surface-dark text-primary border-primary shadow-xl scale-110"
-                              : "bg-white dark:bg-surface-dark text-slate-300 dark:text-slate-600 border-slate-200 dark:border-slate-800"
-                        }`}
+                        className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-500 border-4 ${isCompleted
+                          ? "bg-primary text-white border-primary shadow-lg shadow-primary/30"
+                          : isActive
+                            ? "bg-white dark:bg-surface-dark text-primary border-primary shadow-xl scale-110"
+                            : "bg-white dark:bg-surface-dark text-slate-300 dark:text-slate-600 border-slate-200 dark:border-slate-800"
+                          }`}
                       >
                         {isCompleted ? (
                           <span className="material-symbols-outlined text-[22px]">
@@ -906,11 +966,10 @@ const PublicFormSubmissionView: React.FC = () => {
                       </div>
                       <div className="absolute top-14 whitespace-nowrap text-center">
                         <p
-                          className={`text-[10px] font-black uppercase tracking-widest ${
-                            isCompleted || isActive
-                              ? "text-slate-900 dark:text-white"
-                              : "text-slate-400"
-                          }`}
+                          className={`text-[10px] font-black uppercase tracking-widest ${isCompleted || isActive
+                            ? "text-slate-900 dark:text-white"
+                            : "text-slate-400"
+                            }`}
                         >
                           {stepLabel}
                         </p>

@@ -208,6 +208,7 @@ const InvestmentView: React.FC<InvestmentViewProps> = ({
   const [isLoadingFormData, setIsLoadingFormData] = useState(false);
   const [reassignComment, setReassignComment] = useState("");
   const [availableActions, setAvailableActions] = useState<string[]>([]);
+  const [isTimelineExpanded, setIsTimelineExpanded] = useState(false);
 
   // Fetch investment submissions from database
   useEffect(() => {
@@ -998,8 +999,12 @@ const InvestmentView: React.FC<InvestmentViewProps> = ({
           </Section>
 
           {/* Operation Log Section - GitHub Style Timeline */}
-          <div className="bg-white dark:bg-surface-dark rounded-[24px] p-6 border border-slate-100 dark:border-slate-800 shadow-sm">
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3 mb-4">
+          <div className="bg-white dark:bg-surface-dark rounded-[24px] p-6 border border-slate-100 dark:border-slate-800 shadow-sm transition-all duration-300">
+            <button
+              onClick={() => setIsTimelineExpanded(!isTimelineExpanded)}
+              className="w-full flex items-center justify-between border-b 
+            border-slate-100 dark:border-slate-800 pb-3 mb-0 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-lg p-2 transition-colors"
+            >
               <div className="flex items-center gap-2">
                 <span className="material-symbols-outlined text-primary text-[20px] font-black">
                   history
@@ -1008,14 +1013,20 @@ const InvestmentView: React.FC<InvestmentViewProps> = ({
                   Activity Timeline
                 </h5>
               </div>
-              {inv.operationLogs && inv.operationLogs.length > 0 && (
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                  {inv.operationLogs.length}{" "}
-                  {inv.operationLogs.length === 1 ? "event" : "events"}
+              <div className="flex items-center gap-3">
+                {inv.operationLogs && inv.operationLogs.length > 0 && (
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                    {inv.operationLogs.length}{" "}
+                    {inv.operationLogs.length === 1 ? "event" : "events"}
+                  </span>
+                )}
+                <span className={`material-symbols-outlined text-slate-400 transition-transform duration-300 ${isTimelineExpanded ? 'rotate-180' : ''}`}>
+                  expand_more
                 </span>
-              )}
-            </div>
-            <div className="relative">
+              </div>
+            </button>
+
+            <div className={`relative overflow-hidden transition-all duration-500 ease-in-out ${isTimelineExpanded ? 'max-h-[1000px] opacity-100 mt-4' : 'max-h-0 opacity-0'}`}>
               {inv.operationLogs && inv.operationLogs.length > 0 ? (
                 <div className="space-y-0">
                   {inv.operationLogs.map((log, index) => {

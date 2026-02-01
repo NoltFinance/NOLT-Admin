@@ -602,19 +602,17 @@ const AssignedFormsView: React.FC<AssignedFormsViewProps> = ({
                         <button
                           key={idx}
                           onClick={() => setCurrentStep(stepNumber)}
-                          className={`flex-1 min-w-[120px] px-4 py-2.5 rounded-lg text-xs font-black uppercase tracking-tight transition-all ${
-                            currentStep === stepNumber
+                          className={`flex-1 min-w-[120px] px-4 py-2.5 rounded-lg text-xs font-black uppercase tracking-tight transition-all ${currentStep === stepNumber
                               ? "bg-white dark:bg-slate-800 text-purple-600 shadow-sm"
                               : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
-                          }`}
+                            }`}
                         >
                           <div className="flex items-center justify-center gap-2">
                             <div
-                              className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${
-                                currentStep === stepNumber
+                              className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${currentStep === stepNumber
                                   ? "bg-purple-500 text-white"
                                   : "bg-slate-300 dark:bg-slate-700 text-slate-600 dark:text-slate-400"
-                              }`}
+                                }`}
                             >
                               {stepNumber}
                             </div>
@@ -718,7 +716,7 @@ const AssignedFormsView: React.FC<AssignedFormsViewProps> = ({
             {/* Eligible Amount (Credit Check for Loans) */}
             {selectedForm.type === "Loan" &&
               mapToRequestStatus(selectedSubmission.status) ===
-                "Internal Audit" &&
+              "Internal Audit" &&
               currentUser.role === "Credit" && (
                 <div className="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-800 rounded-xl p-6">
                   <h2 className="text-lg font-black text-slate-900 dark:text-white mb-4 flex items-center gap-2">
@@ -880,11 +878,10 @@ const AssignedFormsView: React.FC<AssignedFormsViewProps> = ({
               <button
                 key={status}
                 onClick={() => setStatusFilter(status)}
-                className={`px-4 py-3 text-sm font-bold uppercase tracking-wider transition-all relative ${
-                  statusFilter === status
+                className={`px-4 py-3 text-sm font-bold uppercase tracking-wider transition-all relative ${statusFilter === status
                     ? "text-primary"
                     : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
-                }`}
+                  }`}
               >
                 {status}
                 {statusFilter === status && (
@@ -1049,11 +1046,10 @@ const AssignedFormsView: React.FC<AssignedFormsViewProps> = ({
           <button
             key={tab}
             onClick={() => setFilter(tab as any)}
-            className={`px-4 py-3 text-sm font-bold uppercase tracking-wider transition-all relative ${
-              filter === tab
+            className={`px-4 py-3 text-sm font-bold uppercase tracking-wider transition-all relative ${filter === tab
                 ? "text-primary"
                 : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
-            }`}
+              }`}
           >
             {tab === "all" ? "All Forms" : `${tab}s`}
             {filter === tab && (
@@ -1113,64 +1109,96 @@ const AssignedFormsView: React.FC<AssignedFormsViewProps> = ({
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredForms.map((form) => (
-                <div
-                  key={form.id}
-                  onClick={() => handleFormClick(form)}
-                  className="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-800 rounded-xl p-6 hover:shadow-lg hover:border-primary/50 transition-all cursor-pointer group"
-                >
-                  {/* Form Type Badge */}
-                  <div className="flex items-center justify-between mb-4">
-                    <div
-                      className={`flex items-center gap-2 px-3 py-1.5 rounded-lg ${getFormTypeColor(
-                        form.type,
-                      )}`}
-                    >
-                      <span className="material-symbols-outlined text-sm">
-                        {getFormTypeIcon(form.type)}
-                      </span>
-                      <span className="text-xs font-bold uppercase tracking-wider">
-                        {form.type}
-                      </span>
+              {filteredForms.map((form) => {
+                const referralLink = `${window.location.origin}/apply/${form.id}?ref=${currentUser.referralCode || ""}`;
+                const handleCopyLink = (e: React.MouseEvent) => {
+                  e.stopPropagation();
+                  if (!currentUser.referralCode) {
+                    toast.error("You don't have a referral code. Please contact admin.");
+                    return;
+                  }
+                  navigator.clipboard.writeText(referralLink);
+                  toast.success("Referral link copied to clipboard!");
+                };
+                return (
+                  <div
+                    key={form.id}
+                    onClick={() => handleFormClick(form)}
+                    className="group relative bg-white dark:bg-surface-dark rounded-[24px] border border-slate-100 dark:border-slate-800 p-6 hover:shadow-xl hover:shadow-primary/5 transition-all duration-300 cursor-pointer overflow-hidden"
+                  >
+                    <div className={`absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity z-10`}>
+                      <button
+                        onClick={handleCopyLink}
+                        className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-primary hover:bg-white dark:hover:bg-surface-darker shadow-sm transition-all"
+                        title="Copy Referral Link"
+                      >
+                        <span className="material-symbols-outlined text-[18px]">
+                          link
+                        </span>
+                      </button>
+                    </div>
+
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-primary/5 to-transparent rounded-bl-[100px] pointer-events-none" />
+
+                    <div className="relative">
+                      <div className="flex items-start justify-between mb-6">
+                        <div
+                          className={`w-12 h-12 rounded-2xl ${getFormTypeColor(
+                            form.type,
+                          )} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}
+                        >
+                          <span className="material-symbols-outlined text-2xl">
+                            {getFormTypeIcon(form.type)}
+                          </span>
+                        </div>
+                        <span
+                          className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-[0.1em] ${form.status === "Published"
+                              ? "bg-emerald-500/10 text-emerald-500"
+                              : "bg-slate-100 text-slate-500"
+                            }`}
+                        >
+                          {form.status}
+                        </span>
+                      </div>
+
+                      <h3 className="text-lg font-black text-slate-900 dark:text-white mb-1 group-hover:text-primary transition-colors line-clamp-1">
+                        {form.name}
+                      </h3>
+                      <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-6 line-clamp-2 min-h-[2.5em]">
+                        {form.category_type
+                          ? `Category: ${form.category_type}`
+                          : "No category specified"}
+                      </p>
+
+                      <div className="flex items-center justify-between text-xs font-bold text-slate-400 dark:text-slate-500 border-t border-slate-100 dark:border-slate-800 pt-4">
+                        <div className="flex items-center gap-1.5">
+                          <span className="material-symbols-outlined text-[16px]">
+                            inbox
+                          </span>
+                          {form.submissions_count || 0} Submissions
+                        </div>
+                        <div className="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors">
+                          <span className="material-symbols-outlined text-[14px]">
+                            arrow_forward
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Mobile-friendly Copy Link (visible on hover/focus) */}
+                      <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between md:hidden">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Share Form</span>
+                        <button
+                          onClick={handleCopyLink}
+                          className="flex items-center gap-1 text-xs font-bold text-primary"
+                        >
+                          <span className="material-symbols-outlined text-[14px]">link</span>
+                          Copy Link
+                        </button>
+                      </div>
                     </div>
                   </div>
-
-                  {/* Form Name */}
-                  <h3 className="text-lg font-black text-slate-900 dark:text-white mb-2 group-hover:text-primary transition-colors">
-                    {form.name}
-                  </h3>
-
-                  {/* Category */}
-                  {form.category_type && (
-                    <p className="text-sm text-slate-600 dark:text-slate-400 mb-3">
-                      Category: {form.category_type}
-                    </p>
-                  )}
-
-                  {/* Description */}
-                  {form.description && (
-                    <p className="text-sm text-slate-500 dark:text-slate-500 mb-4 line-clamp-2">
-                      {form.description}
-                    </p>
-                  )}
-
-                  {/* Stats */}
-                  <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-800">
-                    <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
-                      <span className="material-symbols-outlined text-sm">
-                        description
-                      </span>
-                      <span className="text-xs font-bold">
-                        {form.submissions_count || 0} Submission
-                        {form.submissions_count !== 1 ? "s" : ""}
-                      </span>
-                    </div>
-                    <span className="material-symbols-outlined text-primary group-hover:translate-x-1 transition-transform">
-                      arrow_forward
-                    </span>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
 
