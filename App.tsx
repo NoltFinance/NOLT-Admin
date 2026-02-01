@@ -261,9 +261,9 @@ const App: React.FC = () => {
         (r) =>
           r.type === "Loan" &&
           (r.status === "Docs Verification" ||
-            r.status === "Pending Review" ||
-            r.status === "Returned" ||
-            r.status === "Internal Audit"),
+            r.status === "Internal Audit" ||
+            r.status === "Pending Disbursement" ||
+            r.status === "Approved"),
       );
     }
 
